@@ -1,0 +1,17 @@
+# Modelo sugerido: revisar conforme os nomes reais das pastas de assets.
+# NÃO usar um padrão genérico que oculte código ou arquivos que precisam ser versionados.
+# Exemplos (descomente/adapte após o inventário):
+# assets/commercial/
+# assets/paid/
+.env
+.env.*
+!.env.example
+*.gguf
+*.key
+*.pem
+__pycache__/
+node_modules/
+dist/
+build/
+graphify-out/
+assets/tilesets/ui/franuka/
