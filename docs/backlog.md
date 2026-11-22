@@ -1,6 +1,7 @@
 # Backlog
 
-- [ ] ⭐ docs: aprovar os rascunhos da fatia 1 em `docs/esteira/rules-fatia-1/` e então movê-los para `rules/`; depois ler e adaptar a fatia 2 (equipamento, Carga, Progressão) e a fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias) — origem: decisão do responsável em 2026-11-22
+- [x] docs: aprovar os rascunhos da fatia 1 e movê-los para `rules/` — feito em 2026-11-22
+- [ ] ⭐ docs: ler e adaptar a fatia 2 (equipamento, Carga, Progressão) e a fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias), com aprovação antes de ir para `rules/` — origem: decisão do responsável em 2026-11-22
 - [ ] design: definir os pendentes de regra da fatia 1: faixa de Dificuldade que o Narrador propõe, critério de "progresso significativo" e de "defender" uma Convicção, política de avanço de tempo, definição de Amanhecer, testes de equilíbrio dos tetos por Dia — origem: ADR-073 e rascunhos da fatia 1
 - [x] docs: formalizar em ADRs as decisões da auditoria do Caliope — ADR-070 (llama.cpp + GGUF), ADR-071 (`NarratorProvider`), ADR-072 (HTTP + SSE); `04-arquitetura.md` atualizado
 - [ ] design: definir períodos, paleta e componente `SkyBackdrop` do ambiente de dia e noite, incluindo reduced motion e contraste — origem: `docs/ui-ux/07-ambiente-dia-noite.md`

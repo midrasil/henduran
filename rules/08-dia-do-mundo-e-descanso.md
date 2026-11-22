@@ -1,5 +1,7 @@
 # Dia do Mundo e Descanso Prolongado
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Regras/Personagens/Descanso Prolongado.md` (Descanso). O Dia do Mundo é **novo** no Henduran. Decisões: ADR-010, ADR-073.
 
 ## Dia do Mundo **[ADAPTAÇÃO — ADR-073]**

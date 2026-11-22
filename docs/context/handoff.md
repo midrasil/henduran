@@ -1,12 +1,12 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a tarefa `rules-fatia-1`.
+Atualizado em 2026-11-22 após a tarefa `rules-fatia-1-aprovada`.
 
 ## Estado
 
-- Tarefa: ADR-073 e rascunhos das regras da fatia 1 do Astra.
-- Resultado: documentação; nenhum código. Os rascunhos em `docs/esteira/rules-fatia-1/` **aguardam aprovação** antes de irem para `rules/`.
-- Branch: `docs/rules-fatia-1` (PR aberto contra `main`).
+- Tarefa: aprovação e publicação das regras da fatia 1 do Astra em `rules/`.
+- Resultado: documentação; nenhum código. As regras da fatia 1 estão **aprovadas** e publicadas em `rules/` (versão `fatia-1`).
+- Branch: `docs/rules-fatia-1-aprovada` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -20,7 +20,6 @@ Atualizado em 2026-11-22 após a tarefa `rules-fatia-1`.
 
 ## Pendências relevantes
 
-- **Aprovar os rascunhos da fatia 1** e movê-los para `rules/`.
 - Pendentes de regra: faixa de Dificuldade proposta pelo Narrador; critério de "progresso significativo" e de "defender" uma Convicção; política de avanço de tempo e definição de Amanhecer; testes de equilíbrio dos tetos por Dia.
 - Fatias 2 e 3 do Astra: ler e adaptar (equipamento, Carga, Progressão; Cena Tática sem mapa, Ações, dano, NPCs por orçamento, Condições necessárias).
 - Telas sem decisão: Mundos no menu, Mapa, Inventário; histórico do painel do Aduran; marcas de escrita do chat.
@@ -31,4 +30,4 @@ Atualizado em 2026-11-22 após a tarefa `rules-fatia-1`.
 
 ## Próximo passo recomendado
 
-⭐ Aprovar os rascunhos da fatia 1 e movê-los para `rules/`; depois, instrução explícita de scaffolding para começar o código. A leitura da fatia 2 pode seguir em paralelo.
+⭐ Instrução explícita de scaffolding para começar o código do MVP (esqueleto Tauri + React + Python, `NarratorProvider` e importação dos módulos do Caliope). A leitura da fatia 2 do Astra pode seguir em paralelo.
