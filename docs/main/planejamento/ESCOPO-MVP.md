@@ -1,7 +1,7 @@
 # Henduran — Escopo do primeiro MVP
 
 **Data:** 2026-11-22
-**Status:** proposta a aprovar. Os itens marcados **[PROPOSTO]** nascem desta conversa e dependem de aprovação do responsável. Itens **[DECIDIDO]** vêm de decisão explícita.
+**Status:** os itens **[PROPOSTO]** foram **aprovados pelo responsável em 2026-11-22** e valem como escopo do MVP, exceto os pontos que a seção 6 mantém em aberto. Itens **[DECIDIDO]** vêm de decisão explícita.
 **Substitui:** o caso do ferreiro como caso de uso de referência do MVP.
 
 ## 1. Objetivo
@@ -50,16 +50,21 @@ Validar a experiência central do Henduran como **chat com um Narrador de IA rod
 - **Hardware do jogador:** modelos de 7 a 8 bilhões de parâmetros pedem GPU com bastante memória; sem GPU a resposta é lenta. O suporte mínimo está em aberto (ADR-070).
 - **Motor mínimo sem regras Astra** limita a validação mecânica; isso é intencional nesta fase.
 
-## 6. Decisões para o responsável aprovar
+## 6. Decisões
 
-1. Os itens **[PROPOSTO]** acima, especialmente o conteúdo da criação de personagem (sem atributos) e o motor mínimo.
-2. **Apresentação do Narrador Geral** (esboços visuais em `docs/ui-ux/esbocos/` ajudarão):
-   - **A. Chat próprio recolhido no canto inferior direito**, que expande sob demanda. Prós: sempre à mão, separa bem "falar com o mundo" de "falar na Cena". Contras: ocupa espaço e disputa foco com o chat da Cena.
-   - **B. Acesso a partir do chat da Cena por `@`** (por exemplo `@Narrador`). Prós: não sai da Cena, interface enxuta. Contras: mistura os dois canais; é preciso definir se a pergunta fica no histórico da Cena.
-   - **C. As duas formas.** Mais completo, mais trabalho de UI e de estado.
-   - Em qualquer opção, uma pergunta ao Narrador Geral durante a Cena **não pausa a Cena nem altera o mundo por si só** **[PROPOSTO]**.
-3. Campos do gerador de mundo (calendário, religiões, lugares iniciais, época e tom): quais o jogador escolhe e quais são sorteados.
-4. Nome final do "Narrador Geral" no jogo e no código (hoje provisório).
+**Resolvidas em 2026-11-22**
+
+1. Itens **[PROPOSTO]** das seções 2 a 4: aprovados, incluindo criação de personagem sem atributos e o motor mínimo.
+2. **Apresentação do Narrador Geral: opção C**, com chat próprio recolhido no canto inferior direito **e** acesso por `@` a partir do chat da Cena. Uma pergunta ao Narrador Geral durante a Cena não pausa a Cena nem altera o mundo por si só. O desenho de interface proposto está em `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`, seção 3, e aguarda aprovação.
+3. O Narrador pode iniciar Cenas já no MVP (é o Narrador Geral quem as abre).
+
+**Em aberto**
+
+1. Campos do gerador de mundo (calendário, religiões, lugares iniciais, época e tom): quais o jogador escolhe e quais são sorteados.
+2. Nome final do "Narrador Geral" no jogo e no código (hoje provisório).
+3. Origem das ilustrações (menu, cenas, retratos). No MVP, placeholders até decidir (`ANALISE-ESBOCOS.md`, seção 5).
+4. Detalhes do `@`: abre o painel recolhido ou responde em linha; histórico do painel por Cena ou único.
+5. Quais telas e abas do esboço entram (Mundos no menu, abas Diário, Objetivos e Anotações): ver `ANALISE-ESBOCOS.md`, seção 2.
 
 ## 7. Ordem de implementação sugerida
 
