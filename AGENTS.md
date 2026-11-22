@@ -26,7 +26,7 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 - Toda Cena tem chat contextualizado; mapa localizado e grid são opcionais, segundo a necessidade narrativa ou tática.
 - Fora de Cena é diálogo direto com o Narrador e exploração, não uma fala automática do personagem nem uma pausa obrigatória do mundo.
 - **A wiki interna `rules/` será a referência do Henduran** quando existir; não publicar cópias indiscriminadas da wiki Astra.
-- A **stack base está aprovada** (ADR-001): Tauri + React + TypeScript + PixiJS + Python, somente Windows na fase inicial. Continuam **em aberto** e não podem ser decididos silenciosamente: linguagem/fronteira do motor Astra, protocolo frontend↔Python, empacotamento do serviço Python, bibliotecas de gerenciamento de modelos, suporte mínimo de hardware, sistema de atualização e llama.cpp/GGUF (a lista completa está em `docs/main/04-arquitetura.md`). `docs/main/04-arquitetura.md` detalha a arquitetura e o aceite técnico; **não iniciar scaffolding ou prova de conceito sem instrução explícita**.
+- A **stack base está aprovada** (ADR-001): Tauri + React + TypeScript + PixiJS + Python, somente Windows na fase inicial. Aprovados depois: llama.cpp (`llama-server`) + GGUF como runtime local (ADR-070), interface `NarratorProvider` (ADR-071) e protocolo HTTP local com SSE (ADR-072). Continuam **em aberto** e não podem ser decididos silenciosamente: linguagem/fronteira do motor Astra, empacotamento do serviço Python, suporte mínimo de hardware e sistema de atualização (a lista completa está em `docs/main/04-arquitetura.md`). `docs/main/04-arquitetura.md` detalha a arquitetura e o aceite técnico; **não iniciar scaffolding ou prova de conceito sem instrução explícita**.
 - Não copiar código do Caliope sem verificar licença/autorização, compatibilidade e fronteiras dos módulos.
 - Não incluir assets comprados, segredos ou chaves de API em commits públicos sem validar permissão e segurança.
 
@@ -48,7 +48,7 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 
 ## Primeiro caso de uso de referência
 
-Fora de Cena, jogador em uma cidade decide visitar um ferreiro. O sistema inicia uma Cena de diálogo. O Narrador interpreta o ferreiro; o jogador pode examinar uma espada e negociar. Caso confirme uma compra válida, o motor atualiza inventário e dinheiro. A Cena termina e a Jornada preserva os resultados.
+O primeiro MVP é um **chatbot** que segue o loop de gameplay: menu inicial, mundo genérico, criação de personagem, conversa Fora de Cena e Cenas com início e encerramento, em modelo local. Sem combate, mapas nem economia. O escopo detalhado e os critérios de aceite estão em `docs/main/planejamento/ESCOPO-MVP.md`. O caso do ferreiro (comprar uma espada) deixou de ser o caso de referência do MVP e permanece apenas como exemplo ilustrativo em alguns documentos.
 
 ## Referências locais
 

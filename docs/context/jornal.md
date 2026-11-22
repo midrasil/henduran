@@ -47,3 +47,11 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do responsável: llama.cpp + GGUF local primeiro e API paga depois; `NarratorProvider`; HTTP com SSE; todas as skills entram, inclusive conteúdo adulto; MVP sobre o loop de gameplay (menu inicial, mundo genérico, criação de personagem, só chat); caso do ferreiro retirado dos planos.
 - Cuidado registrado: a permissão do autor cobre o código dele, não licenças de terceiros nas skills; preservar atribuições.
 - Arquivos: `docs/main/auditoria-caliope.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `mvp-escopo-adrs-ia`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: ADR-070 (llama.cpp + GGUF local), ADR-071 (`NarratorProvider`), ADR-072 (HTTP + SSE) aprovados; `ESCOPO-MVP.md` escrito; `04-arquitetura.md`, AGENTS.md, plano e GDD ajustados.
+- Decisões do responsável: MVP em chatbot sobre o loop de gameplay com menu inicial, gerador simples de mundo (evoluir depois para algo como o Azgaar's Fantasy Map Generator) e criação de personagem; dois Narradores já no MVP, sendo o Geral quem abre as Cenas; apresentação do Narrador Geral por chat recolhido no canto inferior direito e/ou `@` na Cena, ainda a decidir com esboços visuais; caso do ferreiro retirado como referência do MVP.
+- Cuidados: sem atributos nem economia no MVP porque as regras Astra adaptadas não estão aprovadas; exemplos do ferreiro em 01, 02 e GDD mantidos como ilustração.
+- Arquivos: `docs/main/decisoes/ADR-070..072`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/main/04-arquitetura.md`, `AGENTS.md`, `docs/backlog.md`.
