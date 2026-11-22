@@ -64,3 +64,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Achados: o esboço traz atributos, PV/PM, testes, dados, inventário e mapa, fora do MVP por depender de regras Astra não aprovadas; ilustrações exigem assets que o CSS do ADR-069 não produz.
 - Pendente: origem das ilustrações, campos do gerador de mundo, nome do Narrador Geral, detalhes do `@`.
 - Arquivos: `docs/ui-ux/esbocos/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `decisoes-narrador-ambiente`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: `ESCOPO-MVP.md` atualizado; novo `docs/ui-ux/07-ambiente-dia-noite.md`; `ANALISE-ESBOCOS.md` ajustada.
+- Decisões do responsável: ilustrações substituídas por ciclo de dia e noite em código, refletindo a última Jornada; `@` responde no próprio chat da Cena com destaque e botão de ocultar (inspirado no `/pergunta` do Caliope); gerador de mundo sorteia e o jogador edita, com 3 a 5 lugares iniciais; nome Aduran para o Narrador Geral (delegado ao planejador); Diário fora, Objetivos e Anotações dentro; regras do Astra entram no MVP.
+- Impacto: a decisão de "sem atributos" do escopo foi superada; o recorte de regras do Astra virou o principal item do backlog e o maior risco de crescimento do MVP.
+- Cuidado: o significado de *arandu* precisa ser confirmado antes de entrar em texto do jogo.
+- Arquivos: `docs/main/planejamento/ESCOPO-MVP.md`, `docs/ui-ux/07-ambiente-dia-noite.md`, `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`, `docs/backlog.md`.

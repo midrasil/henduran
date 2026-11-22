@@ -56,29 +56,29 @@ Esboço: barra de abas superior, painel do personagem à esquerda, chat no centr
 | Elemento | MVP | Observação |
 | --- | --- | --- |
 | Abas **Jornada** | Sim | |
-| Aba **Ficha** | Sim, simplificada | Sem atributos. Nome, descrição, Ambição, Desejo. |
+| Aba **Ficha** | Sim, simplificada | Nome, descrição, Ambição, Desejo e, conforme o recorte de regras Astra aprovado, os valores mecânicos. |
 | Aba **Mundo** | Sim | Calendário, religiões, lugares, época e tom do gerador. |
-| Aba **Diário** | Possível | Histórico de Cenas e fatos registrados. A definir. |
+| Aba **Diário** | **Fora** | Decidido em 2026-11-22: o Diário não entra no MVP. |
 | Aba **Mapa** | Fora | Sem mapas no MVP. |
-| Aba **Inventário** | Fora | Depende de economia e regras. |
+| Aba **Inventário** | A definir | Depende do recorte de regras Astra (economia, itens). |
 | Painel esquerdo: retrato, nome | Sim | Retrato como placeholder. |
-| PV, PM, Vigor, atributos, XP, nível, moeda, peso | **Fora** | Regras Astra adaptadas ainda não aprovadas (AGENTS.md). No lugar: Ambição e Desejo. |
+| PV, PM, Vigor, atributos, XP, nível, moeda, peso | A definir | Entram **conforme o recorte de regras Astra a aprovar** (AGENTS.md); o esboço não é fonte de regras. Enquanto isso, Ambição e Desejo. |
 | Cabeçalho "Jornada / Capítulo / Cena" | Sim | Cena ativa visível. |
 | Falas de NPC com retrato e balão | Sim | Retrato como placeholder. |
 | Bloco "Narrador" em itálico | Sim | Narração da Cena. |
 | Lista "O que você faz?" (ações sugeridas) | Possível | Respostas rápidas sugeridas pelo Narrador **sem mecânica**. **[PROPOSTO]** |
-| "Possível teste: Diplomacia (CAR) CD 12" | **Fora** | Testes dependem de regras aprovadas. |
-| Botão de dados | **Fora** | Idem. |
+| "Possível teste: Diplomacia (CAR) CD 12" | A definir | Testes dependem do recorte de regras Astra; os nomes e valores do esboço não são regra. |
+| Botão de dados | A definir | Idem. |
 | Campo de texto e "Enviar" | Sim | Com cancelar e regenerar. |
 | Botão de lista (ao lado dos dados) | A definir | Provável alternância das ações sugeridas. |
 | Painel direito: **Contexto da Cena** | Sim | |
 | **Locais Próximos** (com tempo de viagem em minutos) | Parcial | Lista de lugares do mundo, **sem tempo de viagem** (exigiria regras de tempo e mapa). |
-| **Objetivos da Jornada** (com marcação) | A decidir | Relacionar com Ambição e Desejo, sem criar mecânica nova. |
-| **Anotações** | A decidir | Notas da Cena ou do jogador. |
-| Barra de status: local, data, período do dia | Sim, parcial | Local e data vêm do calendário do mundo. Período do dia só se o mundo definir. |
+| **Objetivos da Jornada** (com marcação) | **Sim** | Decidido em 2026-11-22. Relacionar com Ambição e Desejo, sem criar mecânica nova. |
+| **Anotações** | **Sim** | Decidido em 2026-11-22. Notas da Cena ou do jogador. |
+| Barra de status: local, data, período do dia | Sim, parcial | Local e data vêm do calendário do mundo. O período do dia é estado do mundo e alimenta o ambiente de dia e noite. |
 | "Memória: 87%" | Possível | Indicador do uso de contexto, como no Caliope. |
 | "Salvo há 2 min" | Sim | Persistência (ADR-050). |
-| Ilustração da cena e minipaisagem lateral | Fora (placeholder) | Ver seção 5. |
+| Ilustração da cena e minipaisagem lateral | Substituídas | Ambiente procedural de dia e noite (`07-ambiente-dia-noite.md`). |
 
 ## 3. Decisão: apresentação do Narrador Geral (opção C)
 
@@ -89,15 +89,16 @@ O esboço mostra só a Cena e o seu "Narrador". O Narrador Geral não aparece. U
 1. **Fora de Cena:** o chat central da aba Jornada **é** o chat do Narrador Geral, em tamanho cheio. Ali o jogador declara ações, tira dúvidas e decide para onde vai.
 2. **Em Cena:** o chat central passa a ser o da Cena. O Narrador Geral continua disponível de duas formas:
    - **Painel recolhido** ancorado no canto inferior direito, sobre a barra de status, que expande como gaveta por cima do painel de contexto. Mostra uma etiqueta ("Narrador") e um aviso de resposta nova.
-   - **`@Narrador`** no campo de texto da Cena, com autocompletar. A pergunta e a resposta aparecem no painel do Narrador Geral, **não** no histórico da Cena. Na Cena fica, no máximo, uma marca discreta de que o jogador consultou o Narrador.
+   - **`@Aduran`** no campo de texto da Cena, com autocompletar. **Decidido (2026-11-22):** a resposta aparece **no próprio chat da Cena**, com **destaque visual diferente** (por exemplo, caixa pontilhada, como no Caliope) e um **botão para ocultar** as respostas do Narrador Geral. **[PROPOSTO]** Essas mensagens não entram no contexto do Narrador da Cena nem viram fato da história.
 3. **A consulta ao Narrador Geral durante a Cena não pausa a Cena nem altera o mundo por si só.** Ações com efeito continuam a passar pelo motor.
 4. **Transições:** quando o Narrador Geral abre uma Cena, o chat central troca para a Cena e o chat Fora de Cena vai para o painel recolhido. Ao encerrar a Cena, o inverso.
 
 Pontos que ainda pedem decisão:
 
-- Se o `@` abre o painel recolhido ou responde em linha dentro da Cena.
 - Se o painel recolhido guarda histórico próprio por Cena ou um histórico único Fora de Cena.
-- Nome final do Narrador Geral.
+- Marcas de escrita do chat, como as do Caliope (aspas para fala, asteriscos para ação, apóstrofos para pensamento, `/` para pergunta ao narrador).
+
+Nome do Narrador Geral: **Aduran** (ver `ESCOPO-MVP.md`, seção 6).
 
 ## 4. Impactos em outros documentos
 
@@ -106,6 +107,6 @@ Pontos que ainda pedem decisão:
 
 ## 5. Questões em aberto
 
-1. **Origem das ilustrações** (fundo do menu, cenas, retratos, brasões). Opções: placeholders no MVP; arte gerada por IA, com decisão de licença e de consistência; arte encomendada. **Não decidido.**
+1. **Origem das ilustrações** (fundo do menu, cenas, retratos, brasões): **decidido em 2026-11-22**: no MVP, ambiente procedural de dia e noite desenhado em código (`07-ambiente-dia-noite.md`) e retratos com iniciais. Arte desenhada, gerada ou encomendada fica para depois do MVP.
 2. **Ornamentos dos painéis** (cantos, faixas): CSS puro no MVP, ou molduras 9-slice próprias (opção 2 discutida ao decidir o ADR-069).
 3. **Tokens de cor:** extrair a paleta a partir dos esboços (roxo escuro, dourado, pergaminho) na tarefa de tokens. Os valores exatos ainda não foram medidos.
