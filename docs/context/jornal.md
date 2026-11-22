@@ -73,3 +73,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Impacto: a decisão de "sem atributos" do escopo foi superada; o recorte de regras do Astra virou o principal item do backlog e o maior risco de crescimento do MVP.
 - Cuidado: o significado de *arandu* precisa ser confirmado antes de entrar em texto do jogo.
 - Arquivos: `docs/main/planejamento/ESCOPO-MVP.md`, `docs/ui-ux/07-ambiente-dia-noite.md`, `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `mvp-fatias-astra`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: `ESCOPO-MVP.md` com as regras do Astra em três fatias jogáveis; backlog ajustado.
+- Decisões do responsável: recorte ampliado com equipamento, progressão e descansos; combate no MVP, sem mapa (o Astra permite combate conduzido de forma narrativa); NPCs montados por orçamento pelo motor e pelo Narrador, sem lista pronta e no modelo do personagem (sem Competências, sem Capacidades); Condições e demais regras em fatias.
+- Esclarecimento de regra: Ambição é de longo prazo e Desejo é de curto prazo.
+- Riscos registrados: volume de regras do núcleo e erro de conta de modelos locais ao propor NPCs.
+- Arquivos: `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.

@@ -1,6 +1,6 @@
 # Backlog
 
-- [ ] ⭐ docs: conversa sobre as regras do Astra no MVP — definir recorte mínimo (ficha, testes, recursos, inventário, economia, XP), mapear trechos reais da wiki e aprovar cada seção adaptada antes de implementar; criar `rules/` — origem: decisão do responsável em 2026-11-22; afeta criação de personagem, motor e abas Ficha e Inventário
+- [ ] ⭐ docs: ler e adaptar as regras do Astra por fatia, com aprovação de cada seção antes do código — fatia 1 (Atributos, Perícias, Reserva de Dados, Vida, Vontade, criação de personagem, Ambição e Desejo, Convicções e Pilares), fatia 2 (equipamento, Carga, Progressão, Descanso Prolongado), fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias); criar `rules/` — origem: decisão do responsável em 2026-11-22; resolver o conflito "sessão" vs "Cena" na regra de Ambição
 - [x] docs: formalizar em ADRs as decisões da auditoria do Caliope — ADR-070 (llama.cpp + GGUF), ADR-071 (`NarratorProvider`), ADR-072 (HTTP + SSE); `04-arquitetura.md` atualizado
 - [ ] design: definir períodos, paleta e componente `SkyBackdrop` do ambiente de dia e noite, incluindo reduced motion e contraste — origem: `docs/ui-ux/07-ambiente-dia-noite.md`
 - [ ] docs: reconciliar `docs/ui-ux/03-mapa-de-telas.md` e `04-wireframes.md` com o `ESCOPO-MVP.md` e os esboços (escritos para a base Franuka e o escopo completo) — origem: análise dos esboços
