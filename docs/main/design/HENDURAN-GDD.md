@@ -446,7 +446,7 @@ Astra distingue **dano superficial e agravado**. Vida cheia gera Debilitado; tod
 
 ### 1. Prioridade da interface
 
-**[CONFIRMADO]** O **chat é a superfície principal**. UI pixel art utilizará pacote comercial comprado. Mapas, fichas e inventário complementam o chat. Nenhuma decisão obriga React, WebView2, Godot ou MonoGame; o uso de um tileset **não exige** um motor gráfico específico.
+**[CONFIRMADO]** O **chat é a superfície principal**. UI pixel art utilizará pacote comercial comprado. Mapas, fichas e inventário complementam o chat. A stack aprovada (ADR-001: Tauri + React + TypeScript + PixiJS + Python) é a referência; o uso de um tileset, por si só, **não exige** um motor gráfico específico.
 
 ### 2. Superfícies de produto
 
@@ -513,7 +513,7 @@ Astra distingue **dano superficial e agravado**. Vida cheia gera Debilitado; tod
 
 ### 1. Decisões e alternativas
 
-**[CONFIRMADO]** Desktop **somente Windows na primeira fase**, IA local baixada no aplicativo, opção online por API key, interface pixel art, desenvolvimento por agentes, regras adaptadas e chat central. **Stack aprovada:** **Tauri + React + TypeScript + PixiJS + Python**. **Godot 4 + C#** e **MonoGame + C#** foram avaliados, mas não escolhidos para a arquitetura inicial. Ver `docs/decisoes/ADR-001-stack-desktop-windows.md`.
+**[CONFIRMADO]** Desktop **somente Windows na primeira fase**, IA local baixada no aplicativo, opção online por API key, interface pixel art, desenvolvimento por agentes, regras adaptadas e chat central. **Stack aprovada:** **Tauri + React + TypeScript + PixiJS + Python**. **Godot 4 + C#** e **MonoGame + C#** foram avaliados, mas não escolhidos para a arquitetura inicial. Ver `docs/main/decisoes/ADR-001-stack-desktop-windows.md`.
 
 | Alternativa | Ganho principal | Custo/risco principal | Estado |
 |---|---|---|---|
@@ -926,7 +926,7 @@ Estes são **critérios propostos** para orientar agentes e testes, não um comp
 
 ### 2. Tecnologia selecionada
 
-**[CONFIRMADO]** Tauri + React + TypeScript + PixiJS + Python, com Windows como plataforma única da fase inicial (`docs/decisoes/ADR-001-stack-desktop-windows.md`). Godot e MonoGame foram alternativas analisadas e não selecionadas. O motor de regras e os mecanismos de comunicação entre processos ainda dependem de projeto técnico específico.
+**[CONFIRMADO]** Tauri + React + TypeScript + PixiJS + Python, com Windows como plataforma única da fase inicial (`docs/main/decisoes/ADR-001-stack-desktop-windows.md`). Godot e MonoGame foram alternativas analisadas e não selecionadas. O motor de regras e os mecanismos de comunicação entre processos ainda dependem de projeto técnico específico.
 
 ### 3. Fontes consultadas
 

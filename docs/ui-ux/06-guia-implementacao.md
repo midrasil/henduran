@@ -2,7 +2,7 @@
 
 ## Estado da recomendação
 
-React + TypeScript, Tauri e PixiJS são a arquitetura candidata documentada; a stack só deve ser fechada após a prova de conceito de `docs/main/04-arquitetura.md`. Este guia não autoriza scaffolding significativo.
+React + TypeScript, Tauri e PixiJS são a stack aprovada (ADR-001); a prova de conceito de `docs/main/04-arquitetura.md` valida a aprovação e resolve motor, protocolo e empacotamento. Este guia não autoriza scaffolding significativo: isso exige instrução explícita.
 
 ## Organização futura proposta
 
@@ -76,7 +76,7 @@ React hospeda `MapViewport`, controla layout e envia comandos semânticos. Adapt
 
 ## Dependências
 
-Não introduzir biblioteca até demonstrar necessidade. CSS, componentes React e APIs nativas cobrem o catálogo inicial. PixiJS é candidato já previsto para mapa. Para máquina de estados, atlas, acessibilidade ou virtualização, primeiro medir complexidade/performance e registrar decisão; evitar framework visual genérico que conflite com sprites.
+Não introduzir biblioteca até demonstrar necessidade. CSS, componentes React e APIs nativas cobrem o catálogo inicial. PixiJS é a renderização de mapa já aprovada no ADR-001. Para máquina de estados, atlas, acessibilidade ou virtualização, primeiro medir complexidade/performance e registrar decisão; evitar framework visual genérico que conflite com sprites.
 
 ## Sequência recomendada
 

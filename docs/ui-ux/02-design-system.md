@@ -2,7 +2,7 @@
 
 ## Princípios
 
-**CONFIRMADO:** chat domina a interface narrativa; mapa domina a situação tática sem remover o chat; a UI deve nascer de um inventário local e formar uma biblioteca reutilizável. **PROPOSTO:** implementar essa biblioteca em React/TypeScript, usar DOM para texto/controles acessíveis e PixiJS para mapas/tokens; adotar tokens semânticos CSS, foco de alto contraste e layout em grade de 8 px, com sprites alinhados à grade nativa de 16 px. A stack permanece candidata até a prova de conceito e ADR final.
+**CONFIRMADO:** chat domina a interface narrativa; mapa domina a situação tática sem remover o chat; a UI deve nascer de um inventário local e formar uma biblioteca reutilizável. **CONFIRMADO (ADR-001):** React/TypeScript para a UI e PixiJS para mapas/tokens. **PROPOSTO:** usar DOM para texto/controles acessíveis; adotar tokens semânticos CSS, foco de alto contraste e layout em grade de 8 px, com sprites alinhados à grade nativa de 16 px. A prova de conceito de `docs/main/04-arquitetura.md` valida essas escolhas.
 
 Todo componente deve expor conteúdo semântico, teclado, foco visível, estado assíncrono e rótulo acessível. O sprite é decoração (`aria-hidden`) quando o DOM já comunica a função.
 
