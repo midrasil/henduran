@@ -37,6 +37,8 @@
 
 ## M3 — Vertical slice social integrado
 
+> **Nota (2026-11-22):** o primeiro MVP passou a ser um chatbot sobre o loop de gameplay, sem economia nem mapas (`ESCOPO-MVP.md`). O cenário do ferreiro abaixo fica como candidato a marco futuro, a revisar quando regras e economia estiverem aprovadas.
+
 **Cenário de teste:** protagonista entra em uma cena com ferreiro, conversa, recebe informação, compra um item, realiza um teste confirmado, deixa a cena e reinicia a aplicação.
 
 **Aceite:** dinheiro, inventário e estoque coerentes após compra; estado e histórico compatíveis; nenhuma alegação de NPC altera cânone automaticamente; falha simulada no meio da compra não confirma efeitos parciais; histórico de chat persistido independentemente de checkpoint.

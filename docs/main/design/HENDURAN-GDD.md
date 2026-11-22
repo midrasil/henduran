@@ -655,6 +655,8 @@ O desenvolvimento deve ser dirigido pelos documentos adicionais:
 
 ### 1. Vertical slice — proposta
 
+> **Nota (2026-11-22):** o primeiro MVP foi redefinido como chatbot sobre o loop de gameplay, sem economia, testes nem mapas (`planejamento/ESCOPO-MVP.md`). Este vertical slice com o ferreiro fica como candidato a marco posterior.
+
 **Objetivo [PROPOSTO]:** demonstrar uma Jornada pequena que começa Fora de Cena, entra em uma Cena social iniciada voluntariamente, conversa com um ferreiro, realiza uma operação de inventário validada, executa um teste, encerra a Cena e conserva suas consequências após reiniciar o aplicativo. O Narrador deve responder por pelo menos um modelo local e, em seguida, pelo menos um provedor online configurado pelo usuário. Um mapa hexagonal e um grid com tokens podem entrar em uma segunda expansão do slice caso não estejam impedindo a validação do chat.
 
 **Critérios mínimos [PROPOSTOS]:** chat com streaming; carga/salvamento; contextos separados por Cena; persistência de efeitos; não alteração indevida de recurso; troca de provedor sem mudar o resultado mecânico; UI com assets licenciados carregados da máquina local.

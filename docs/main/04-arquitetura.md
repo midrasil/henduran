@@ -1,6 +1,6 @@
 # 04 — Arquitetura (stack base aprovada; detalhes em aberto)
 
-**Status:** a stack base (Tauri, React + TypeScript, PixiJS, Python, somente Windows) está **APROVADA** pelo `decisoes/ADR-001-stack-desktop-windows.md`. Este documento detalha a arquitetura e o aceite técnico. Permanecem **propostos/em aberto**: llama.cpp/GGUF como execução local, linguagem e fronteira de processo do motor de regras, protocolo frontend↔Python, empacotamento do serviço Python, bibliotecas de gerenciamento de modelos, suporte mínimo de hardware e sistema de atualização. Banco de dados: SQLite já aprovado no ADR-050; esquema e transações seguem em aberto.
+**Status:** a stack base (Tauri, React + TypeScript, PixiJS, Python, somente Windows) está **APROVADA** pelo `decisoes/ADR-001-stack-desktop-windows.md`. Este documento detalha a arquitetura e o aceite técnico. Aprovados depois: llama.cpp (`llama-server`) + GGUF como execução local (ADR-070), interface `NarratorProvider` (ADR-071) e protocolo HTTP local com SSE entre interface e serviço Python (ADR-072). Permanecem **propostos/em aberto**: linguagem e fronteira de processo do motor de regras, empacotamento do serviço Python, suporte mínimo de hardware e sistema de atualização; a integração das bibliotecas do Caliope segue a auditoria em `auditoria-caliope.md`. Banco de dados: SQLite já aprovado no ADR-050; esquema e transações seguem em aberto.
 
 ## 1. Critérios de escolha
 
@@ -16,9 +16,13 @@ O jogo é desktop e centrado em chat, com interface pixel art, mapas auxiliares 
 - **Serviço de IA:** Python. O reaproveitamento seletivo do Caliope vem do ADR-016 e depende de auditoria de licença e fronteiras.
 - **Plataforma:** somente Windows na fase inicial.
 
+**Aprovado depois (ADR-070 a 072):**
+
+- **Execução local de LLMs:** llama.cpp (`llama-server`) com modelos GGUF, local gratuito primeiro; provedores remotos por API key depois, pela interface `NarratorProvider`.
+- **Protocolo interface↔serviço Python:** HTTP local em loopback, com SSE para streaming.
+
 **Proposto / em aberto:**
 
-- **Execução local de LLMs:** llama.cpp com modelos GGUF; provedores remotos por API key.
 - **Motor de regras:** componente determinístico independente de UI e de provedor de IA. **Linguagem e fronteira de processo a definir** após protótipo e leitura detalhada das regras.
 
 Godot 4 + C# e MonoGame + C# foram avaliados e não selecionados; a stack aprovada é a referência até nova decisão formal (ADR-001).
