@@ -1,6 +1,7 @@
 # Backlog
 
-- [ ] ⭐ docs: ler e adaptar as regras do Astra por fatia, com aprovação de cada seção antes do código — fatia 1 (Atributos, Perícias, Reserva de Dados, Vida, Vontade, criação de personagem, Ambição e Desejo, Convicções e Pilares), fatia 2 (equipamento, Carga, Progressão, Descanso Prolongado), fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias); criar `rules/` — origem: decisão do responsável em 2026-11-22; resolver o conflito "sessão" vs "Cena" na regra de Ambição
+- [ ] ⭐ docs: aprovar os rascunhos da fatia 1 em `docs/esteira/rules-fatia-1/` e então movê-los para `rules/`; depois ler e adaptar a fatia 2 (equipamento, Carga, Progressão) e a fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias) — origem: decisão do responsável em 2026-11-22
+- [ ] design: definir os pendentes de regra da fatia 1: faixa de Dificuldade que o Narrador propõe, critério de "progresso significativo" e de "defender" uma Convicção, política de avanço de tempo, definição de Amanhecer, testes de equilíbrio dos tetos por Dia — origem: ADR-073 e rascunhos da fatia 1
 - [x] docs: formalizar em ADRs as decisões da auditoria do Caliope — ADR-070 (llama.cpp + GGUF), ADR-071 (`NarratorProvider`), ADR-072 (HTTP + SSE); `04-arquitetura.md` atualizado
 - [ ] design: definir períodos, paleta e componente `SkyBackdrop` do ambiente de dia e noite, incluindo reduced motion e contraste — origem: `docs/ui-ux/07-ambiente-dia-noite.md`
 - [ ] docs: reconciliar `docs/ui-ux/03-mapa-de-telas.md` e `04-wireframes.md` com o `ESCOPO-MVP.md` e os esboços (escritos para a base Franuka e o escopo completo) — origem: análise dos esboços

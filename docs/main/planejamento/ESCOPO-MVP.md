@@ -27,8 +27,8 @@ Validar a experiência central do Henduran como **chat com um Narrador de IA rod
 
 12. **Ambiente visual procedural** **[DECIDIDO]**: no lugar das ilustrações, um **ciclo de dia e noite desenhado em código**, com manhã, tarde, entardecer, noite e seus astros, refletindo o estado da **última Jornada jogada**. Detalhes em `docs/ui-ux/07-ambiente-dia-noite.md` (períodos, fonte do horário e acessibilidade são **[PROPOSTO]**). Retratos usam iniciais no MVP.
 13. **Regras do Astra** **[DECIDIDO em 2026-11-22]**: entram no MVP, **em três fatias jogáveis**. Cada trecho adaptado precisa de aprovação antes de virar código (AGENTS.md); as fontes são a wiki `rules/` do Henduran e o `astra-rules` como origem. **Competências e Capacidades continuam fora.**
-    - **Fatia 1, chat, ficha e testes:** criação de personagem (Conceito, Ambição, Desejo, Convicções e Pilares, Atributos, Perícias, Vida e Vontade derivadas) e Reserva de Dados. O Narrador propõe o teste; o motor rola e valida.
-    - **Fatia 2, equipamento, progressão e descansos:** equipamento inicial por orçamento de Valor, catálogos, Carga, Progressão (XP) e Descanso Prolongado.
+    - **Fatia 1, chat, ficha e testes:** criação de personagem (Conceito, Ambição, Desejo, Convicções e Pilares, Atributos, 22 Perícias, trilhas de Vida e Vontade), Reserva de Dados, uso de Vontade, Convicções com Fraturas, **Descanso Prolongado** e o **Dia do Mundo** (ADR-073). O Narrador propõe o teste, o jogador confirma e o motor rola (ADR-006). Sem dano de Vida, Tratamento nem Condições. Rascunhos em `docs/esteira/rules-fatia-1/`.
+    - **Fatia 2, equipamento, progressão e descansos:** equipamento inicial por orçamento de Valor, catálogos, Carga e Progressão (XP). O Descanso Prolongado foi movido para a fatia 1.
     - **Fatia 3, combate sem mapa e NPCs por orçamento:** Cena Tática conduzida de forma narrativa (o Astra permite combate sem mapa: o Narrador descreve posições e distâncias), com Iniciativa, Rodadas, Turnos, Ações e dano validados pelo motor.
     - **NPCs por orçamento, sem lista pronta:** o Narrador propõe um patamar e a distribuição; o motor valida contra o orçamento de Criação de NPCs (Capanga, Par, Veterano, Elite) e monta a ficha. NPCs seguem o modelo do personagem: **sem Competências, sem Capacidades e sem Pontos de Capacidade**. A régua de encontros do Astra pode validar a dificuldade.
     - **Condições, tipos de dano e Ações avançadas entram por fatia**, só as necessárias a cada uma, sem adicionar todas de uma vez.
@@ -74,6 +74,7 @@ Validar a experiência central do Henduran como **chat com um Narrador de IA rod
 6. **Ilustrações:** substituídas por ambiente procedural de dia e noite (item 12 da seção 2).
 7. **Nome do Narrador Geral: Aduran.** Anagrama de *arandu* ("sabedoria", "conhecimento" em guarani), que ainda lembra o "duran" de Henduran. O responsável delegou a escolha; vale confirmar o significado com um dicionário ou falante de guarani antes de fixar em texto de jogo. Alternativas do mesmo anagrama: *Dunara*, *Undara*. Evitar nomes de divindades e seres sagrados de povos vivos (por exemplo, Tupã e Anhangá).
 8. **Recorte de regras do Astra:** fatias 1, 2 e 3 como no item 13 da seção 2, com **combate sem mapa**, **NPCs por orçamento sem Capacidades** e **Condições em fatias**.
+9. **Perícias e Dia do Mundo (2026-11-22):** 22 Perícias de mundo medieval, sem Dirigir, Pilotar nem Conhecimento Específico; Dia do Mundo como limitador, começando no Amanhecer, e troca livre de Ambição e Desejo (ADR-073); Descanso Prolongado na fatia 1.
 
 **Em aberto**
 
