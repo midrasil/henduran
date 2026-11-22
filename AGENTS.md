@@ -26,7 +26,7 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 - Toda Cena tem chat contextualizado; mapa localizado e grid são opcionais, segundo a necessidade narrativa ou tática.
 - Fora de Cena é diálogo direto com o Narrador e exploração, não uma fala automática do personagem nem uma pausa obrigatória do mundo.
 - **A wiki interna `rules/` será a referência do Henduran** quando existir; não publicar cópias indiscriminadas da wiki Astra.
-- A **stack não está fechada**. `docs/04-arquitetura.md` é proposta; não iniciar migração ou scaffolding significativo sem instrução explícita.
+- A **stack base está aprovada** (ADR-001): Tauri + React + TypeScript + PixiJS + Python, somente Windows na fase inicial. Continuam **em aberto** e não podem ser decididos silenciosamente: linguagem/fronteira do motor Astra, protocolo frontend↔Python, empacotamento do serviço Python, bibliotecas de gerenciamento de modelos, suporte mínimo de hardware, sistema de atualização e llama.cpp/GGUF (a lista completa está em `docs/main/04-arquitetura.md`). `docs/main/04-arquitetura.md` detalha a arquitetura e o aceite técnico; **não iniciar scaffolding ou prova de conceito sem instrução explícita**.
 - Não copiar código do Caliope sem verificar licença/autorização, compatibilidade e fronteiras dos módulos.
 - Não incluir assets comprados, segredos ou chaves de API em commits públicos sem validar permissão e segurança.
 

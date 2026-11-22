@@ -1,38 +1,33 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a entrega `mapeamento-ui-ux`.
+Atualizado em 2026-11-22 após a tarefa `reconciliar-stack`.
 
 ## Estado
 
-- Tarefa: mapeamento completo de UI/UX do Henduran.
-- Resultado: documentação, inventário e catálogo local concluídos; nenhuma tela definitiva foi implementada.
-- Branch: `docs/mapeamento-ui-ux`.
-- Commits: `1bfa7e3` e `08c2c6d`.
-- PR: [#1 — Mapeamento completo de UI/UX](https://github.com/midrasil/henduran/pull/1), aberto contra `main`.
+- Tarefa: reconciliar a contradição sobre a stack (ADR-001 aprovada vs documentos que ainda a chamavam de candidata).
+- Resultado: documentação alinhada; nenhum ADR novo; nenhum código ou scaffolding.
+- Branch: `docs/reconciliar-stack` (PR a abrir contra `main` pela entrega).
+
+## Regra vigente sobre a stack
+
+- **Aprovada (ADR-001):** Tauri, React + TypeScript, PixiJS, Python; somente Windows na fase inicial.
+- **Em aberto:** lista completa em `docs/main/04-arquitetura.md` (motor Astra, protocolo, empacotamento do Python, modelos, hardware, atualização, llama.cpp/GGUF). Banco: SQLite aprovado no ADR-050.
+- **Scaffolding e prova de conceito exigem instrução explícita.** A prova de conceito valida o ADR-001 e resolve motor, protocolo e empacotamento; se inviabilizar algo, registra-se novo ADR.
 
 ## Artefatos principais
 
-- Especificação e índice: `docs/ui-ux/README.md` e documentos `01` a `06`.
-- Manifesto exaustivo: `docs/ui-ux/franuka-manifest.json`.
-- Catálogo local: `docs/ui-ux/catalogo-franuka.local.html`.
-- Inspetor reproduzível: `scripts/ui-ux/inspect-franuka.ps1`.
-- Registros da esteira: `docs/esteira/mapeamento-ui-ux/`.
-
-## Validação
-
-- Revisor: aprovado na segunda rodada.
-- QA: passou nos 12 critérios de aceite.
-- Inventário: 1.917 arquivos únicos e nenhuma imagem sem dimensão.
-- Escalas: 1.262 comparações dimensionais sem exceções no escopo documentado.
-- Catálogo e manifesto: geração determinística, sem incorporar ou copiar assets comerciais.
+- `AGENTS.md`, `docs/main/04-arquitetura.md`, `docs/main/06-plano-inicial.md`, `docs/ui-ux/README.md`, `docs/ui-ux/02-design-system.md`, `docs/ui-ux/06-guia-implementacao.md`.
+- Registros históricos em `docs/esteira/mapeamento-ui-ux/` preservados (ainda dizem "candidata").
+- Grafo local em `graphify-out/` (fora do git); o catálogo HTML Franuka está marcado como parcial no cache do graphify.
 
 ## Pendências relevantes
 
-- Definir resolução-base, breakpoints e requisitos formais de acessibilidade.
-- Validar a forma de distribuição dos assets comerciais no executável e em eventual repositório público.
-- Frames e duração dos seis GIFs não foram extraídos; somente suas dimensões foram registradas.
+- Resolução-base, breakpoints e acessibilidade formal (ADR).
+- Distribuição legal dos assets Franuka.
+- Frames e duração dos seis GIFs Franuka não foram extraídos (só dimensões).
+- ADR-049:28 ainda diz que SQLite é candidato; o ADR-050 já o aprovou.
 - O backlog autoritativo permanece em `docs/backlog.md`.
 
 ## Próximo passo recomendado
 
-Implementar o primeiro slice da interface principal da Jornada a partir da especificação UI/UX, seguindo a rota completa de feature registrada no backlog.
+Decidir e registrar resolução-base, breakpoints e acessibilidade formal (ADR), primeiro item do backlog.

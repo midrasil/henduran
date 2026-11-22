@@ -15,7 +15,7 @@
 
 ## Etapa 1 — Prova de conceito do chat desktop
 
-- Criar shell desktop usando a stack candidata, **após decisão ou aprovação de prova de conceito**.
+- Criar shell desktop usando a stack aprovada (ADR-001), **somente após instrução explícita para iniciar a prova de conceito**.
 - Construir chat com visual pixel art, lista de mensagens e entrada de texto, com seleção/cópia/rolagem.
 - Conectar a um adaptador simulado de Narrador, com streaming fake e erros simulados.
 - Validar empacotamento, testes e layout em resoluções usuais.

@@ -21,7 +21,7 @@ Recursos auxiliares locais: [catálogo visual](catalogo-franuka.local.html) e [m
 
 ## Fontes de verdade
 
-Ordem: GDD e ADRs aprovadas em `docs/main/`; regras aprovadas em `rules/`; código/testes futuros coerentes; arquivos locais Franuka como evidência visual. A arquitetura React/Tauri/PixiJS permanece proposta até a prova de conceito e ADR final, conforme `docs/main/04-arquitetura.md`.
+Ordem: GDD e ADRs aprovadas em `docs/main/`; regras aprovadas em `rules/`; código/testes futuros coerentes; arquivos locais Franuka como evidência visual. A stack React/Tauri/PixiJS está aprovada pelo ADR-001; a prova de conceito e os pontos em aberto (motor, protocolo, empacotamento) seguem em `docs/main/04-arquitetura.md`.
 
 > **Licença:** os binários Franuka são comerciais. O catálogo referencia os arquivos locais e não os incorpora. Não publicar os assets, o catálogo funcional isolado ou capturas do pacote sem autorização. A licença local permite uso/edição e proíbe redistribuição “as is”; a distribuição no executável ainda requer validação.
 

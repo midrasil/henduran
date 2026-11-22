@@ -1,21 +1,27 @@
-# 04 — Arquitetura (proposta, não decisão final)
+# 04 — Arquitetura (stack base aprovada; detalhes em aberto)
 
-**Status:** proposta para avaliação técnica e protótipo. A stack abaixo **não está consolidada**.
+**Status:** a stack base (Tauri, React + TypeScript, PixiJS, Python, somente Windows) está **APROVADA** pelo `decisoes/ADR-001-stack-desktop-windows.md`. Este documento detalha a arquitetura e o aceite técnico. Permanecem **propostos/em aberto**: llama.cpp/GGUF como execução local, linguagem e fronteira de processo do motor de regras, protocolo frontend↔Python, empacotamento do serviço Python, bibliotecas de gerenciamento de modelos, suporte mínimo de hardware e sistema de atualização. Banco de dados: SQLite já aprovado no ADR-050; esquema e transações seguem em aberto.
 
 ## 1. Critérios de escolha
 
 O jogo é desktop e centrado em chat, com interface pixel art, mapas auxiliares e desenvolvimento predominantemente por agentes de programação (Codex/Claude Code). A arquitetura deve favorecer: testes automatizados, isolamento de regras, streaming de mensagens, facilidade de distribuir modelos locais, observabilidade e manutenção por código.
 
-## 2. Stack candidata
+## 2. Stack
+
+**Aprovada (ADR-001):**
 
 - **Shell desktop:** Tauri.
 - **Interface:** React + TypeScript, com o pacote comercial de sprites de UI via CSS e componentes.
 - **Mapas e tokens:** PixiJS para renderização 2D no mapa-múndi hexagonal e mapas táticos.
-- **Serviço de IA:** Python, aproveitando seletivamente conceitos/código autorizado do Caliope.
+- **Serviço de IA:** Python. O reaproveitamento seletivo do Caliope vem do ADR-016 e depende de auditoria de licença e fronteiras.
+- **Plataforma:** somente Windows na fase inicial.
+
+**Proposto / em aberto:**
+
 - **Execução local de LLMs:** llama.cpp com modelos GGUF; provedores remotos por API key.
 - **Motor de regras:** componente determinístico independente de UI e de provedor de IA. **Linguagem e fronteira de processo a definir** após protótipo e leitura detalhada das regras.
 
-Godot 4 + C# continua alternativa válida; MonoGame + C# também é possível. Não bloquear desenvolvimento futuro pela stack antes da validação do chat e da UI pixel art.
+Godot 4 + C# e MonoGame + C# foram avaliados e não selecionados; a stack aprovada é a referência até nova decisão formal (ADR-001).
 
 ## 3. Separação de responsabilidades
 
@@ -56,8 +62,8 @@ A integração deverá ocorrer por uma fronteira estável entre serviço de IA e
 - O aplicativo desktop deve inicializar e encerrar corretamente processos locais, sem deixar serviços órfãos.
 - Não publicar assets adquiridos no GitHub público sem permissão expressa da licença.
 
-## 7. Critérios para fechar a stack
+## 7. Aceite técnico da stack (prova de conceito)
 
-Executar uma prova de conceito que demonstre: (a) chat pixel art com textos longos, seleção, cópia e rolagem; (b) resposta de LLM em streaming; (c) painel 2D com token e grid; (d) teste determinístico isolado; (e) empacotamento desktop e inicialização do serviço local; (f) testes automatizados executáveis pelo Codex.
+A stack já está aprovada; a prova de conceito **valida** a aprovação e resolve motor, protocolo e empacotamento do serviço Python (hardware mínimo e atualização exigem decisões próprias), e não é pré-condição para aprová-la. Ela deve demonstrar: (a) chat pixel art com textos longos, seleção, cópia e rolagem; (b) resposta de LLM em streaming; (c) painel 2D com token e grid; (d) teste determinístico isolado; (e) empacotamento desktop e inicialização do serviço local, sem ambiente Python de desenvolvimento; (f) testes automatizados executáveis pelo Codex.
 
-Somente então registrar uma decisão arquitetural (ADR) final, com alternativas descartadas e motivos.
+Registrar em ADR específico as decisões que a prova de conceito resolver (motor, protocolo, empacotamento). Se ela inviabilizar parte da stack, registrar um novo ADR que substitua o ADR-001, com alternativas e motivos. Iniciar a prova de conceito exige instrução explícita.
