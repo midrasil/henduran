@@ -1,7 +1,10 @@
 # Backlog
 
-- [ ] ⭐ design: decidir e registrar resolução-base, breakpoints e acessibilidade formal (ADR) — origem: lacunas do mapeamento UI/UX; rota de decisão/ADR
-- [ ] infra: com instrução explícita, executar a prova de conceito da stack aprovada (chat com streaming, UI pixel art, empacotamento Windows) e registrar ADRs de motor, protocolo e empacotamento — origem: ADR-001 e reconciliação da stack
+- [ ] ⭐ docs: propagar o ADR-068 (referência cruzada em ADR-017 e ADR-020; GDD IX.2, IX.4, IX.5, linha 42, P-13, P-18, contagem de ADRs na linha 644 e histórico de versões; docs/ui-ux 01 (orbs, se confirmado), 02, 03, 04, 05, 06 e README; docs/main/04-arquitetura.md) sem transformar "alvo 44 px" em altura mínima de Button — origem: ADR-068; rota: `dev-economico` → `revisor`
+- [ ] design: conciliar janela mínima e breakpoints com o SC 1.4.10 (reflow em 320 CSS px) e definir "controles primários" e alturas visuais — origem: pendências do ADR-068
+- [ ] docs: reconferir no manifesto a faixa de dimensão das orbs (48–240 px vs 48–80 px) e a regra de antialiasing da fonte na licença — origem: pendências do ADR-068
+- [x] design: decidir e registrar resolução-base, breakpoints e acessibilidade formal — decidido no ADR-068 (política); valores numéricos seguem pendentes nos itens de design e infra desta lista
+- [ ] infra: com instrução explícita, executar a prova de conceito da stack aprovada (chat com streaming, UI pixel art, empacotamento Windows) e registrar ADRs de motor, protocolo e empacotamento; na mesma prova, medir telas narrativa e tática em 100%, 125%, 150% e 200% de DPI para fixar janela mínima, breakpoints, proporção de painéis, texto base do chat e viewport tático mínimo — origem: ADR-001, reconciliação da stack e ADR-068
 - [ ] feat: implementar o primeiro slice da interface principal da Jornada a partir da especificação UI/UX — origem: mapeamento UI/UX; rota completa de feature, depois do ADR de resolução e da decisão sobre a prova de conceito
 - [ ] docs: atualizar o grafo com os documentos usando `/graphify . --update` — origem: mapeamento UI/UX; opcional, consome tokens
 - [ ] feat: implementar DicePrompt fora da tática com confirmação explícita e motor determinístico — origem: mapeamento UI/UX e ADR-006

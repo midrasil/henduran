@@ -1,33 +1,32 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a tarefa `reconciliar-stack`.
+Atualizado em 2026-11-22 após a tarefa `adr-068-resolucao-base`.
 
 ## Estado
 
-- Tarefa: reconciliar a contradição sobre a stack (ADR-001 aprovada vs documentos que ainda a chamavam de candidata).
-- Resultado: documentação alinhada; nenhum ADR novo; nenhum código ou scaffolding.
-- Branch: `docs/reconciliar-stack` (PR a abrir contra `main` pela entrega).
+- Tarefa: ADR-068 (política de resolução, redimensionamento e acessibilidade da UI).
+- Resultado: decisão registrada; nenhum código; valores numéricos ainda pendentes.
+- Branch: `docs/adr-068-resolucao-base` (PR a abrir contra `main`), construída sobre a `main` que já contém o PR #2 (reconciliação da stack).
 
-## Regra vigente sobre a stack
+## Decisões vigentes
 
-- **Aprovada (ADR-001):** Tauri, React + TypeScript, PixiJS, Python; somente Windows na fase inicial.
-- **Em aberto:** lista completa em `docs/main/04-arquitetura.md` (motor Astra, protocolo, empacotamento do Python, modelos, hardware, atualização, llama.cpp/GGUF). Banco: SQLite aprovado no ADR-050.
-- **Scaffolding e prova de conceito exigem instrução explícita.** A prova de conceito valida o ADR-001 e resolve motor, protocolo e empacotamento; se inviabilizar algo, registra-se novo ADR.
+- **Stack (ADR-001, reconciliada no PR #2):** Tauri, React + TypeScript, PixiJS, Python, só Windows. Itens em aberto em `docs/main/04-arquitetura.md`. Scaffolding e prova de conceito exigem instrução explícita.
+- **Resolução (ADR-068):** layout fluido, sprites 1x/2x/3x por DPI efetivo, sem zoom fracionário, texto DOM com escala independente.
+- **Acessibilidade (ADR-068):** WCAG 2.2 AA no DOM; alvo de interação ≥ 44 CSS px para controles primários (requisito interno) e ≥ 24 px nos demais; reduced motion obrigatório; equivalente DOM para informação essencial do canvas.
 
-## Artefatos principais
+## Artefatos
 
-- `AGENTS.md`, `docs/main/04-arquitetura.md`, `docs/main/06-plano-inicial.md`, `docs/ui-ux/README.md`, `docs/ui-ux/02-design-system.md`, `docs/ui-ux/06-guia-implementacao.md`.
-- Registros históricos em `docs/esteira/mapeamento-ui-ux/` preservados (ainda dizem "candidata").
-- Grafo local em `graphify-out/` (fora do git); o catálogo HTML Franuka está marcado como parcial no cache do graphify.
+- `docs/main/decisoes/ADR-068-resolucao-redimensionamento-acessibilidade-ui.md`.
+- `docs/esteira/adr-068-resolucao-base/` (plano técnico, revisão, entrega).
+- Entrega: PR do ADR-068 aberto pela etapa `entrega` (ver `06-entrega.md`).
 
 ## Pendências relevantes
 
-- Resolução-base, breakpoints e acessibilidade formal (ADR).
-- Distribuição legal dos assets Franuka.
-- Frames e duração dos seis GIFs Franuka não foram extraídos (só dimensões).
-- ADR-049:28 ainda diz que SQLite é candidato; o ADR-050 já o aprovou.
-- O backlog autoritativo permanece em `docs/backlog.md`.
+- Propagar o ADR-068 nos documentos relacionados (lista completa no backlog), sem converter o alvo de 44 px em altura mínima de Button.
+- Conciliar janela mínima e breakpoints com o SC 1.4.10; definir "controles primários".
+- Prova de conceito (com instrução explícita) para fixar valores numéricos.
+- Backlog autoritativo: `docs/backlog.md`.
 
 ## Próximo passo recomendado
 
-Decidir e registrar resolução-base, breakpoints e acessibilidade formal (ADR), primeiro item do backlog.
+Propagar o ADR-068 nos documentos que o referenciam (primeiro item do backlog).
