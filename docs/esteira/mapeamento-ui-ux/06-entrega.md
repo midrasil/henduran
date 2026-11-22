@@ -18,6 +18,7 @@ Esta entrega transforma o pacote comercial Franuka e as decisões existentes do 
 - guia de implementação para a stack candidata, sempre distinguindo `CONFIRMADO`, `PROPOSTO` e `PENDENTE`;
 - inspetor local reproduzível em `scripts/ui-ux/inspect-franuka.ps1`;
 - backlog atualizado com a sequência recomendada de implementação.
+- memória operacional formalizada: jornal cronológico, handoff do estado atual e backlog como fonte autoritativa.
 
 ## Como verificar
 
@@ -29,6 +30,7 @@ Esta entrega transforma o pacote comercial Franuka e as decisões existentes do 
 ## Validação realizada
 
 - Revisor: `APROVADO` na segunda rodada.
+- Ajuste de memória operacional: `APROVADO` na terceira rodada de revisão.
 - QA: `PASSOU` nos 12 critérios.
 - 1.262 comparações dimensionais entre variantes 1x/2x/3x, sem exceções.
 - zero links Markdown relativos quebrados;
@@ -48,6 +50,9 @@ Esta entrega transforma o pacote comercial Franuka e as decisões existentes do 
 - o catálogo é exclusivamente local e referencia os arquivos licenciados sem duplicá-los;
 - a implementação deve começar pela interface principal da Jornada, preservando chat predominante na narrativa e mapa predominante na tática;
 - a atualização semântica do Graphify com documentos é opcional porque consome tokens.
+- `docs/context/jornal.md` passa a integrar obrigatoriamente a esteira como registro cronológico cumulativo de cada tarefa;
+- `docs/context/handoff.md` passa a ser substituído ao fechar cada tarefa para representar somente o estado atual de retomada;
+- `docs/backlog.md` permanece a lista autoritativa e ordenada de pendências, sem duplicação de backlog no handoff ou no jornal.
 
 ## Artefatos da esteira
 
@@ -56,6 +61,8 @@ Esta entrega transforma o pacote comercial Franuka e as decisões existentes do 
 - Notas de desenvolvimento: `docs/esteira/mapeamento-ui-ux/03-dev-notas.md`
 - Revisão: `docs/esteira/mapeamento-ui-ux/04-revisao.md`
 - QA: `docs/esteira/mapeamento-ui-ux/05-qa.md`
+- Handoff atual: `docs/context/handoff.md`
+- Jornal cumulativo: `docs/context/jornal.md`
 
 ## Próximos passos
 

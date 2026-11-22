@@ -51,3 +51,39 @@
 - Corrigida a descrição da validação de escalas nesta nota: documentados chave de agrupamento, seleção dos exemplares, verificação dimensional e limites. Removida a contradição entre “verificação futura” e “passou”.
 - Verificações repetidas: busca normativa confirmou a stack candidata no README, design system e guia; validação dimensional retornou novamente `0` exceções no escopo declarado; `git diff --check` não encontrou erro.
 
+## Ajuste posterior — registros de contexto da esteira
+
+- Encaminhamento previsto: Dev econômico via OpenCode (`opencode/big-pickle`).
+- Prompt autossuficiente salvo em `03-prompt-externo.md`.
+- Execução externa não realizada: o ambiente rejeitou o envio por risco de exposição de contexto do repositório a um destino externo sem autorização explícita.
+- Nenhum arquivo de produto ou documentação-alvo foi alterado pelo OpenCode; o ajuste deve ser repassado ao Dev interno.
+
+## Rodada 3 — integração dos registros de contexto
+
+### O que foi feito
+
+- Tornados obrigatórios em `AGENTS.md` o jornal cumulativo durante/ao fechar tarefas e a substituição do handoff no fechamento.
+- Mantido `docs/backlog.md` como lista autoritativa, sem criar backlog paralelo nos registros de contexto.
+- Preenchidos `docs/context/handoff.md` e `docs/context/jornal.md` com a entrega `mapeamento-ui-ux`, suas validações, commits e PR.
+- Registrada a decisão e os dois artefatos neste documento de entrega.
+- Mantido `03-prompt-externo.md` como evidência auditável do encaminhamento ao Dev econômico que ficou indisponível; o arquivo não contém segredo nem asset comercial.
+
+### Arquivos alterados
+
+- `AGENTS.md`
+- `docs/context/handoff.md`
+- `docs/context/jornal.md`
+- `docs/esteira/mapeamento-ui-ux/03-dev-notas.md`
+- `docs/esteira/mapeamento-ui-ux/06-entrega.md`
+- `docs/esteira/mapeamento-ui-ux/03-prompt-externo.md` (criado pelo encaminhamento anterior e preservado como auditoria)
+
+### Comandos e resultados
+
+- `git diff --check`: passou; apenas avisos esperados de normalização futura LF→CRLF no Windows.
+- `git status --short`: passou; somente os seis arquivos documentais deste ajuste aparecem modificados ou novos.
+- `rg -n "handoff|jornal|backlog|mapeamento-ui-ux|pull/1" AGENTS.md docs/context docs/esteira/mapeamento-ui-ux/06-entrega.md`: passou; confirmou as regras persistentes, o estado atual, o registro cronológico e a rastreabilidade da entrega.
+
+### Desvio do plano
+
+- O ajuste não constava do plano técnico original porque foi solicitado após a entrega. Foi aplicado de forma localizada, sem mudar o backlog, os documentos de UI/UX ou os assets.
+

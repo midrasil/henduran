@@ -53,3 +53,31 @@ Mantêm-se as sugestões da rodada 1 para filtros adicionais no catálogo e vali
 - As correções foram restritas aos pontos solicitados e preservaram o escopo.
 - A integridade foi reconfirmada: 1.917 itens e caminhos únicos no manifesto, nenhum diff nos assets comerciais e nenhum recurso incorporado/remoto no catálogo.
 - `git diff --check` continua sem erro; resta apenas o aviso de conversão LF→CRLF do backlog.
+
+## Rodada 3 — registros de contexto da esteira
+
+**Veredito: APROVADO**
+
+## Bloqueantes
+
+Nenhum.
+
+## Verificações do ajuste
+
+- `AGENTS.md` torna explícitos e obrigatórios os papéis distintos: jornal cumulativo durante/no fechamento, handoff substituído no fechamento e backlog como lista autoritativa.
+- `docs/context/handoff.md` contém estado atual, branch, commits, PR, artefatos, validações, pendências e próximo passo suficiente para retomada.
+- `docs/context/jornal.md` registra cronologicamente rota, resultado, inventário, revisão, QA, entrega e a ocorrência posterior do Dev econômico, sem criar backlog paralelo.
+- Os commits `1bfa7e3` e `08c2c6d`, a branch `docs/mapeamento-ui-ux`, o PR #1 e os resultados de revisão/QA conferem com `git log` e `06-entrega.md`.
+- `03-prompt-externo.md` preserva evidência auditável da tentativa não executada, sem segredo, conteúdo comercial ou instrução fora do escopo.
+- `docs/backlog.md` não foi alterado e continua sendo a fonte ordenada das pendências.
+- `git diff --check` passou; foram emitidos somente avisos de futura normalização LF→CRLF.
+
+## Sugestões (não bloqueantes)
+
+- Em tarefas futuras, manter o handoff sintético e apontar ao backlog/artefatos, como feito nesta rodada, para evitar deriva entre fontes.
+
+## Pontos positivos
+
+- Mudança localizada e compatível com a memória entre sessões já prevista pela esteira.
+- Separação clara entre histórico (`jornal`), fotografia atual (`handoff`) e trabalho futuro (`backlog`).
+- Rastreabilidade preservada até a tentativa indisponível do executor econômico.
