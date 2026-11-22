@@ -55,3 +55,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do responsável: MVP em chatbot sobre o loop de gameplay com menu inicial, gerador simples de mundo (evoluir depois para algo como o Azgaar's Fantasy Map Generator) e criação de personagem; dois Narradores já no MVP, sendo o Geral quem abre as Cenas; apresentação do Narrador Geral por chat recolhido no canto inferior direito e/ou `@` na Cena, ainda a decidir com esboços visuais; caso do ferreiro retirado como referência do MVP.
 - Cuidados: sem atributos nem economia no MVP porque as regras Astra adaptadas não estão aprovadas; exemplos do ferreiro em 01, 02 e GDD mantidos como ilustração.
 - Arquivos: `docs/main/decisoes/ADR-070..072`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/main/04-arquitetura.md`, `AGENTS.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `esbocos-ui-mvp`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: análise de três esboços visuais (menu inicial, Nova Jornada, Jornada em andamento) em `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`; `ESCOPO-MVP.md` atualizado.
+- Decisões do responsável: opção C para o Narrador Geral (painel recolhido no canto inferior direito e `@` na Cena); itens PROPOSTO do escopo aprovados; esboços são só referência visual; imagens incluídas no repositório.
+- Achados: o esboço traz atributos, PV/PM, testes, dados, inventário e mapa, fora do MVP por depender de regras Astra não aprovadas; ilustrações exigem assets que o CSS do ADR-069 não produz.
+- Pendente: origem das ilustrações, campos do gerador de mundo, nome do Narrador Geral, detalhes do `@`.
+- Arquivos: `docs/ui-ux/esbocos/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.

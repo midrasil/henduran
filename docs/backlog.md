@@ -1,7 +1,8 @@
 # Backlog
 
 - [x] docs: formalizar em ADRs as decisões da auditoria do Caliope — ADR-070 (llama.cpp + GGUF), ADR-071 (`NarratorProvider`), ADR-072 (HTTP + SSE); `04-arquitetura.md` atualizado
-- [ ] ⭐ design: decidir como o Narrador Geral aparece (chat recolhido no canto, `@` na Cena, ou os dois), a partir dos esboços em `docs/ui-ux/esbocos/`; depois aprovar os itens PROPOSTO do `ESCOPO-MVP.md`, definir os campos do gerador de mundo e o nome final do Narrador Geral, e revisar os exemplos do ferreiro que restam em 01, 02 e GDD — origem: decisão do responsável em 2026-11-22
+- [ ] docs: reconciliar `docs/ui-ux/03-mapa-de-telas.md` e `04-wireframes.md` com o `ESCOPO-MVP.md` e os esboços (escritos para a base Franuka e o escopo completo) — origem: análise dos esboços
+- [ ] ⭐ design: aprovar o desenho do Narrador Geral (opção C já decidida) e fechar os pontos em aberto da seção 6 do `ESCOPO-MVP.md` (campos do gerador de mundo, nome final, origem das ilustrações, detalhes do `@`, quais telas e abas entram), com base em `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`; revisar os exemplos do ferreiro que restam em 01, 02 e GDD — origem: decisão do responsável em 2026-11-22
 - [ ] infra: importar módulos do Caliope na ordem da auditoria (`llm.py` → `runtime.py` + `hardware.py` → `modelhub.py`), com leitura completa, testes correspondentes e commit de origem registrado — origem: auditoria do Caliope; exige instrução explícita de scaffolding
 - [ ] legal: registrar por escrito a autorização do autor do Caliope e pedir que ele adicione uma `LICENSE`; perguntar a origem do acervo de 520 skills e preservar licenças e atribuições — origem: auditoria do Caliope
 
