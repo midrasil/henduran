@@ -40,6 +40,12 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 6. Atualizar documentação quando uma decisão aprovada alterar comportamento ou arquitetura.
 7. Preservar assets originais e evitar reestruturações sem necessidade.
 
+## Memória operacional da esteira
+
+- `docs/context/jornal.md` é o registro cronológico, cumulativo e conciso da execução. Durante ou no fechamento de cada tarefa, acrescente uma entrada com data, slug, rota, resultado, validações e ocorrências relevantes.
+- `docs/context/handoff.md` representa somente o estado atual para retomada. Ao fechar cada tarefa, substitua seu conteúdo com estado, branch e PR, artefatos, validações, pendências e próximo passo recomendado.
+- `docs/backlog.md` é a lista autoritativa e ordenada de pendências. O handoff e o jornal podem referenciar itens do backlog, mas não devem criar uma lista paralela.
+
 ## Primeiro caso de uso de referência
 
 Fora de Cena, jogador em uma cidade decide visitar um ferreiro. O sistema inicia uma Cena de diálogo. O Narrador interpreta o ferreiro; o jogador pode examinar uma espada e negociar. Caso confirme uma compra válida, o motor atualiza inventário e dinheiro. A Cena termina e a Jornada preserva os resultados.
