@@ -1,32 +1,33 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a tarefa `adr-ui-pixel-art-css`.
+Atualizado em 2026-11-22 após a tarefa `auditoria-caliope`.
 
 ## Estado
 
-- Tarefa: ADR-069 (UI pixel art em CSS com tokens próprios, sem tileset no MVP).
-- Resultado: decisão registrada; nenhum código; tokens e fontes ainda não definidos.
-- Branch: `docs/adr-ui-pixel-art-css` (PR aberto contra `main`).
+- Tarefa: auditoria técnica do Caliope (ADR-016) e registro das decisões de MVP e de IA local.
+- Resultado: relatório escrito; nenhum código; ADRs das decisões novas ainda por formalizar.
+- Branch: `docs/auditoria-caliope` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
-- **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows. Itens em aberto em `docs/main/04-arquitetura.md`. Scaffolding e prova de conceito exigem instrução explícita.
-- **UI (ADR-069, substitui parcialmente o ADR-017):** pixel art em CSS com tokens próprios; componentes agnósticos à origem da moldura; texto em DOM; fonte pixel só em títulos/HUD. Tileset Franuka fora do caminho crítico, mantido local como referência.
-- **Resolução e acessibilidade (ADR-068):** layout fluido, WCAG 2.2 AA no DOM, alvo ≥ 44 CSS px nos controles primários, reduced motion. Sprites 1x/2x/3x valem só para mapa/tokens PixiJS.
+- **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows. Scaffolding e prova de conceito exigem instrução explícita.
+- **UI (ADR-069):** pixel art em CSS com tokens próprios, sem tileset; ADR-068 para resolução e acessibilidade.
+- **IA (aprovado na auditoria, a formalizar em ADR):** llama-server (llama.cpp) + GGUF, local gratuito primeiro e API paga por chave depois; interface `NarratorProvider`; protocolo frontend↔Python por HTTP com SSE.
+- **Caliope:** o autor autorizou o uso do código (confirmação verbal; registrar por escrito). Importar `llm.py`, depois `runtime.py` + `hardware.py`, depois `modelhub.py`. Não importar `engine.py` nem regras. **Todas as skills entram**, inclusive conteúdo adulto, preservando licenças e atribuições.
+- **MVP:** sobre o loop de gameplay, com menu inicial, mundo genérico, criação de personagem e somente chatbot, sem combate nem mapa global. O caso do ferreiro foi retirado dos planos.
 
 ## Artefatos
 
-- `docs/main/decisoes/ADR-069-ui-pixel-art-css-sem-tileset.md`.
-- `docs/main/decisoes/ADR-017-biblioteca-ui-pixel-art.md` (estado atualizado).
-- `docs/backlog.md` (itens novos de propagação, tokens/fontes e página de componentes).
+- `docs/main/auditoria-caliope.md`.
+- Clone de leitura do Caliope (commit `1cab9e0`) só na pasta temporária da sessão; não está no repositório.
 
 ## Pendências relevantes
 
-- Propagar ADR-068 e ADR-069 nos documentos relacionados (primeiro item do backlog).
-- Definir tokens e fontes.
-- Instrução explícita para scaffolding do MVP.
+- Formalizar os três ADRs de IA e ajustar `04-arquitetura.md`.
+- Detalhar o escopo do MVP e ajustar os docs que citam o ferreiro.
+- Registrar a autorização do Caliope por escrito e pedir `LICENSE`.
 - Backlog autoritativo: `docs/backlog.md`.
 
 ## Próximo passo recomendado
 
-⭐ Dar a instrução explícita de scaffolding e do primeiro MVP (chat com o Narrador e o caso do ferreiro). Em paralelo, propagar os ADRs 068 e 069 nos documentos.
+⭐ Escrever os ADRs de IA local e detalhar o escopo do MVP; depois dar a instrução explícita de scaffolding para o dev importar `llm.py`, `runtime.py` e `hardware.py`.
