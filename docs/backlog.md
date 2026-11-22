@@ -1,5 +1,10 @@
 # Backlog
 
+- [ ] ⭐ docs: formalizar em ADRs as decisões aprovadas na auditoria do Caliope — (a) llama-server/llama.cpp + GGUF como runtime local, local gratuito primeiro e API paga por chave depois; (b) interface `NarratorProvider`; (c) protocolo frontend↔Python por HTTP com SSE — e atualizar `04-arquitetura.md` — origem: `docs/main/auditoria-caliope.md`
+- [ ] ⭐ docs: detalhar o escopo do primeiro MVP sobre o loop de gameplay (menu inicial, mundo genérico, criação de personagem, somente chatbot, sem combate nem mapa global) e ajustar os documentos que citam o caso do ferreiro (AGENTS.md, 01, 02, GDD, PLANO-DE-DESENVOLVIMENTO) — origem: decisão do responsável em 2026-11-22
+- [ ] infra: importar módulos do Caliope na ordem da auditoria (`llm.py` → `runtime.py` + `hardware.py` → `modelhub.py`), com leitura completa, testes correspondentes e commit de origem registrado — origem: auditoria do Caliope; exige instrução explícita de scaffolding
+- [ ] legal: registrar por escrito a autorização do autor do Caliope e pedir que ele adicione uma `LICENSE`; perguntar a origem do acervo de 520 skills e preservar licenças e atribuições — origem: auditoria do Caliope
+
 - [ ] ⭐ docs: propagar o ADR-069 (UI em CSS sem tileset) em GDD IX, P-18 e D-033, ADR-020 e `docs/ui-ux/` (02-design-system e demais), marcando o catálogo Franuka como referência não normativa; fazer em conjunto com a propagação do ADR-068 abaixo — origem: ADR-069
 - [ ] design: definir tokens (paleta, bordas, sombras, espaçamento) e fontes (pixel para títulos/HUD, legível para chat) — origem: ADR-069
 - [ ] infra: página de componentes como prova visual inicial, após scaffolding aprovado — origem: ADR-069
