@@ -1,5 +1,7 @@
 # Vontade
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Regras/Personagens/Vontade.md`. Decisões: ADR-010, ADR-012, ADR-013, ADR-073.
 
 ## Trilha de Vontade **[ASTRA]**

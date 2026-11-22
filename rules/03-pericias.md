@@ -1,5 +1,7 @@
 # Perícias
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Regras/Personagens/Perícias.md`.
 
 ## Escala **[ASTRA]**

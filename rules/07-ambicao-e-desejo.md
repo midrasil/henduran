@@ -1,5 +1,7 @@
 # Ambição e Desejo
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Regras/Personagens/Ambição e Desejo.md`. Decisões: ADR-010, ADR-011, ADR-012, ADR-022, ADR-073.
 
 ## Conceito **[ASTRA]**

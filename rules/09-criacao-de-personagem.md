@@ -1,5 +1,7 @@
 # Criação de Personagem
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Criação de Personagem/0` a `3`. Os passos 4 (Competências) e 5 (Equipamento Inicial) não entram na fatia 1.
 
 Na interface, esta é a etapa **Protagonista** do assistente de Nova Jornada (`docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`). O jogador pode voltar e ajustar escolhas enquanto o conceito se firma.

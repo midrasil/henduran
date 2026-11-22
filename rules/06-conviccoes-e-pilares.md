@@ -1,5 +1,7 @@
 # Convicções e Pilares
 
+**Status:** aprovada para a fatia 1 em 2026-11-22. Versão das regras: `fatia-1`.
+
 **Origem:** `Regras/Personagens/Convicções e Pilares.md`. Decisões: ADR-013, ADR-073.
 
 ## Convicções e Pilares **[ASTRA]**

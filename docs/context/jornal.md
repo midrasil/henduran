@@ -90,3 +90,11 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do responsável: Dia do Mundo, começando no Amanhecer; Ambição e Desejo trocáveis quando deixam de fazer sentido; 22 Perícias de mundo medieval; Conhecimento Específico fora do sistema; fatia 1 sem dano de Vida e Condições; Descanso Prolongado na fatia 1; interpretações propostas pelo Narrador, registradas pelo motor e contestáveis pelo jogador; testes fora de combate confirmados pelo jogador.
 - Ocorrência: ao propor as opções de "sessão" eu não havia lido os ADRs 010 a 013, que já tratavam do tema. O conflito foi reportado antes de escrever as regras e resolvido com o Dia do Mundo como limitador, mantendo o acontecimento validado como gatilho.
 - Arquivos: `docs/main/decisoes/ADR-073-dia-do-mundo-limitador-troca-de-objetivos.md`, `docs/esteira/rules-fatia-1/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `rules-fatia-1-aprovada`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: as regras da fatia 1 foram aprovadas pelo responsável e movidas de `docs/esteira/rules-fatia-1/` para `rules/`, com status e versão `fatia-1`. `rules/README.md` virou o índice da wiki, com convenções e decisões de apoio.
+- Ocorrência: o PR dos rascunhos foi mesclado antes da aprovação, então a movimentação foi levada para uma branch nova sobre a `main`.
+- Pendências mantidas como PENDENTE nos textos: faixa de Dificuldade, critérios de "progresso significativo" e "defender" uma Convicção, política de avanço de tempo, definição de Amanhecer, testes de equilíbrio dos tetos por Dia.
+- Arquivos: `rules/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
