@@ -1,6 +1,6 @@
 # ADR-011 — Alterações de Ambição e Desejo condicionadas aos acontecimentos
 
-- **Estado:** Aprovada
+- **Estado:** Aprovada; a condição de troca da Ambição foi flexibilizada pelo ADR-073 (o jogador pode trocar quando ela deixar de fazer sentido para ele)
 - **Data:** 2026-11-22
 - **Questão:** P-03 do GDD
 - **Origem:** decisão explícita do responsável pelo Henduran

@@ -1,6 +1,6 @@
 # ADR-010 — Marcos narrativos em vez de sessões de mesa
 
-- **Estado:** Aprovada
+- **Estado:** Aprovada; refinada pelo ADR-073 (o Dia do Mundo entra como limitador de benefícios específicos, sem ser unidade universal)
 - **Data:** 2026-11-22
 - **Questão:** P-02 do GDD
 - **Origem:** Decisão explícita do responsável pelo Henduran

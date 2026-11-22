@@ -1,12 +1,12 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a tarefa `mvp-fatias-astra`.
+Atualizado em 2026-11-22 após a tarefa `rules-fatia-1`.
 
 ## Estado
 
-- Tarefa: recorte das regras do Astra no MVP, em fatias.
-- Resultado: documentação; nenhum código; regras do Astra ainda não adaptadas nem aprovadas.
-- Branch: `docs/mvp-fatias-astra` (PR aberto contra `main`).
+- Tarefa: ADR-073 e rascunhos das regras da fatia 1 do Astra.
+- Resultado: documentação; nenhum código. Os rascunhos em `docs/esteira/rules-fatia-1/` **aguardam aprovação** antes de irem para `rules/`.
+- Branch: `docs/rules-fatia-1` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -14,20 +14,16 @@ Atualizado em 2026-11-22 após a tarefa `mvp-fatias-astra`.
 - **UI (ADR-069):** pixel art em CSS com tokens próprios; ADR-068 para resolução e acessibilidade; ambiente de dia e noite em código (`docs/ui-ux/07-ambiente-dia-noite.md`).
 - **IA local (ADR-070 a 072):** `llama-server` + GGUF, local primeiro e API paga depois; `NarratorProvider`; HTTP com SSE.
 - **Caliope:** uso autorizado pelo autor; ordem de importação `llm.py`, `runtime.py` + `hardware.py`, `modelhub.py`; todas as skills entram.
-- **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, com dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em **três fatias**: (1) chat, ficha e testes; (2) equipamento, progressão e descansos; (3) combate sem mapa e NPCs por orçamento.
-- **NPCs:** montados por orçamento (Capanga, Par, Veterano, Elite), Narrador propõe e motor valida; sem Competências, Capacidades nem Pontos de Capacidade.
-- **Fora do MVP:** Competências e Capacidades, grid, mapas, Diário, Bestiário pronto, NPCs Lendários.
-- **Ambição e Desejo:** longo prazo e curto prazo, 1 de cada por vez.
-
-## Astra (leitura feita)
-
-Clone de leitura em pasta temporária (commit `1c51aea`), fora do repositório. Lidos: Readme, Reserva de Dados, criação de personagem, índice de Personagens, Ambição e Desejo, Criação de NPCs, A Cena, Cenas Táticas, Ação. Não lidos: Perícias, Vida, Vontade, Condições, Equipamentos, Confrontar, Manobras, Aguardar, Movimentação, Progressão.
+- **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em três fatias: (1) chat, ficha, testes, Vontade, Convicções e Descanso; (2) equipamento, Carga e Progressão; (3) combate sem mapa e NPCs por orçamento sem Capacidades.
+- **Dia do Mundo (ADR-073):** limitador de benefícios, começando no Amanhecer; o gatilho continua sendo o acontecimento validado (ADR-010, 012, 013). Ambição e Desejo podem ser trocados quando deixarem de fazer sentido, sem recompensa pela troca.
+- **Fatia 1:** 22 Perícias de mundo medieval (sem Dirigir, Pilotar e Conhecimento Específico); sem dano de Vida, Tratamento e Condições; rerrolagem gratuita por Convicção excluída (ADR-013); testes fora de combate com confirmação do jogador (ADR-006).
 
 ## Pendências relevantes
 
-- Ler e adaptar a fatia 1 do Astra e criar `rules/` com aprovação por seção; resolver "sessão" vs "Cena" na regra de Ambição.
-- Condições, tipos de dano e Ações avançadas por fatia.
-- Telas sem decisão: Mundos no menu, Mapa, Inventário; histórico do painel do Aduran; marcas de escrita do chat; detalhes do ambiente de dia e noite.
+- **Aprovar os rascunhos da fatia 1** e movê-los para `rules/`.
+- Pendentes de regra: faixa de Dificuldade proposta pelo Narrador; critério de "progresso significativo" e de "defender" uma Convicção; política de avanço de tempo e definição de Amanhecer; testes de equilíbrio dos tetos por Dia.
+- Fatias 2 e 3 do Astra: ler e adaptar (equipamento, Carga, Progressão; Cena Tática sem mapa, Ações, dano, NPCs por orçamento, Condições necessárias).
+- Telas sem decisão: Mundos no menu, Mapa, Inventário; histórico do painel do Aduran; marcas de escrita do chat.
 - Confirmar *arandu* com dicionário ou falante de guarani.
 - Reconciliar `docs/ui-ux/03-mapa-de-telas.md` e `04-wireframes.md`; revisar exemplos do ferreiro em 01, 02 e GDD.
 - Registrar a autorização do Caliope por escrito e pedir `LICENSE`.
@@ -35,4 +31,4 @@ Clone de leitura em pasta temporária (commit `1c51aea`), fora do repositório. 
 
 ## Próximo passo recomendado
 
-⭐ Ler a fatia 1 do Astra (Atributos, Perícias, Vida, Vontade, Convicções e Pilares) e preparar as seções adaptadas para aprovação. Depois, instrução explícita de scaffolding.
+⭐ Aprovar os rascunhos da fatia 1 e movê-los para `rules/`; depois, instrução explícita de scaffolding para começar o código. A leitura da fatia 2 pode seguir em paralelo.

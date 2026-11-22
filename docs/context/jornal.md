@@ -82,3 +82,11 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Esclarecimento de regra: Ambição é de longo prazo e Desejo é de curto prazo.
 - Riscos registrados: volume de regras do núcleo e erro de conta de modelos locais ao propor NPCs.
 - Arquivos: `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `rules-fatia-1`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: ADR-073 e nove rascunhos de regras em `docs/esteira/rules-fatia-1/`; ADR-010 e ADR-011 ganharam nota de estado; escopo e backlog atualizados.
+- Decisões do responsável: Dia do Mundo, começando no Amanhecer; Ambição e Desejo trocáveis quando deixam de fazer sentido; 22 Perícias de mundo medieval; Conhecimento Específico fora do sistema; fatia 1 sem dano de Vida e Condições; Descanso Prolongado na fatia 1; interpretações propostas pelo Narrador, registradas pelo motor e contestáveis pelo jogador; testes fora de combate confirmados pelo jogador.
+- Ocorrência: ao propor as opções de "sessão" eu não havia lido os ADRs 010 a 013, que já tratavam do tema. O conflito foi reportado antes de escrever as regras e resolvido com o Dia do Mundo como limitador, mantendo o acontecimento validado como gatilho.
+- Arquivos: `docs/main/decisoes/ADR-073-dia-do-mundo-limitador-troca-de-objetivos.md`, `docs/esteira/rules-fatia-1/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
