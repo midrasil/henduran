@@ -1,6 +1,6 @@
 # ADR-017 — Biblioteca reutilizável de UI pixel art
 
-- **Estado:** Aprovada
+- **Estado:** Parcialmente substituída pelo ADR-069 (a base visual em sprites Franuka foi retirada do MVP; o princípio de biblioteca reutilizável permanece)
 - **Data:** 2026-11-22
 - **Questão:** P-18 do GDD
 - **Origem:** Decisão explícita do responsável pelo Henduran

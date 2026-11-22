@@ -1,5 +1,8 @@
 # Backlog
 
+- [ ] ⭐ docs: propagar o ADR-069 (UI em CSS sem tileset) em GDD IX, P-18 e D-033, ADR-020 e `docs/ui-ux/` (02-design-system e demais), marcando o catálogo Franuka como referência não normativa; fazer em conjunto com a propagação do ADR-068 abaixo — origem: ADR-069
+- [ ] design: definir tokens (paleta, bordas, sombras, espaçamento) e fontes (pixel para títulos/HUD, legível para chat) — origem: ADR-069
+- [ ] infra: página de componentes como prova visual inicial, após scaffolding aprovado — origem: ADR-069
 - [ ] ⭐ docs: propagar o ADR-068 (referência cruzada em ADR-017 e ADR-020; GDD IX.2, IX.4, IX.5, linha 42, P-13, P-18, contagem de ADRs na linha 644 e histórico de versões; docs/ui-ux 01 (orbs, se confirmado), 02, 03, 04, 05, 06 e README; docs/main/04-arquitetura.md) sem transformar "alvo 44 px" em altura mínima de Button — origem: ADR-068; rota: `dev-economico` → `revisor`
 - [ ] design: conciliar janela mínima e breakpoints com o SC 1.4.10 (reflow em 320 CSS px) e definir "controles primários" e alturas visuais — origem: pendências do ADR-068
 - [ ] docs: reconferir no manifesto a faixa de dimensão das orbs (48–240 px vs 48–80 px) e a regra de antialiasing da fonte na licença — origem: pendências do ADR-068
