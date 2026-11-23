@@ -13,11 +13,33 @@ import uvicorn
 
 from henduran.__main__ import bind_socket
 from henduran.api.app import create_app
+from henduran.db import Database, open_app_database
+from henduran.paths import DataPaths
 from henduran.providers.base import ChatMessage, NarratorProvider
 from henduran.providers.fake import FakeNarratorProvider
+from henduran.settings import SettingsStore
 
 TOKEN = "token-de-teste"
 LONG_REPLY = " ".join(f"palavra{i}" for i in range(500))
+
+_OPEN_DATABASES: list[Database] = []
+
+
+def open_settings(paths: DataPaths) -> SettingsStore:
+    """Abre (e migra) o banco do app em ``paths`` e devolve as preferências sobre ele.
+
+    O banco é fechado automaticamente no fim do teste.
+    """
+    db, _ = open_app_database(paths.database_file)
+    _OPEN_DATABASES.append(db)
+    return SettingsStore(db, legacy_file=paths.settings_file)
+
+
+@pytest.fixture(autouse=True)
+def _close_databases() -> Iterator[None]:
+    yield
+    while _OPEN_DATABASES:
+        _OPEN_DATABASES.pop().close()
 
 
 class RecordingProvider(NarratorProvider):

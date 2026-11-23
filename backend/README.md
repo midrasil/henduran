@@ -42,6 +42,8 @@ Ele escuta **somente em `127.0.0.1`**.
 | --- | --- | --- |
 | `HENDURAN_TOKEN` | (obrigatória) | Token Bearer exigido em todas as rotas. |
 | `HENDURAN_PROVIDER` | `local` | `local` (motor llama-server) ou `fake` (texto fixo, para testes). Outro valor: o serviço não inicia (código 3). |
+
+Códigos de saída: `0` normal; `2` sem `HENDURAN_TOKEN`; `3` provedor inválido; `4` o banco de dados não pôde ser aberto ou migrado (a mensagem no stderr traz o código do erro, por exemplo `banco_mais_novo`, `checksum_divergente`, `migracao_falhou` ou `banco_inacessivel`).
 | `HENDURAN_DATA_DIR` | `%LOCALAPPDATA%\Henduran` | Pasta de dados. Fica fora do repositório e do OneDrive. |
 
 ### Pasta de dados
@@ -52,10 +54,21 @@ Ele escuta **somente em `127.0.0.1`**.
     models\          modelos .gguf (subpastas valem); downloads vão para models\<autor>\<repo>\
     logs\engine.log  log do motor (o anterior fica em engine.log.1)
     logs\models.log  log dos downloads de modelos (URL, SHA-256 conferido ou ausente, remoções)
-    settings.json    modelo ativo, tamanho de contexto (4096), variante do motor e pastas extras
+    henduran.db      banco SQLite do app (preferências e metadados), com -wal/-shm ao lado
+    backups\         cópias do banco feitas antes de migrar (as 5 últimas)
+    settings.json.migrado   preferências antigas, já importadas para o banco (não é mais lido)
 ```
 
-`settings.json` é **provisório**: existe só até a persistência SQLite do projeto (ADR-050). A gravação é atômica e um arquivo ausente ou corrompido volta aos padrões.
+## Banco de dados (`henduran/db/`, ADR-050)
+
+`henduran.db` é o **banco do app**: guarda só preferências (`settings`) e metadados (`app_meta`). Não há tabelas de jogo ainda; elas entram com suas funcionalidades. Se o jogo terá um banco por Jornada ou um banco único **continua em aberto**.
+
+- **Conexão** (`connection.py`, `Database`): `journal_mode=WAL`, `synchronous=NORMAL` (íntegro em queda de energia; no pior caso perde as últimas transações antes do *checkpoint*), `foreign_keys=ON`, `busy_timeout=5000`. Um escritor serializado por lock (`transaction()` com `BEGIN IMMEDIATE`, confirma no fim e desfaz em exceção; aninhar usa `SAVEPOINT`), leituras em conexões próprias só de leitura, e fachada assíncrona (`aexecute`, `aquery_all`, `aquery_one`, `arun_transaction`, `run`) via `asyncio.to_thread`. `close()` faz *checkpoint* do WAL e fecha tudo, liberando o arquivo no Windows. SQL sempre parametrizado.
+- **Migrações** (`migrations.py` e `migrations/NNNN_nome.sql`): só para frente, numeradas sem lacunas. Cada uma roda numa transação junto com o registro em `schema_migrations(version, name, checksum, applied_at)`; uma falha no meio desfaz a migração inteira. O SHA-256 das já aplicadas é conferido (arquivo alterado = `checksum_divergente`) e um banco de versão mais nova que a do app é recusado (`banco_mais_novo`). Migrações não podem conter `BEGIN`/`COMMIT`/`ROLLBACK`/`SAVEPOINT`/`RELEASE`/`VACUUM`.
+- **Backup antes de migrar:** se há migrações pendentes e o banco já tem conteúdo, ele é copiado com a API de backup do SQLite para `backups\henduran-v<versão atual>-<AAAAMMDD-HHMMSS>.db`; ficam só os **5 mais recentes** (pela data no nome). Banco novo não gera backup.
+- **Banco corrompido:** o arquivo existente é conferido por uma conexão só de leitura com `PRAGMA quick_check`. Se não for SQLite ou a checagem não der `ok`, **nada é apagado**: o arquivo é renomeado para `henduran.db.corrompido-<AAAAMMDD-HHMMSS>` (com `-wal`/`-shm` junto), um banco novo é criado, o fato vai para o log e `/health` responde `database.recovered = true` com uma mensagem. Bloqueio ou falta de permissão **não** contam como corrupção (o serviço não inicia, código 4, e o arquivo fica intacto). **Este recuo automático só é aceitável porque o banco hoje guarda apenas preferências; a política deve ser revista quando ele guardar dados de jogo.**
+- **Preferências** (`henduran/settings.py`): `active_model`, `context_size` (512–131072, padrão 4096), `engine_variant` (`vulkan`/`cpu`) e `model_folders` (até 20), uma linha por chave com o valor em JSON. Valor inválido no banco é ignorado com aviso.
+- **Importação única do `settings.json` antigo:** na primeira execução com o banco, se `settings.json` existir e a tabela estiver vazia, os valores válidos são importados numa transação (os inválidos são descartados com aviso no log) e o arquivo é renomeado para `settings.json.migrado` (nunca apagado). JSON ausente ou corrompido não impede o serviço de subir. A importação fica registrada em `app_meta` e não se repete.
 
 ## Motor de IA (`llama-server`)
 
@@ -81,7 +94,7 @@ Todas as rotas exigem `Authorization: Bearer <token>`; sem ele a resposta é 401
 
 | Rota | Descrição |
 | --- | --- |
-| `GET /health` | `{"status": "ok", "provider": {"name", "ready", ...}}`. Com o provedor local, inclui `state`, `code` e `message` quando não está pronto. |
+| `GET /health` | `{"status": "ok", "provider": {"name", "ready", ...}, "database": {"schema_version", "recovered"}}`. Com o provedor local, inclui `state`, `code` e `message` quando não está pronto. `database.message` aparece quando o banco corrompido foi recriado. |
 | `POST /chat/stream` | Corpo `{"messages": [{"role": "user", "content": "..."}]}`. Resposta `text/event-stream`. |
 | `POST /chat/{id}/cancel` | Cancela a geração em curso. 404 se o id for desconhecido. |
 | `GET /hardware` | `{"gpus": [{"name", "memory_bytes"}], "ram_bytes", "cpu", "os"}` (`?refresh=true` lê de novo). |
@@ -132,7 +145,8 @@ Os testes usam `HENDURAN_DATA_DIR` temporário, o provedor falso, `tests/fake_ll
 - Sem token do Hugging Face: repositórios restritos ou privados não podem ser baixados.
 - Um download de modelo por vez (sem fila); o estado dos downloads não sobrevive ao fechamento do app, só o `.part`.
 - Sem lista curada nem modelo recomendado: o jogador escolhe.
-- Sem regras do Astra, persistência SQLite, memória, mundo ou personagem.
+- Sem regras do Astra, memória, mundo ou personagem. O SQLite guarda só preferências e metadados.
+- `quick_check` roda a cada início: barato hoje, mas o custo cresce com o banco.
 - `estimate_fit` usa limiares **provisórios** (arquivo + ~20% na memória da maior placa; senão na RAM): proposta a validar.
 - O formato dos eventos SSE, o versionamento da API e a reconexão seguem em aberto (ADR-072).
 - **Empacotamento do serviço (sidecar, PyInstaller etc.) está fora do escopo e em aberto**: por enquanto só roda em modo de desenvolvimento, com o Python do `.venv`.

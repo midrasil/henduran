@@ -23,8 +23,8 @@ from henduran.ai.modelhub import (
     validate_repo_file,
 )
 from henduran.paths import DataPaths
-from henduran.settings import SettingsStore
 
+from .conftest import open_settings
 from .fake_hub import BLOB, PART1, PART2, FakeHub, sha
 
 REPO = "autor/Repo-GGUF"
@@ -42,7 +42,7 @@ def fake() -> FakeHub:
 
 
 def make_hub(paths: DataPaths, fake: FakeHub, free: int = 10**12) -> ModelHub:
-    settings = SettingsStore(paths.settings_file)
+    settings = open_settings(paths)
     engine = EngineManager(paths, settings)
     return ModelHub(paths, settings, engine=engine, client=HubClient(fake.transport()),
                     disk_usage=lambda _p: Usage(free * 2, free, free))
@@ -97,7 +97,7 @@ async def test_busca_sem_rede(paths):
     def boom(request):
         raise httpx.ConnectError("sem rede")
 
-    hub = ModelHub(paths, SettingsStore(paths.settings_file), client=HubClient(httpx.MockTransport(boom)))
+    hub = ModelHub(paths, open_settings(paths), client=HubClient(httpx.MockTransport(boom)))
     with pytest.raises(HubError) as err:
         await hub.search("x")
     assert err.value.code == "rede"
@@ -449,7 +449,7 @@ def test_pastas_extras(hub, paths, tmp_path):
     assert models[0]["id"] == folder_prefix(str(other.resolve())) + "pub/Externo-Q5_K_M.gguf"
     assert not any(paths.models_dir.rglob("*.gguf"))  # nada copiado
     assert [f["kind"] for f in hub.folders()] == ["app", "extra"]
-    assert SettingsStore(paths.settings_file).get("model_folders") == [str(other.resolve())]
+    assert open_settings(paths).get("model_folders") == [str(other.resolve())]
     with pytest.raises(HubError) as err:
         hub.add_folder(str(other))
     assert err.value.code == "pasta_sobreposta"

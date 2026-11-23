@@ -29,6 +29,8 @@ from pydantic import BaseModel, Field
 from henduran.ai import hardware as hw
 from henduran.ai.engine import EngineError, EngineManager
 from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubError, ModelHub
+from henduran.db.connection import Database
+from henduran.db.migrations import schema_version
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
 
 logger = logging.getLogger("henduran.api")
@@ -119,11 +121,13 @@ def create_app(
     engine: EngineManager | None = None,
     hardware_scan: Callable[[], dict] | None = None,
     hub: ModelHub | None = None,
+    database: Database | None = None,
 ) -> FastAPI:
     """Cria a aplicação. ``token`` é o segredo por execução exigido em todas as rotas.
 
     ``engine`` habilita as rotas de modelos e motor; ``hub`` habilita as do Hugging
     Face, a remoção de modelos e as pastas extras. Sem eles, respondem 503.
+    ``database`` acrescenta o campo ``database`` em ``/health``.
     """
     if not token:
         raise ValueError("token de acesso obrigatório")
@@ -141,6 +145,7 @@ def create_app(
     app.state.generations = generations
     app.state.engine = engine
     app.state.hub = hub
+    app.state.database = database
     scan = hardware_scan or hw.scan
     hardware_cache: dict[str, dict] = {}
 
@@ -177,7 +182,19 @@ def create_app(
 
     @app.get("/health", dependencies=auth)
     async def health() -> dict:
-        return {"status": "ok", "provider": await provider.health()}
+        out: dict = {"status": "ok", "provider": await provider.health()}
+        if database is not None:
+            info: dict = {
+                "schema_version": await database.run(schema_version, database),
+                "recovered": database.recovered,
+            }
+            if database.recovered:
+                info["message"] = (
+                    "O banco de dados estava corrompido e foi recriado; o arquivo antigo foi preservado"
+                    + (f" como {database.recovered_from.name}." if database.recovered_from else ".")
+                )
+            out["database"] = info
+        return out
 
     @app.post("/chat/stream", dependencies=auth)
     async def chat_stream(body: ChatRequest) -> StreamingResponse:

@@ -6,7 +6,9 @@
 - ``HENDURAN_DATA_DIR`` troca a pasta de dados (padrão ``%LOCALAPPDATA%\\Henduran``).
 - Quando o servidor está pronto, imprime no stdout uma linha JSON
   ``{"event": "ready", "port": N}``, lida pelo shell Tauri.
-- Ao sair (inclusive por ``KeyboardInterrupt``), para o motor de IA.
+- Na inicialização, abre o banco do app (``<dados>\\henduran.db``) e aplica as
+  migrações; se falharem, o serviço não inicia (código 4) e explica o motivo.
+- Ao sair (inclusive por ``KeyboardInterrupt``), para o motor de IA e fecha o banco.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ import atexit
 import json
 import os
 import socket
+import sqlite3
 import sys
 
 import uvicorn
@@ -24,6 +27,7 @@ import uvicorn
 from henduran.ai.engine import EngineManager
 from henduran.ai.modelhub import ModelHub
 from henduran.api.app import create_app
+from henduran.db import Database, DatabaseError, open_app_database
 from henduran.paths import DataPaths
 from henduran.providers.base import NarratorProvider
 from henduran.providers.fake import FakeNarratorProvider
@@ -36,6 +40,7 @@ PROVIDER_ENV = "HENDURAN_PROVIDER"
 PROVIDERS = ("fake", "local")
 EXIT_MISSING_TOKEN = 2
 EXIT_BAD_PROVIDER = 3
+EXIT_DATABASE = 4
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -64,9 +69,10 @@ def bind_socket(port: int) -> socket.socket:
     return sock
 
 
-def build_components(provider_name: str) -> tuple[NarratorProvider, EngineManager, ModelHub]:
-    paths = DataPaths.from_env().ensure()
-    settings = SettingsStore(paths.settings_file)
+def build_components(
+    provider_name: str, paths: DataPaths, database: Database
+) -> tuple[NarratorProvider, EngineManager, ModelHub]:
+    settings = SettingsStore(database, legacy_file=paths.settings_file)
     engine = EngineManager(paths, settings)
     provider: NarratorProvider
     provider = FakeNarratorProvider() if provider_name == "fake" else LocalLlamaProvider(engine)
@@ -75,9 +81,14 @@ def build_components(provider_name: str) -> tuple[NarratorProvider, EngineManage
 
 
 async def serve(
-    sock: socket.socket, token: str, provider: NarratorProvider, engine: EngineManager, hub: ModelHub | None = None
+    sock: socket.socket,
+    token: str,
+    provider: NarratorProvider,
+    engine: EngineManager,
+    hub: ModelHub | None = None,
+    database: Database | None = None,
 ) -> None:
-    app = create_app(provider, token, engine=engine, hub=hub)
+    app = create_app(provider, token, engine=engine, hub=hub, database=database)
     config = uvicorn.Config(app, log_level="warning", access_log=False, lifespan="off")
     server = uvicorn.Server(config)
     task = asyncio.create_task(server.serve(sockets=[sock]))
@@ -112,17 +123,39 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return EXIT_BAD_PROVIDER
-    provider, engine, hub = build_components(provider_name)
-    # Recuo: se o laço não chegar ao finally (saída abrupta do interpretador), ainda para o motor.
-    atexit.register(engine.stop_now)
-    sock = bind_socket(args.port)
+    paths = DataPaths.from_env().ensure()
     try:
-        asyncio.run(serve(sock, token, provider, engine, hub))
+        database, _ = open_app_database(paths.database_file)
+    except (DatabaseError, sqlite3.Error, OSError) as exc:
+        code = getattr(exc, "code", "banco_inacessivel")
+        print(
+            f"henduran: não foi possível preparar o banco de dados ({code}): {exc} O serviço não foi iniciado.",
+            file=sys.stderr,
+        )
+        return EXIT_DATABASE
+    if database.recovered:
+        name = database.recovered_from.name if database.recovered_from else "?"
+        print(
+            f"henduran: o banco de dados estava corrompido; o arquivo foi preservado como {name} "
+            "e um banco novo foi criado.",
+            file=sys.stderr,
+        )
+    try:
+        provider, engine, hub = build_components(provider_name, paths, database)
+        # Recuo: se o laço não chegar ao finally (saída abrupta do interpretador), ainda para o motor.
+        atexit.register(engine.stop_now)
+        sock = bind_socket(args.port)
+        try:
+            asyncio.run(serve(sock, token, provider, engine, hub, database))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            engine.stop_now()
+            sock.close()
     except KeyboardInterrupt:
         pass
     finally:
-        engine.stop_now()
-        sock.close()
+        database.close()
     return 0
 
 

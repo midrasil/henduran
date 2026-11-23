@@ -13,9 +13,8 @@ from henduran.ai.engine import EngineManager
 from henduran.ai.modelhub import HubClient, ModelHub
 from henduran.paths import DataPaths
 from henduran.providers.fake import FakeNarratorProvider
-from henduran.settings import SettingsStore
 
-from .conftest import RunningServer, run_server
+from .conftest import RunningServer, open_settings, run_server
 from .fake_hub import BLOB, FakeHub
 
 GB = 2**30
@@ -27,7 +26,7 @@ Usage = namedtuple("Usage", "total used free")
 @pytest.fixture
 def setup(tmp_path):
     paths = DataPaths(tmp_path / "dados").ensure()
-    settings = SettingsStore(paths.settings_file)
+    settings = open_settings(paths)
     engine = EngineManager(paths, settings)
     fake = FakeHub()
     state = {"free": 10**12}

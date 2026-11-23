@@ -11,9 +11,8 @@ from henduran.ai.engine import EngineManager
 from henduran.paths import DataPaths
 from henduran.providers.fake import FakeNarratorProvider
 from henduran.providers.local import LocalLlamaProvider
-from henduran.settings import SettingsStore
 
-from .conftest import TOKEN, RunningServer, parse_sse, run_server
+from .conftest import TOKEN, RunningServer, open_settings, parse_sse, run_server
 from .test_engine import GOOD_ZIP, add_model, fake_launcher, install_fake_binary, releases_with
 
 GB = 2**30
@@ -24,7 +23,7 @@ BODY = {"messages": [{"role": "user", "content": "Olá"}]}
 @pytest.fixture
 def manager(tmp_path) -> EngineManager:
     paths = DataPaths(tmp_path / "dados").ensure()
-    settings = SettingsStore(paths.settings_file)
+    settings = open_settings(paths)
     state = {"releases": releases_with(GOOD_ZIP), "data": GOOD_ZIP}
 
     async def fetch_json(url):

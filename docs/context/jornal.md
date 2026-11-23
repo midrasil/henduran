@@ -128,3 +128,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Achados da API do Hugging Face: limite de cerca de 500 chamadas a cada 5 minutos sem login; repositório inexistente ou privado responde 401; o hash SHA-256 vem do `lfs.oid` e fica mascarado em repositórios restritos; o CDN aceita `Range`.
 - Decisões da Tarefa B: remover modelo de pasta extra sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez; sem token do Hugging Face (repositórios restritos aparecem como não suportados).
 - Arquivos: `backend/henduran/ai/modelhub.py`, `backend/henduran/api/app.py`, `app/src/components/HubSearch.tsx`, `app/src/components/DownloadsPanel.tsx`, `app/src/components/ModelFolders.tsx`.
+
+## 2026-11-23 — `persistencia-sqlite`
+
+- Rota: conversa com o planejador → Dev (em cópia de trabalho isolada) → Entrega.
+- Resultado: `backend/henduran/db/` com `Database` (WAL, `foreign_keys`, escritor único, leituras só de leitura), migrações numeradas com checksum, backup antes de migrar (5 mais recentes), proteção contra banco mais novo e recuo para banco corrompido sem apagar nada. O `settings.json` passou para a tabela `settings`, com importação única e arquivo renomeado para `.migrado`. `/health` ganhou `database: {schema_version, recovered}`. Código de saída 4 para falha do banco.
+- Validações: 298 testes passaram, conferidos pelo planejador. O dev relatou teste real com pasta de dados com espaço e acento: importação do legado (descartando um valor inválido), persistência após reiniciar.
+- Achado do dev: fechar uma conexão de escrita sobre um arquivo inválido faz o SQLite apagar o `-wal`; por isso a checagem de um arquivo existente usa conexão somente leitura.
+- Decisões propostas no ADR-074 (aguardando aprovação): PRAGMAs, migrações só para frente, backup antes de migrar, política provisória de corrupção.
+- Pendente: um banco por Jornada ou único; política de corrupção e durabilidade com dados de jogo; Ctrl+C real no Windows não testado.
+- Arquivos: `backend/henduran/db/`, `backend/henduran/settings.py`, `backend/tests/test_db.py`, `docs/main/decisoes/ADR-074-fundacao-sqlite-migracoes-backup.md`.

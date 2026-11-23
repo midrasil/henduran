@@ -34,6 +34,18 @@ assets/tilesets/ui/franuka/
 llama-*-bin-win-*.zip
 engine.new/
 llama-server.exe
+# Bancos SQLite, backups e preferências (ficam na pasta de dados; nunca no Git)
+*.db
+*.db-wal
+*.db-shm
+*.db.corrompido-*
+*.sqlite
+*.sqlite3
+settings.json.migrado*
 # Downloads de modelos interrompidos (ficam na pasta de dados; nunca no Git)
 *.gguf.part
 *.part
+
+# Cópias de trabalho e configuração local do Claude Code
+.claude/worktrees/
+.claude/settings.local.json
