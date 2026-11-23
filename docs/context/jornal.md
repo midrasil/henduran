@@ -167,3 +167,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do dev: `confirm` com padrão `False`; nomes com limite de 200 caracteres; `delete_world` recusa se houver Jornada ilegível; `open_journey` não grava `last_journey_id` sozinho; anexo do Mundo por `ATTACH ... mode=ro` (a escrita falha), deixando `-wal` e `-shm` vazios inofensivos.
 - Pendente: rotas de criar, abrir, excluir e restaurar; esquema de jogo; retenção dos backups por Jornada; cache do catálogo; anexos grandes; `ATTACH` com FTS5 e vetores.
 - Arquivos: `backend/henduran/storage/`, `backend/henduran/db/`, `backend/henduran/paths.py`, `backend/tests/test_storage.py`, `.gitattributes`.
+
+## 2026-11-23 — `api-jornada-mundo-personagem`
+
+- Rota: conversa com o planejador → Dev → Entrega. Metade 1 do passo 2 (backend); a interface vem na metade 2.
+- Resultado: `backend/henduran/rules/` com a fatia 1 em código (`RULES_VERSION = "fatia-1"`), `worldgen/` com o gerador determinístico e o esquema de Mundo v1, migração `journey/0002_character.sql`, `storage/character.py`, `services/journey_creation.py` (criação atômica com compensação entre Mundo e Jornada) e `services/session.py` (uma Jornada aberta por vez), mais as rotas de regras, mundo, personagem e Jornadas. Documento `docs/main/modelo-de-dados-jogo.md`.
+- Validações: 517 testes passaram (373 anteriores e 144 novos), conferidos pelo planejador, que também rodou o gerador em três sementes e leu os resultados. O dev relatou teste real pela API: gerar mundo, validar personagem válido e inválido, criar Jornada, listar, abrir, `current`, fechar, reiniciar e reabrir. Não provado no teste real: o fechamento da Jornada num encerramento normal (só pelo teste automatizado).
+- Decisões do dev: status `impossivel` incluído nos objetivos, seguindo `rules/07` e o ADR-073; abrir uma Jornada com outra aberta retorna 409; todos os textos do personagem são obrigatórios, porque o passo final da criação do Astra os lista; o esquema de Mundo v1 tem limites de tamanho e o tipo de lugar é texto livre; `character_id` com cascata nas tabelas do personagem.
+- Observações do planejador: os nomes de lugar de um mundo repetem raízes e as descrições são repetitivas (backlog); excluir uma Jornada deixa o Mundo órfão (a corrigir na metade 2).
+- Pendente: interface do menu e do assistente; excluir o Mundo junto; esquema de jogo além do personagem; troca de Ambição e Desejo com histórico.
+- Arquivos: `backend/henduran/rules/`, `backend/henduran/worldgen/`, `backend/henduran/services/`, `backend/henduran/storage/character.py`, `backend/henduran/db/migrations/journey/0002_character.sql`, `docs/main/modelo-de-dados-jogo.md`.

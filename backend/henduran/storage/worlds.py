@@ -259,6 +259,21 @@ class WorldStore:
         users, _ = self.journeys_using(world_id)
         return bool(users)
 
+    def discard_new_world(self, world_id: str) -> None:
+        """Remove a pasta de um Mundo **recém-criado** por uma operação que falhou (compensação).
+
+        Sem as conferências de :meth:`delete_world`: só para desfazer uma criação
+        que nunca foi entregue ao jogador. Levanta :class:`StorageError` se não conseguir.
+        """
+        folder = self.paths.world_dir(checked_id(world_id))
+        try:
+            shutil.rmtree(folder)
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            raise StorageError("exclusao_falhou", f"Não foi possível remover o Mundo criado: {exc}", path=folder) from exc
+        log.info("mundo descartado (criação desfeita): %s", world_id)
+
     def delete_world(self, world_id: str, *, confirm: bool = False) -> None:
         """Remove a pasta do Mundo. Exige ``confirm=True``; recusa se o Mundo estiver em uso.
 

@@ -33,7 +33,8 @@ def test_tres_conjuntos_com_numeracao_propria():
     assert MIGRATION_SETS == ("app", "journey", "world")
     for name in MIGRATION_SETS:
         known = load_migration_set(name)
-        assert [m.version for m in known] == [1]
+        expected = [1, 2] if name == "journey" else [1]  # journey/0002_character: personagem da fatia 1
+        assert [m.version for m in known] == expected
         assert known[0].name == "initial"
     assert mig_mod.MIGRATIONS_DIR == mig_mod.MIGRATIONS_ROOT / "app"
     assert not list(mig_mod.MIGRATIONS_ROOT.glob("*.sql"))  # nada solto fora dos conjuntos
@@ -47,12 +48,14 @@ def test_conjuntos_sao_independentes(tmp_path):
     for name in MIGRATION_SETS:
         db = Database(tmp_path / f"{name}.db")
         try:
-            assert migrate(db, migration_set=name).applied == [1]
-            created[name] = tables(db) - {"schema_migrations"}
+            assert migrate(db, migration_set=name).applied == [m.version for m in load_migration_set(name)]
+            created[name] = tables(db) - {"schema_migrations", "sqlite_sequence"}
         finally:
             db.close()
     assert created["app"] == {"settings", "app_meta"}
-    assert created["journey"] == {"journey_meta"}
+    assert created["journey"] == {
+        "journey_meta", "character", "character_attributes", "character_skills", "convictions", "objectives",
+    }
     assert created["world"] == {"world_meta", "world_versions"}
 
 
@@ -119,10 +122,11 @@ def test_banco_do_app_criado_pelo_codigo_antigo_abre(tmp_path, recorded):
 
 
 def _copy_sets(dest: Path, extra: dict[str, str]) -> Path:
-    """Cópia dos conjuntos reais com uma migração ``0002`` extra nos conjuntos de ``extra``."""
+    """Cópia dos conjuntos reais com uma migração extra (a seguinte à última real) nos conjuntos de ``extra``."""
     shutil.copytree(mig_mod.MIGRATIONS_ROOT, dest, ignore=shutil.ignore_patterns("__pycache__"))
     for name, sql in extra.items():
-        (dest / name / "0002_extra.sql").write_text(sql, encoding="utf-8")
+        nxt = mig_mod.latest_version(name) + 1
+        (dest / name / f"{nxt:04d}_extra.sql").write_text(sql, encoding="utf-8")
     return dest
 
 
@@ -132,14 +136,15 @@ def test_backup_antes_de_migrar_e_banco_mais_novo_por_conjunto(tmp_path, monkeyp
     db = Database(tmp_path / "x.db")
     try:
         migrate(db, migration_set=name)
+        current = mig_mod.latest_version(name)
         root = _copy_sets(tmp_path / "sets", {name: "CREATE TABLE extra_teste (x INTEGER);\n"})
         monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", root)
         result = migrate(db, migration_set=name, backups_dir=tmp_path / "bk")
-        assert result.applied == [2]
-        assert result.backup is not None and result.backup.name.startswith(f"{prefix}-v1-")
+        assert result.applied == [current + 1]
+        assert result.backup is not None and result.backup.name.startswith(f"{prefix}-v{current}-")
         copy = sqlite3.connect(result.backup)
         try:
-            assert copy.execute("SELECT MAX(version) FROM schema_migrations").fetchone()[0] == 1
+            assert copy.execute("SELECT MAX(version) FROM schema_migrations").fetchone()[0] == current
         finally:
             copy.close()
         # O app (sem a migração extra) recusa o banco mais novo, sem alterá-lo.

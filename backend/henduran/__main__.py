@@ -9,7 +9,7 @@
 - Na inicialização, abre o banco do app (``<dados>\\henduran.db``) e aplica as
   migrações; se falharem, o serviço não inicia (código 4) e explica o motivo.
 - Cria os armazenamentos de Jornadas e de Mundos (ADR-075), mas **não abre**
-  nenhuma Jornada na inicialização.
+  nenhuma Jornada na inicialização; a Jornada aberta pela API é fechada ao sair.
 - Ao sair (inclusive por ``KeyboardInterrupt``), para o motor de IA e fecha o banco.
 """
 
@@ -111,6 +111,12 @@ async def serve(
         print(json.dumps({"event": "ready", "port": port}), flush=True)
         await task
     finally:
+        session = getattr(app.state, "session", None)
+        if session is not None:
+            try:
+                await asyncio.to_thread(session.close)  # fecha a Jornada aberta (libera o bloqueio)
+            except Exception as exc:  # noqa: BLE001 — o encerramento continua
+                print(f"henduran: falha ao fechar a Jornada aberta: {exc}", file=sys.stderr)
         if hub is not None:
             await hub.shutdown()  # o .part fica para retomar depois
         await engine.stop()

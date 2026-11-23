@@ -669,14 +669,15 @@ def test_backup_pre_migracao_por_jornada_com_rotacao(env, monkeypatch):
         with Database(paths.journey_db_file(jid), synchronous="FULL") as db:
             backup_database(db, backups, 1, prefix="journey", now=base + timedelta(minutes=i))
     assert len(journeys.list_backups(jid)) == 5
-    (root / "journey" / "0002_extra.sql").write_text("CREATE TABLE extra_teste (x INTEGER);\n", encoding="utf-8")
+    current = mig_mod.latest_version("journey")  # a migração extra vem depois das reais
+    (root / "journey" / f"{current + 1:04d}_extra.sql").write_text("CREATE TABLE extra_teste (x INTEGER);\n", encoding="utf-8")
     (root / "world" / "0002_extra.sql").write_text("CREATE TABLE extra_mundo (x INTEGER);\n", encoding="utf-8")
     monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", root)
     with journeys.open_journey(jid) as journey:
-        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == 2
+        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == current + 1
         assert journey.db.query_one("SELECT COUNT(*) FROM world.extra_mundo")[0] == 0  # Mundo migrado antes
     found = journeys.list_backups(jid)
-    assert len(found) == 5 and found[0].schema_version == 1 and found[0].created.startswith("20")
+    assert len(found) == 5 and found[0].schema_version == current and found[0].created.startswith("20")
     assert found[0].created > "2025"  # o novo, de agora
     assert journeys.list_backups(other) == []  # só a Jornada aberta foi copiada
     assert len(list(paths.world_backups_dir(wid).glob("world-v1-*.db"))) == 1
