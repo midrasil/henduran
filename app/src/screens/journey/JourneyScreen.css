@@ -702,7 +702,7 @@
 
 .msg {
   position: relative;
-  max-width: 68ch;
+  max-width: 100%;
 }
 
 .msg__who {
@@ -731,6 +731,8 @@
 
 .msg--player {
   align-self: flex-end;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .msg--player .msg__who {

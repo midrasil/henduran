@@ -1,14 +1,15 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
+Atualizado em 2026-11-23 após a tarefa `largura-mensagens-chat` (ajuste de UI na Jornada).
 
 ## Estado
 
-- Tarefa: protótipo do redesenho do menu inicial, primeira das telas existentes a passar pelo processo de `docs/ui-ux/10-prototipagem.md`.
-- Resultado: **aprovado na primeira rodada**. Documento `docs/ui-ux/11-menu-inicial.md` e protótipo `docs/ui-ux/prototipos/menu-inicial.html`: título e botões no eixo central, cartão "Última Jornada" à direita sem deslocar o eixo, Modelos fora dos botões (indicador clicável no rodapé), paisagem pixel art em tela cheia com castelos dos dois lados e animação por período (nuvens, estrelas, pássaros, vaga-lumes), cantos dourados e estandartes. **Ainda não implementado**: o app continua com o menu anterior.
-- Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23).
-- Decisão do responsável: **por enquanto só prototipar e documentar** as telas existentes, uma por vez; a implementação vem depois.
-- Branch: `docs/prototipo-menu`, PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.
+- Tarefa: as mensagens do Narrador e do jogador paravam em cerca de metade da coluna e quebravam linha cedo. Causa: `.msg` usava `max-width: 68ch`, medido na Pixelify Sans de 16 px herdada de `.jscreen`, enquanto o texto usa Crimson Pro de 20 px.
+- Resultado: as mensagens passam a usar a largura disponível da coluna (`max-width: 100%`). As falas do jogador continuam à direita, com balão ajustado ao texto e teto de 100%. Regras equivalentes aplicadas ao protótipo aprovado e nota acrescentada à especificação da tela.
+- Decisão do responsável: largura 100% disponível, em vez de limite de ~80 caracteres ou versão híbrida; protótipo e documento atualizados junto com o código.
+- Validações: `npm run test` (275/275) e `npm run typecheck` passaram. A conferência visual no app real ainda não foi feita; jsdom não calcula layout.
+- Branch: `fix/largura-mensagens-chat`. PR [#25](https://github.com/midrasil/henduran/pull/25) aberto contra `main`.
+- Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23) e o protótipo do menu inicial foi aprovado (PR #24). Por enquanto as telas existentes são só prototipadas e documentadas, uma por vez; ajustes pequenos como este podem ir direto ao código.
 
 ## Decisões vigentes
 
@@ -28,13 +29,13 @@ Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
 - `app/src/`: navegação por telas (`navigation.ts`): `menu`, `jornadas`, `nova-jornada`, `modelos` e `jornada` (abas Chat, Ficha, Mundo, Objetivos). Telas em `screens/` (`MainMenu`, `JourneysScreen`, `newJourney/`, `journey/`), cliente de API em `api/journeys.ts`, validação do servidor em `hooks/useServerValidation.ts`, componentes novos em `ui/` (`Select`, `RadioGroup`, `FieldGroup`, `Stepper`, `TrailBoxes`), tudo na galeria. A interface não duplica regras: vem de `GET /rules/creation`. O fixture de testes `app/src/test/gameData.ts` é gerado do backend e precisa ser regerado se as regras mudarem. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
-- Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`.
+- Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`; `npm run typecheck` também passou nesta tarefa.
 - Formato do evento `done` provisório (`reason`: completed ou cancelled); ADR-072 segue aberto nesse ponto.
-
-- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens.
+- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens. As mensagens da Jornada usam `.msgs`/`.msg` em `app/src/screens/journey/JourneyScreen.css`, não o `ChatBubble` da galeria; desde esta tarefa ocupam 100% da coluna.
 
 ## Pendências relevantes
 
+- Conferir visualmente a largura das mensagens no app real (1024×768 e maximizado), com narração longa, fala curta e longa do jogador, ações, rolagem e streaming.
 - Testar com modelo local real: se o Aduran usa a marcação `[[propor_cena]]` só quando a ação pede Cena e se não resolve ações incertas; revisar as instruções em `backend/henduran/narrative/context.py`.
 - A rolagem da coluna da Ficha apareceu fora do topo numa captura do dev, sem reprodução (provável efeito da emulação de largura); ficou só `overflow-anchor: none`. Reavaliar se acontecer no uso real.
 - Backups da Jornada não incluem `assets\` (retrato); o backend não expõe o estado das trilhas nem o máximo de Fraturas (a interface usa `FRACTURE_SLOTS = 2`). Ambos no backlog.
@@ -61,4 +62,4 @@ Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
 
 ## Próximo passo recomendado
 
-⭐ Prototipar a próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), depois **Jornadas** e **Modelos** (no nível do Caliope), seguindo `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
+⭐ Revisar o PR #25 e conferir a largura das mensagens no app em 1024×768 e maximizado; se aprovado, fazer o merge. Depois, retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
