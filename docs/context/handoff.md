@@ -8,7 +8,7 @@ Atualizado em 2026-11-23 após a tarefa `largura-mensagens-chat` (ajuste de UI n
 - Resultado: as mensagens passam a usar a largura disponível da coluna (`max-width: 100%`). As falas do jogador continuam à direita, com balão ajustado ao texto e teto de 100%. Regras equivalentes aplicadas ao protótipo aprovado e nota acrescentada à especificação da tela.
 - Decisão do responsável: largura 100% disponível, em vez de limite de ~80 caracteres ou versão híbrida; protótipo e documento atualizados junto com o código.
 - Validações: `npm run test` (275/275) e `npm run typecheck` passaram. A conferência visual no app real ainda não foi feita; jsdom não calcula layout.
-- Branch: `fix/largura-mensagens-chat`. PR aberto contra `main`; link a registrar no jornal e neste handoff.
+- Branch: `fix/largura-mensagens-chat`. PR [#25](https://github.com/midrasil/henduran/pull/25) aberto contra `main`.
 - Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23) e o protótipo do menu inicial foi aprovado (PR #24). Por enquanto as telas existentes são só prototipadas e documentadas, uma por vez; ajustes pequenos como este podem ir direto ao código.
 
 ## Decisões vigentes
@@ -62,4 +62,4 @@ Atualizado em 2026-11-23 após a tarefa `largura-mensagens-chat` (ajuste de UI n
 
 ## Próximo passo recomendado
 
-⭐ Revisar o PR desta tarefa e conferir a largura das mensagens no app em 1024×768 e maximizado; se aprovado, fazer o merge. Depois, retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
+⭐ Revisar o PR #25 e conferir a largura das mensagens no app em 1024×768 e maximizado; se aprovado, fazer o merge. Depois, retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.

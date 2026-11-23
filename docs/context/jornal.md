@@ -11,7 +11,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: `.msg { max-width: 100% }` e `.msg--player { width: fit-content; max-width: 100% }`; regras equivalentes no protótipo aprovado e nota sobre a largura em `09-tela-da-jornada.md`.
 - Validações: `npm run test` (275/275) e `npm run typecheck` passaram. A conferência visual no app real fica com o responsável, porque jsdom não calcula layout.
 - Arquivos: `app/src/screens/journey/JourneyScreen.css`, `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/context/handoff.md`.
-- Entrega: PR a registrar nesta entrada.
+- Entrega: PR [#25](https://github.com/midrasil/henduran/pull/25) aberto contra `main`.
 
 ## 2026-11-22 — `mapeamento-ui-ux`
 
