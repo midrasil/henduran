@@ -1,5 +1,6 @@
 """Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos, Hugging Face, motor (ADR-072)
-e as listas de Jornadas e Mundos (ADR-075, somente leitura).
+as Jornadas e os Mundos (ADR-075) e o passo "Nova Jornada": regras de criação da fatia 1, gerador
+de mundo, validação, criação atômica, abertura, fechamento, exclusão e restauração.
 
 Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no ADR-072):
 
@@ -9,7 +10,8 @@ Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no AD
 - ``event: error`` — ``{"message": "...", "code": "..."}``; encerra o fluxo. ``code``:
   ``no_model``, ``engine_not_installed``, ``engine_not_ready`` ou ``generation_failed``.
 
-Erros HTTP das rotas de modelos, motor e Hugging Face: ``{"detail": {"code": "...", "message": "..."}}``.
+Erros HTTP: ``{"detail": {"code": "...", "message": "..."}}``. Nas validações (422), ``detail`` traz
+também ``errors: [{"field", "code", "message"}]``.
 """
 
 from __future__ import annotations
@@ -30,10 +32,19 @@ from pydantic import BaseModel, Field
 from henduran.ai import hardware as hw
 from henduran.ai.engine import EngineError, EngineManager
 from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubError, ModelHub
-from henduran.db.connection import Database
+from henduran.db.connection import Database, DatabaseError
 from henduran.db.migrations import schema_version
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
-from henduran.storage import JourneyStore, WorldStore
+from henduran.rules.creation import creation_catalog, preview_derived, validate_character
+from henduran.services.journey_creation import (
+    JourneyCreationFailed,
+    JourneyCreationInvalid,
+    create_journey_with_character,
+)
+from henduran.services.session import JourneySession
+from henduran.storage import JourneyStore, StorageError, WorldStore
+from henduran.worldgen import SEED_MAX, generate_world, validate_world_content
+from henduran.worldgen import limits as world_limits
 
 logger = logging.getLogger("henduran.api")
 
@@ -77,6 +88,38 @@ ERROR_STATUS = {
     "engine_unavailable": 503,
     "storage_unavailable": 503,
 }
+
+# Erros de Jornadas e Mundos (StorageError, JourneyDamaged, MigrationError).
+STORAGE_STATUS = {
+    "id_invalido": 422,
+    "nome_invalido": 422,
+    "backup_invalido": 422,
+    "confirmacao_necessaria": 400,
+    "jornada_nao_encontrada": 404,
+    "mundo_nao_encontrado": 404,
+    "backup_nao_encontrado": 404,
+    "nenhuma_jornada_aberta": 404,
+    "jornada_ja_aberta": 409,
+    "jornada_aberta": 409,
+    "jornada_bloqueada": 409,
+    "personagem_existente": 409,
+    "mundo_ausente": 409,
+    "versao_ausente": 409,
+    "mundo_mais_novo": 409,
+    "mundo_danificado": 409,
+    "banco_mais_novo": 409,
+    "banco_danificado": 409,
+    "banco_ausente": 409,
+    "banco_vazio": 409,
+    "sem_resumo": 409,
+    "id_divergente": 409,
+    "checksum_divergente": 409,
+    "migracao_desconhecida": 409,
+    "banco_inacessivel": 503,
+}
+
+# Limite do corpo das rotas de Nova Jornada (o conteúdo do Mundo tem até 256 KB).
+MAX_BODY_BYTES = 1024 * 1024
 
 
 class Message(BaseModel):
@@ -154,6 +197,9 @@ def create_app(
     app.state.database = database
     app.state.journeys = journeys
     app.state.worlds = worlds
+    session = JourneySession(journeys) if journeys is not None else None
+    # Jornada aberta (uma por vez); quem serve o app chama ``app.state.session.close()`` ao encerrar.
+    app.state.session = session
     scan = hardware_scan or hw.scan
     hardware_cache: dict[str, dict] = {}
 
@@ -442,5 +488,195 @@ def create_app(
             raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
         items = await asyncio.to_thread(worlds.list_worlds)
         return {"worlds": [item.to_dict() for item in items]}
+
+    # ------------------------------------------------- Nova Jornada: regras e Mundo
+    def need_journeys() -> tuple[JourneyStore, JourneySession]:
+        if journeys is None or session is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Jornadas não está ativo.", 503)
+        return journeys, session
+
+    def storage_error(exc: Exception) -> HTTPException:
+        if isinstance(exc, JourneyCreationFailed):
+            return HTTPException(status_code=500, detail={"code": exc.code, "message": str(exc), "step": exc.step})
+        code = getattr(exc, "code", "erro_armazenamento")
+        status_code = STORAGE_STATUS.get(code, 500)
+        if status_code >= 500:
+            logger.error("erro de armazenamento (%s): %s", code, exc)
+        return _http_error(code, str(exc), status_code)
+
+    def invalid(code: str, message: str, errors: list[dict]) -> HTTPException:
+        return HTTPException(status_code=422, detail={"code": code, "message": message, "errors": errors})
+
+    def unknown_fields(prefix: str, keys: list) -> list[dict]:
+        return [
+            {"field": f"{prefix}{str(k)[:40]}", "code": "campo_desconhecido", "message": "Campo desconhecido."}
+            for k in keys
+        ]
+
+    async def read_json(request: Request, allowed: tuple[str, ...]) -> dict:
+        """Corpo JSON (objeto) com até ``MAX_BODY_BYTES``; chaves fora de ``allowed`` são recusadas."""
+        declared = request.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+            raise _http_error("corpo_grande_demais", "O pedido é grande demais.", 413)
+        chunks: list[bytes] = []
+        size = 0
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > MAX_BODY_BYTES:
+                raise _http_error("corpo_grande_demais", "O pedido é grande demais.", 413)
+            chunks.append(chunk)
+        raw = b"".join(chunks)
+        if not raw.strip():
+            return {}
+
+        def reject_constant(name: str) -> None:
+            raise ValueError(name)
+
+        try:
+            body = json.loads(raw.decode("utf-8"), parse_constant=reject_constant)
+        except (UnicodeDecodeError, ValueError, RecursionError) as exc:
+            raise _http_error("json_invalido", "O corpo do pedido não é JSON válido.", 400) from exc
+        if not isinstance(body, dict):
+            raise invalid("corpo_invalido", "O corpo do pedido deve ser um objeto JSON.", [])
+        unknown = [k for k in body if k not in allowed]
+        if unknown:
+            raise invalid("corpo_invalido", "O pedido tem campos desconhecidos.", unknown_fields("", unknown))
+        return body
+
+    @app.get("/rules/creation", dependencies=auth)
+    async def rules_creation() -> dict:
+        return creation_catalog()
+
+    @app.get("/worlds/schema", dependencies=auth)
+    async def worlds_schema() -> dict:
+        return world_limits()
+
+    @app.post("/worlds/generate", dependencies=auth)
+    async def worlds_generate(request: Request) -> dict:
+        body = await read_json(request, ("seed",))
+        seed = body.get("seed")
+        if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= SEED_MAX):
+            message = f"A semente deve ser um inteiro entre 0 e {SEED_MAX}."
+            raise invalid("semente_invalida", message, [{"field": "seed", "code": "semente_invalida", "message": message}])
+        return await asyncio.to_thread(generate_world, seed)
+
+    @app.post("/worlds/validate", dependencies=auth)
+    async def worlds_validate(request: Request) -> dict:
+        body = await read_json(request, ("content",))
+        result = await asyncio.to_thread(validate_world_content, body.get("content"))
+        return {"valid": result.valid, "errors": result.error_dicts(), "content": result.content}
+
+    @app.post("/characters/validate", dependencies=auth)
+    async def characters_validate(request: Request) -> dict:
+        body = await read_json(request, ("draft",))
+        draft = body.get("draft")
+        result = validate_character(draft)
+        return {"valid": result.valid, "errors": result.error_dicts(), "derived": preview_derived(draft)}
+
+    # ------------------------------------------------- Nova Jornada: criação e ciclo de vida
+    @app.post("/journeys", dependencies=auth)
+    async def journeys_create(request: Request) -> JSONResponse:
+        store, _ = need_journeys()
+        body = await read_json(request, ("name", "world", "start_place_id", "character"))
+        world = body.get("world")
+        failed = "Os dados da Nova Jornada têm erros; nada foi criado."
+        if world is not None and not isinstance(world, dict):
+            raise invalid(
+                "criacao_invalida",
+                failed,
+                [{"field": "world", "code": "tipo_invalido", "message": "world deve ser um objeto com content."}],
+            )
+        world = world or {}
+        extra = [k for k in world if k != "content"]
+        if extra:
+            raise invalid("criacao_invalida", failed, unknown_fields("world.", extra))
+        try:
+            summary = await asyncio.to_thread(
+                create_journey_with_character,
+                store,
+                world_content=world.get("content"),
+                start_place_id=body.get("start_place_id"),
+                character=body.get("character"),
+                name=body.get("name"),
+            )
+        except JourneyCreationInvalid as exc:
+            raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return JSONResponse({"journey": summary.to_dict()}, status_code=201)
+
+    @app.get("/journeys/current", dependencies=auth)
+    async def journeys_current() -> dict:
+        _, sess = need_journeys()
+        try:
+            snap = await asyncio.to_thread(sess.snapshot)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        if snap is None:
+            raise _http_error("nenhuma_jornada_aberta", "Nenhuma Jornada está aberta.", 404)
+        return snap
+
+    @app.post("/journeys/close", dependencies=auth)
+    async def journeys_close() -> dict:
+        _, sess = need_journeys()
+        return {"closed": await asyncio.to_thread(sess.close)}
+
+    @app.post("/journeys/{journey_id}/open", dependencies=auth)
+    async def journeys_open(journey_id: str) -> dict:
+        _, sess = need_journeys()
+
+        def work() -> dict | None:
+            sess.open(journey_id)
+            return sess.snapshot()
+
+        try:
+            snap = await asyncio.to_thread(work)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        if snap is None:  # fechada no meio por outra requisição
+            raise _http_error("nenhuma_jornada_aberta", "A Jornada foi fechada.", 409)
+        return snap
+
+    @app.delete("/journeys/{journey_id}", dependencies=auth)
+    async def journeys_delete(journey_id: str, confirm: str = "") -> dict:
+        store, _ = need_journeys()
+        try:
+            await asyncio.to_thread(store.delete_journey, journey_id, confirm=confirm.lower() in ("true", "1"))
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return {"deleted": journey_id.lower()}
+
+    @app.get("/journeys/{journey_id}/backups", dependencies=auth)
+    async def journeys_backups(journey_id: str) -> dict:
+        store, _ = need_journeys()
+
+        def work() -> list[dict]:
+            store.get_summary(journey_id)  # 404 se a Jornada não existir
+            return [b.to_dict() for b in store.list_backups(journey_id)]
+
+        try:
+            return {"backups": await asyncio.to_thread(work)}
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+
+    @app.post("/journeys/{journey_id}/restore", dependencies=auth)
+    async def journeys_restore(journey_id: str, request: Request) -> dict:
+        store, _ = need_journeys()
+        body = await read_json(request, ("backup",))
+        backup = body.get("backup")
+        if not isinstance(backup, str) or not backup:
+            raise invalid(
+                "corpo_invalido",
+                "Informe o backup a restaurar.",
+                [{"field": "backup", "code": "obrigatorio", "message": "Informe o nome do backup."}],
+            )
+        try:
+            result = await asyncio.to_thread(store.restore_backup, journey_id, backup)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return {
+            "restored_from": result.restored_from,
+            "preserved_as": result.preserved_as.name if result.preserved_as else None,
+        }
 
     return app

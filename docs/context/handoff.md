@@ -1,13 +1,13 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `bancos-jornada-mundo`.
+Atualizado em 2026-11-23 após a tarefa `api-jornada-mundo-personagem`.
 
 ## Estado
 
-- Tarefa: infraestrutura dos bancos por Jornada e por Mundo (ADR-075), passo 1 do caminho para o menu inicial e a criação de personagem.
-- Resultado: `backend/` com 373 testes (1 pulado) passando. Migrações por conjunto (`app`, `journey`, `world`), ids em UUID estrito, `WorldStore` e `JourneyStore` (criar, listar, abrir, excluir, restaurar backup), uma Jornada aberta por vez com bloqueio do sistema operacional, Mundo anexado só em leitura, `synchronous=FULL` nos bancos de jogo e dano sem recriação silenciosa. API só de leitura: `GET /journeys` e `GET /worlds`. **Sem esquema de jogo ainda.** Teste real do dev: duas Jornadas, uma corrompida de propósito e restaurada, bloqueio liberado após `taskkill /F`.
-- ADR-074 aprovado; a persistência SQLite (PR #15), a base de UI (PR #16) e o ADR-075 (PR #17) já estão na `main`.
-- Branch: `feat/bancos-jornada-mundo` (PR aberto contra `main`).
+- Tarefa: backend do passo "Nova Jornada" (metade 1 do passo 2): regras de criação da fatia 1, gerador de mundo por código, esquema mínimo de personagem e API de Jornadas.
+- Resultado: `backend/` com 517 testes (1 pulado) passando. `rules/` em código (6 Atributos, 22 Perícias, 3 perfis, Vida e Vontade derivadas, validação com erros por campo), `worldgen/` (mundo determinístico por semente, esquema v1 com validação), migração `journey/0002_character.sql` (personagem, Atributos, Perícias, Convicções, objetivos; `rules_version` em `journey_meta`), criação atômica de Jornada com compensação, e rotas `GET /rules/creation`, `POST /worlds/generate`, `POST /worlds/validate`, `GET /worlds/schema`, `POST /characters/validate`, `POST /journeys`, `GET /journeys/current`, `POST /journeys/{id}/open`, `POST /journeys/close`, `DELETE /journeys/{id}?confirm=true`, `GET /journeys/{id}/backups`, `POST /journeys/{id}/restore`. Teste real do dev pela API: criar, abrir, reiniciar e reabrir. Sem mudanças em `app/`.
+- A infraestrutura dos bancos (PR #18) já está na `main`.
+- Branch: `feat/jornada-mundo-personagem-api` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -22,7 +22,7 @@ Atualizado em 2026-11-23 após a tarefa `bancos-jornada-mundo`.
 
 ## Código existente
 
-- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações por conjunto, backup), `storage/` (`WorldStore`, `JourneyStore`, bloqueio, leitura sem migrar), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
+- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações por conjunto, backup), `storage/` (`WorldStore`, `JourneyStore`, bloqueio, leitura sem migrar, `character.py`), `rules/` (fatia 1 em código), `worldgen/` (gerador e esquema do Mundo v1), `services/` (criação atômica e sessão da Jornada aberta). Modelo de dados em `docs/main/modelo-de-dados-jogo.md`, `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
 - `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, busca e downloads de modelos, tudo com a base de UI pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
@@ -33,7 +33,9 @@ Atualizado em 2026-11-23 após a tarefa `bancos-jornada-mundo`.
 
 ## Pendências relevantes
 
-- Rotas de criar, abrir, excluir e restaurar Jornada e Mundo: ficam para quando as telas pedirem (hoje só `GET /journeys` e `GET /worlds`). O esquema de jogo (estado, eventos, memória, salvamentos, ramificações) ainda não existe.
+- **Passo 2, metade 2:** menu inicial e assistente de Nova Jornada (Mundo, Protagonista, Revisão) na interface, sobre a API acima, com `GET /rules/creation` como fonte única das regras. Fazer junto: excluir o Mundo quando a Jornada é excluída e nenhum outro a usa (hoje fica um Mundo órfão).
+- O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
+- Gerador de mundo: os nomes de lugar de um mesmo mundo repetem raízes (por exemplo Lumícia, Lumais e Lumanor) e as descrições são repetitivas; melhorar a variedade. Os textos ficam em `backend/henduran/worldgen/data.py`.
 - Pendências da infraestrutura: a lista não roda `quick_check` (dano em outras páginas só aparece ao abrir); `delete_journey` pode deixar a pasta parcialmente apagada se um arquivo estiver preso; corrida teórica entre `world_in_use` e a exclusão do Mundo.
 - Em aberto no ADR-075: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e o anexo do Mundo com FTS5 e vetores.
 - **Visual abaixo dos esboços** (feedback do responsável): faltam ornamentos de canto, mais riqueza nas áreas de conversa e de listas, tooltip, ícones, controle de escala de texto no jogo; verificar DPI de 125% a 200%, reflow a 320 px e leitor de tela. O céu cobre só uma faixa no topo; as cores dos períodos estão em `sky.ts`, fora dos tokens.
@@ -53,4 +55,4 @@ Atualizado em 2026-11-23 após a tarefa `bancos-jornada-mundo`.
 
 ## Próximo passo recomendado
 
-⭐ Passo 2: menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art e a infraestrutura dos bancos. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.
+⭐ Passo 2, metade 2: menu inicial e assistente de Nova Jornada na interface, com o céu da última Jornada, sobre a API já pronta. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.

@@ -31,17 +31,20 @@ import shutil
 import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from henduran.db.connection import SIDE_FILES, Database, DatabaseError, timestamp, utc_now_iso
+from henduran.db.connection import SIDE_FILES, Database, DatabaseError, Transaction, timestamp, utc_now_iso
 from henduran.db.migrations import MigrationError, latest_version, list_backup_files, migrate
 from henduran.paths import DataPaths, InvalidIdError, new_id, validate_id
+from henduran.storage import character as character_store
 from henduran.storage.errors import JourneyDamaged, StorageError, WorldDamaged
 from henduran.storage.lock import FileLock, LockBusy
 from henduran.storage.snapshot import read_snapshot
 from henduran.storage.worlds import NAME_MAX, WorldStore, WorldSummary, checked_id, clean_name
 
 if TYPE_CHECKING:
+    from henduran.rules.creation import Character
     from henduran.settings import SettingsStore
 
 log = logging.getLogger("henduran.storage")
@@ -54,6 +57,11 @@ DAMAGED_SUFFIX = ".danificado-"
 _BACKUP_NAME_RE = re.compile(r"^journey-v\d+-\d{8}-\d{6}(?:-\d+)?\.db$")
 _DAMAGE_CODES = ("banco_danificado", "banco_ausente", "banco_vazio", "sem_resumo")
 _UNSET: Any = object()
+# Campos do resumo devolvidos por OpenJourney.summary() (rules_version existe a partir da migração 0002).
+_SUMMARY_KEYS = (
+    "id", "name", "character_name", "location", "day_period", "world_id", "world_version",
+    "created_at", "last_saved_at", "rules_version",
+)
 
 # Uma Jornada aberta por vez neste processo (entre todas as instâncias de JourneyStore).
 _process_lock = threading.Lock()
@@ -84,6 +92,7 @@ class JourneySummary:
     status: str
     error_code: str | None = None
     error_message: str | None = None
+    rules_version: str | None = None  # versão das regras aplicada (migração 0002); None se ilegível
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -133,11 +142,30 @@ class OpenJourney:
         return self._closed
 
     def summary(self) -> dict[str, Any]:
-        row = self.db.query_one(
-            "SELECT id, name, character_name, location, day_period, world_id, world_version, created_at, last_saved_at "
-            "FROM journey_meta"
-        )
-        return dict(row) if row is not None else {}
+        row = self.db.query_one("SELECT * FROM journey_meta")
+        if row is None:
+            return {}
+        data = dict(row)
+        return {key: data.get(key) for key in _SUMMARY_KEYS}
+
+    # ------------------------------------------------------------- personagem
+    def write_character(self, character: Character) -> None:
+        """Grava o personagem validado numa transação única e atualiza ``character_name`` no resumo.
+
+        Recusa (``personagem_existente``) se a Jornada já tiver personagem.
+        """
+        now = utc_now_iso()
+        with self.db.transaction() as tx:
+            character_store.write_character(tx, character, now)
+            tx.execute("UPDATE journey_meta SET character_name = ?", (character.name,))
+
+    def read_character(self) -> dict[str, Any] | None:
+        """O personagem como gravado, ou ``None``."""
+        return character_store.read_character(self.db)
+
+    def character_sheet(self) -> dict[str, Any] | None:
+        """Personagem completo com os derivados (trilhas de Vida e Vontade), ou ``None``."""
+        return character_store.character_sheet(self.db)
 
     def world_content(self) -> Any:
         """Conteúdo (JSON decodificado) da versão fixada do Mundo, lido pelo anexo."""
@@ -222,8 +250,20 @@ class JourneyStore:
             return _process_open["id"]
 
     # ------------------------------------------------------------- criação
-    def create_journey(self, name: str, world_id: str, world_version: int = 1) -> str:
-        """Cria a Jornada vinculada a ``(world_id, world_version)``. Devolve o id."""
+    def create_journey(
+        self,
+        name: str,
+        world_id: str,
+        world_version: int = 1,
+        *,
+        initialize: Callable[[Transaction, str], None] | None = None,
+    ) -> str:
+        """Cria a Jornada vinculada a ``(world_id, world_version)``. Devolve o id.
+
+        ``initialize(tx, journey_id)``, se dado, roda **na mesma transação** que grava
+        o ``journey_meta`` (por exemplo, para gravar o personagem): se falhar, nada
+        fica gravado e a pasta da Jornada é removida.
+        """
         name = clean_name(name)
         wid = checked_id(world_id)
         self.worlds.require_version(wid, world_version)
@@ -241,6 +281,8 @@ class JourneyStore:
                     "INSERT INTO journey_meta (id, name, world_id, world_version, created_at) VALUES (?, ?, ?, ?, ?)",
                     (journey_id, name, wid, world_version, utc_now_iso()),
                 )
+                if initialize is not None:
+                    initialize(tx, journey_id)
         except BaseException:
             if db is not None:
                 db.close()
@@ -287,6 +329,7 @@ class JourneyStore:
             last_saved_at=meta.get("last_saved_at"),
             schema_version=snap.version,
             status="ok",
+            rules_version=meta.get("rules_version"),
         )
 
         def mark(status: str, code: str, message: str | None) -> JourneySummary:
@@ -541,6 +584,25 @@ class JourneyStore:
                 extra.replace(target.with_name(target.name + side))
 
     # ------------------------------------------------------------- exclusão
+    def discard_new_journey(self, journey_id: str) -> None:
+        """Remove a pasta de uma Jornada **recém-criada** por uma operação que falhou (compensação).
+
+        Só para desfazer uma criação que nunca foi entregue ao jogador (a Jornada
+        não está aberta). Levanta :class:`StorageError` se não conseguir.
+        """
+        jid = checked_id(journey_id)
+        with _process_lock:
+            if _process_open["id"] == jid:
+                raise StorageError("jornada_aberta", "A Jornada criada está aberta e não pode ser descartada.")
+        folder = self.paths.journey_dir(jid)
+        try:
+            shutil.rmtree(folder)
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            raise StorageError("exclusao_falhou", f"Não foi possível remover a Jornada criada: {exc}", path=folder) from exc
+        log.info("jornada descartada (criação desfeita): %s", jid)
+
     def delete_journey(self, journey_id: str, *, confirm: bool = False) -> None:
         """Remove a pasta da Jornada. Exige ``confirm=True``; recusa se estiver aberta ou bloqueada."""
         jid = checked_id(journey_id)
