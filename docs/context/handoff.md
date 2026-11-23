@@ -7,7 +7,7 @@ Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
 - Tarefa: decisão sobre a Cena inicial e o ciclo de Cena no MVP (só documentação).
 - Resultado: **ADR-076 aprovado**. Toda Jornada começa Em Cena, no lugar inicial, com a primeira mensagem do Narrador. A abertura é gerada na primeira vez que a Jornada abre sem mensagens (botão "Gerar abertura" se o modelo não estiver pronto). O motor sorteia um tom de partida. A Cena nasce em duas etapas (proposta em JSON validada pelo motor, depois narração em *streaming*). O encerramento é feito pelo jogador ou proposto pelo Narrador e confirmado pelo jogador, com resumo gravado. Histórico de Cenas e mensagens no `journey.db`. Ajustados `02-loop-de-gameplay.md`, `05-narrador-ia.md` e `ESCOPO-MVP.md`.
 - A interface do menu e da Nova Jornada (PR #20) já está na `main`.
-- Branch: `docs/cena-inicial` (PR aberto contra `main`).
+- Branch: `docs/cena-inicial`, PR [#21](https://github.com/midrasil/henduran/pull/21) aberto contra `main`.
 
 ## Decisões vigentes
 
