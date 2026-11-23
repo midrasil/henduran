@@ -1,4 +1,5 @@
 import type { EngineStatus } from "../api/engine";
+import { Button, PixelIcon } from "../ui";
 
 /** Texto do aviso no Chat, ou `null` quando o Narrador pode responder. */
 export function engineNoticeText(status: EngineStatus | null): string | null {
@@ -15,11 +16,12 @@ export function EngineNotice({ status, onOpenModels }: { status: EngineStatus | 
   const text = engineNoticeText(status);
   if (!text) return null;
   return (
-    <div className="notice" role="status">
+    <div className="notice surface-parchment px-frame" role="status">
+      <PixelIcon name="warning" size={24} className="notice__icon" />
       <p className="notice__text">{text}</p>
-      <button type="button" className="button button--secondary" onClick={onOpenModels}>
+      <Button variant="primary" onClick={onOpenModels}>
         Ir para a aba Modelos
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,0 +1,148 @@
+/**
+ * Ícones em pixel art desenhados por código: cada grade vira retângulos SVG
+ * (`#` = pixel aceso, na cor do texto). Sem arquivos de imagem. Decorativos
+ * (`aria-hidden`); o significado sempre está também em texto.
+ */
+
+const GRIDS = {
+  sun: [
+    "...#....",
+    ".#...#..",
+    "...##...",
+    "#.####.#",
+    "..####..",
+    "...##...",
+    ".#...#..",
+    "...#....",
+  ],
+  moon: [
+    "..####..",
+    ".##.....",
+    "##......",
+    "##......",
+    "##......",
+    "##......",
+    ".##.....",
+    "..####..",
+  ],
+  check: [
+    "........",
+    ".......#",
+    "......##",
+    "#....##.",
+    "##..##..",
+    ".####...",
+    "..##....",
+    "........",
+  ],
+  cross: [
+    "........",
+    ".##..##.",
+    "..####..",
+    "...##...",
+    "..####..",
+    ".##..##.",
+    "........",
+    "........",
+  ],
+  hourglass: [
+    "########",
+    ".#....#.",
+    "..#..#..",
+    "...##...",
+    "...##...",
+    "..#..#..",
+    ".######.",
+    "########",
+  ],
+  hollow: [
+    "........",
+    ".######.",
+    ".#....#.",
+    ".#....#.",
+    ".#....#.",
+    ".#....#.",
+    ".######.",
+    "........",
+  ],
+  chat: [
+    "........",
+    ".######.",
+    "#......#",
+    "#.#.#..#",
+    "#......#",
+    ".######.",
+    ".#......",
+    "#.......",
+  ],
+  gem: [
+    "........",
+    "..####..",
+    ".#.##.#.",
+    "########",
+    ".#.##.#.",
+    "..#..#..",
+    "...##...",
+    "........",
+  ],
+  star: [
+    "...#....",
+    "...#....",
+    "..###...",
+    "#######.",
+    "..###...",
+    "..#.#...",
+    ".#...#..",
+    "........",
+  ],
+  warning: [
+    "...##...",
+    "..#..#..",
+    "..#..#..",
+    ".#.##.#.",
+    ".#.##.#.",
+    "#......#",
+    "#..##..#",
+    "########",
+  ],
+} as const;
+
+export type PixelIconName = keyof typeof GRIDS;
+
+export interface PixelIconProps {
+  name: PixelIconName;
+  /** Tamanho em pixels CSS (múltiplo de 8 para manter pixels inteiros). */
+  size?: 16 | 24 | 32;
+  className?: string;
+}
+
+export function PixelIcon({ name, size = 16, className }: PixelIconProps) {
+  const grid = GRIDS[name];
+  const rects: { x: number; y: number; w: number }[] = [];
+  grid.forEach((row, y) => {
+    // junta pixels vizinhos da linha num só retângulo
+    let start = -1;
+    for (let x = 0; x <= row.length; x++) {
+      const on = row[x] === "#";
+      if (on && start < 0) start = x;
+      if (!on && start >= 0) {
+        rects.push({ x: start, y, w: x - start });
+        start = -1;
+      }
+    }
+  });
+  return (
+    <svg
+      className={["pixel-icon", className ?? ""].filter(Boolean).join(" ")}
+      width={size}
+      height={size}
+      viewBox="0 0 8 8"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {rects.map((r) => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill="currentColor" />
+      ))}
+    </svg>
+  );
+}

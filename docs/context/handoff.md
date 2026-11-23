@@ -1,12 +1,13 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `persistencia-sqlite`.
+Atualizado em 2026-11-23 após as tarefas `persistencia-sqlite` e `base-ui-pixel-art`.
 
 ## Estado
 
-- Tarefa: fundação de persistência SQLite do app (ADR-050, ADR-074 proposto). A base de UI pixel art corre em paralelo, em PR separado.
+- Tarefas: fundação de persistência SQLite do app (ADR-050, ADR-074 proposto) e base de UI pixel art (ADR-069). Foram feitas em paralelo, em PRs separados; o da UI está empilhado sobre o da SQLite.
 - Resultado: `backend/` com 298 testes (1 pulado) passando. Banco do app com migrações, backup antes de migrar e tratamento de banco corrompido; o `settings.json` provisório passou para o banco com importação única. A API não mudou, salvo o campo `database` em `/health`. Teste real do dev: importação do legado, persistência após reiniciar. Só modo dev: o empacotamento do Python segue em aberto.
-- Branch: `feat/persistencia-sqlite` (PR aberto contra `main`).
+- Base de UI: tokens com paleta extraída dos esboços, fontes Pixelify Sans e Crimson Pro (OFL), componentes em `app/src/ui/`, `SkyBackdrop` com 6 períodos, galeria só em desenvolvimento e as telas Chat e Modelos reescritas. 167 testes do frontend passam, com contraste AA verificado por teste. O responsável avaliou: ainda não está na cara esperada, mas é aceitável para o MVP.
+- Branches: `feat/persistencia-sqlite` (PR aberto contra `main`) e `feat/base-ui-pixel-art` (PR aberto contra a branch da SQLite; depois que a SQLite for mesclada, o PR da UI passa para a `main`).
 
 ## Decisões vigentes
 
@@ -21,15 +22,18 @@ Atualizado em 2026-11-23 após a tarefa `persistencia-sqlite`.
 ## Código existente
 
 - `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações, backup), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
-- `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, sem visual pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
+- `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, busca e downloads de modelos, tudo com a base de UI pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
 - Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`.
 - Formato do evento `done` provisório (`reason`: completed ou cancelled); ADR-072 segue aberto nesse ponto.
 
+- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens.
+
 ## Pendências relevantes
 
 - **Decidir um banco por Jornada ou um banco único** para os dados de jogo (ADR-050, ADR-058, ADR-074); revisar a política de corrupção e a durabilidade (`synchronous`) quando houver dados de jogo. Aprovar o ADR-074.
+- **Visual abaixo dos esboços** (feedback do responsável): faltam ornamentos de canto, mais riqueza nas áreas de conversa e de listas, tooltip, ícones, controle de escala de texto no jogo; verificar DPI de 125% a 200%, reflow a 320 px e leitor de tela. O céu cobre só uma faixa no topo; as cores dos períodos estão em `sky.ts`, fora dos tokens.
 - **Aba Modelos no nível do Caliope** (feedback do responsável): abas separadas, escolha de pasta pelo Windows, notas de qualidade por quantização, sugestões de busca, ocultar modelos, tela inicial sem modelo e ajustes de contexto e camadas da GPU. Detalhes no backlog.
 - Decisões da Tarefa B em aberto: remover modelo de pasta extra é sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez, sem fila.
 - Excluir `app/src-tauri/target/` e `node_modules/` da sincronização do OneDrive.

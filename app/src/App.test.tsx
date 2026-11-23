@@ -106,7 +106,9 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Enviar" }));
 
     const log = screen.getByRole("log", { name: "Conversa" });
-    expect(log).toHaveAttribute("aria-live", "polite");
+    // A conversa não é anunciada palavra por palavra; uma região à parte anuncia início e fim.
+    expect(log).toHaveAttribute("aria-live", "off");
+    await waitFor(() => expect(screen.getByTestId("chat-live")).toHaveTextContent("O Narrador está respondendo…"));
     expect(within(log).getByText("Olá")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeVisible();
     expect(sentBody).toEqual({ messages: [{ role: "user", content: "Olá" }] });
@@ -120,6 +122,7 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument());
     expect(screen.getByLabelText("Mensagem para o Narrador")).toHaveValue("");
+    await waitFor(() => expect(screen.getByTestId("chat-live")).toHaveTextContent("Narrador: Bem-vindo, viajante."));
   });
 
   it("envia o histórico da conversa nas mensagens seguintes", async () => {

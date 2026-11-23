@@ -1,0 +1,38 @@
+.sky {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
+  z-index: var(--z-sky);
+}
+
+.sky__layer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Crossfade em degraus; com movimento reduzido a troca é imediata (o JS nem cria a camada). */
+.sky__layer--enter {
+  animation: sky-fade var(--duration-crossfade) steps(4, end) both;
+}
+
+@keyframes sky-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.period-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.period-label__icon {
+  color: var(--color-accent);
+}

@@ -1,0 +1,230 @@
+/*
+ * Tokens da UI do Henduran (ADR-069): a identidade visual do jogo.
+ *
+ * Paleta extraída dos esboços em docs/ui-ux/esbocos/ por amostragem (mediana de
+ * recortes 7x7 e quantização median cut) e reduzida a poucos tons coerentes:
+ * roxo escuro, dourado e pergaminho. Detalhes e valores amostrados em
+ * docs/ui-ux/08-guia-de-componentes.md.
+ *
+ * Regras: bordas em pixels CSS inteiros (2 a 4 px), sombra dura sem blur, raio
+ * zero, espaçamento em múltiplos de 8 px e texto com escala própria
+ * (--text-scale), independente da escala dos elementos (ADR-068).
+ *
+ * Pares de contraste verificados por src/styles/tokens.test.ts (WCAG 2.2 AA:
+ * 4,5 para texto normal; 3 para texto grande, bordas de controles e foco).
+ * Formato: @contrast <frente> on <fundo> min <razão>
+ *
+ * Texto sobre superfícies escuras
+ * @contrast --color-text on --color-bg min 4.5
+ * @contrast --color-text on --color-surface min 4.5
+ * @contrast --color-text on --color-surface-raised min 4.5
+ * @contrast --color-text-muted on --color-bg min 4.5
+ * @contrast --color-text-muted on --color-surface min 4.5
+ * @contrast --color-text-muted on --color-surface-raised min 4.5
+ * @contrast --color-accent on --color-bg min 4.5
+ * @contrast --color-accent on --color-surface min 4.5
+ * @contrast --color-accent on --color-surface-raised min 4.5
+ * @contrast --color-danger-text on --color-surface min 4.5
+ * @contrast --color-danger-text on --color-surface-raised min 4.5
+ * @contrast --color-success-text on --color-surface min 4.5
+ * @contrast --color-success-text on --color-surface-raised min 4.5
+ * @contrast --color-warn-text on --color-surface min 4.5
+ * @contrast --color-warn-text on --color-surface-raised min 4.5
+ * @contrast --color-text on --color-input-bg min 4.5
+ * @contrast --color-text-muted on --color-input-bg min 4.5
+ *
+ * Texto sobre pergaminho
+ * @contrast --color-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-text-on-parchment on --color-parchment-deep min 4.5
+ * @contrast --color-text-on-parchment-muted on --color-parchment min 4.5
+ * @contrast --color-text-on-parchment-muted on --color-parchment-deep min 4.5
+ * @contrast --color-danger-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-success-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-warn-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-accent on --color-title-bar min 4.5
+ *
+ * Botões e etiquetas
+ * @contrast --color-on-primary on --color-primary min 4.5
+ * @contrast --color-on-primary on --color-primary-hover min 4.5
+ * @contrast --color-on-primary on --color-primary-active min 4.5
+ * @contrast --color-text on --color-secondary min 4.5
+ * @contrast --color-text on --color-secondary-hover min 4.5
+ * @contrast --color-on-danger on --color-danger min 4.5
+ * @contrast --color-on-danger on --color-danger-hover min 4.5
+ * @contrast --color-player-text on --color-player-bg min 4.5
+ * @contrast --color-badge-light-text on --color-badge-neutral-bg min 4.5
+ * @contrast --color-badge-dark-text on --color-badge-accent-bg min 4.5
+ * @contrast --color-badge-light-text on --color-badge-success-bg min 4.5
+ * @contrast --color-badge-dark-text on --color-badge-warn-bg min 4.5
+ * @contrast --color-badge-light-text on --color-badge-danger-bg min 4.5
+ * @contrast --color-badge-light-text on --color-badge-info-bg min 4.5
+ *
+ * Componentes de interface e foco (não textuais)
+ * @contrast --color-focus on --color-bg min 3
+ * @contrast --color-focus on --color-surface min 3
+ * @contrast --color-focus on --color-surface-raised min 3
+ * @contrast --color-focus-on-parchment on --color-parchment min 3
+ * @contrast --color-focus-on-parchment on --color-parchment-deep min 3
+ * @contrast --color-frame on --color-bg min 3
+ * @contrast --color-frame on --color-surface min 3
+ * @contrast --color-input-border on --color-surface min 3
+ * @contrast --color-input-border on --color-surface-raised min 3
+ * @contrast --color-input-border-on-parchment on --color-parchment min 3
+ * @contrast --color-progress-fill on --color-progress-track min 3
+ * @contrast --color-accent on --color-secondary min 3
+ */
+
+:root {
+  /* ------------------------------------------------ paleta (primitivos) */
+  --px-ink-950: #0e0911;
+  --px-ink-900: #170f1a;
+  --px-ink-800: #221a26;
+  --px-ink-700: #2e2233;
+  --px-ink-600: #432e4a;
+  --px-ink-400: #8d7a93;
+  --px-purple-800: #45186a;
+  --px-purple-700: #4f1d75;
+  --px-purple-600: #5a2380;
+  --px-purple-500: #6e3197;
+  --px-purple-300: #9a62c4;
+  --px-gold-700: #7a4e12;
+  --px-gold-600: #a8701c;
+  --px-gold-400: #f0c050;
+  --px-gold-200: #f8d878;
+  --px-parchment-100: #f8e4c8;
+  --px-parchment-200: #f5dbbb;
+  --px-parchment-300: #e8c69c;
+  --px-parchment-500: #a77d52;
+  --px-brown-900: #2a1b14;
+  --px-brown-700: #5c4230;
+  --px-ivory-100: #f4e8d4;
+  --px-ivory-400: #c8b8ac;
+  --px-red-800: #8a1c12;
+  --px-red-700: #8f2121;
+  --px-red-600: #a32828;
+  --px-red-300: #ff8f80;
+  --px-green-800: #1e5e2e;
+  --px-green-300: #7fd88a;
+  --px-amber-800: #6e4300;
+  --px-amber-300: #f5b04a;
+  --px-cyan-300: #6ee7ff;
+  --px-blue-700: #1f4fa8;
+
+  /* ------------------------------------------------- cores semânticas */
+  --color-bg: var(--px-ink-900);
+  --color-surface: var(--px-ink-800);
+  --color-surface-raised: var(--px-ink-700);
+  --color-title-bar: var(--px-ink-800);
+  --color-outline: var(--px-ink-950);
+  --color-shadow: var(--px-ink-950);
+  --color-parchment: var(--px-parchment-200);
+  --color-parchment-light: var(--px-parchment-100);
+  --color-parchment-deep: var(--px-parchment-300);
+  --color-parchment-edge: var(--px-parchment-500);
+
+  --color-text: var(--px-ivory-100);
+  --color-text-muted: var(--px-ivory-400);
+  --color-text-on-parchment: var(--px-brown-900);
+  --color-text-on-parchment-muted: var(--px-brown-700);
+
+  --color-accent: var(--px-gold-400);
+  --color-accent-light: var(--px-gold-200);
+  --color-frame: var(--px-gold-600);
+  --color-frame-dark: var(--px-gold-700);
+
+  --color-primary: var(--px-purple-600);
+  --color-primary-hover: var(--px-purple-500);
+  --color-primary-active: var(--px-purple-800);
+  --color-primary-bevel: var(--px-purple-300);
+  --color-on-primary: var(--px-ivory-100);
+  --color-secondary: var(--px-ink-700);
+  --color-secondary-hover: var(--px-ink-600);
+
+  --color-danger: var(--px-red-700);
+  --color-danger-hover: var(--px-red-600);
+  --color-on-danger: var(--px-ivory-100);
+  --color-danger-text: var(--px-red-300);
+  --color-danger-text-on-parchment: var(--px-red-800);
+  --color-success-text: var(--px-green-300);
+  --color-success-text-on-parchment: var(--px-green-800);
+  --color-warn-text: var(--px-amber-300);
+  --color-warn-text-on-parchment: var(--px-amber-800);
+
+  --color-focus: var(--px-cyan-300);
+  --color-focus-on-parchment: var(--px-blue-700);
+
+  --color-disabled-bg: var(--px-ink-700);
+  --color-disabled-text: var(--px-ink-400);
+  --color-disabled-frame: var(--px-ink-600);
+
+  --color-input-bg: var(--px-ink-950);
+  --color-input-border: var(--px-gold-600);
+  --color-input-bg-on-parchment: var(--px-parchment-100);
+  --color-input-border-on-parchment: var(--px-brown-700);
+
+  --color-progress-track: var(--px-ink-950);
+  --color-progress-fill: var(--px-gold-400);
+
+  --color-player-bg: var(--px-purple-800);
+  --color-player-text: var(--px-ivory-100);
+
+  --color-badge-light-text: var(--px-ivory-100);
+  --color-badge-dark-text: var(--px-ink-900);
+  --color-badge-neutral-bg: var(--px-ink-600);
+  --color-badge-accent-bg: var(--px-gold-400);
+  --color-badge-success-bg: var(--px-green-800);
+  --color-badge-warn-bg: var(--px-amber-300);
+  --color-badge-danger-bg: var(--px-red-700);
+  --color-badge-info-bg: var(--px-purple-600);
+
+  /* ------------------------------------------------------- tipografia */
+  --font-pixel: "Pixelify Sans", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Crimson Pro", Georgia, "Times New Roman", serif;
+  --font-mono: Consolas, "Cascadia Mono", monospace;
+
+  /* Escala de texto do jogador (ADR-068): só o texto muda, não a moldura. */
+  --text-scale: 1;
+  --font-size-xs: calc(0.875rem * var(--text-scale));
+  --font-size-sm: calc(1rem * var(--text-scale));
+  --font-size-md: calc(1.125rem * var(--text-scale));
+  --font-size-lg: calc(1.25rem * var(--text-scale));
+  --font-size-xl: calc(1.5rem * var(--text-scale));
+  --font-size-2xl: calc(2rem * var(--text-scale));
+  --line-height-body: 1.45;
+  --line-height-tight: 1.2;
+
+  /* ------------------------------------------- bordas, sombras, raio */
+  --border-thin: 2px;
+  --border-frame: 4px;
+  --bevel: 2px;
+  --shadow-drop: 4px;
+  --radius: 0;
+
+  /* ------------------------------------------- espaçamento (8 px) */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  /* ------------------------------------------------- alvos (ADR-068) */
+  --target-primary: 44px;
+  --target-min: 24px;
+
+  /* --------------------------------------------------------- camadas */
+  --z-sky: 0;
+  --z-base: 1;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-overlay: 1000;
+  --z-dialog: 1010;
+
+  /* -------------------------------------------------------- movimento */
+  --duration-fast: 120ms;
+  --duration-crossfade: 640ms;
+
+  /* ---------------------------------------------------- ambiente (céu) */
+  --sky-pixel: 4px;
+  --sky-band-height: 96px;
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ChatView } from "./components/ChatView";
 import { EngineNotice } from "./components/EngineNotice";
@@ -7,13 +7,16 @@ import { StatusIndicator } from "./components/StatusIndicator";
 import { useBackend, type UseBackendOptions } from "./hooks/useBackend";
 import { useChat } from "./hooks/useChat";
 import { useEngineStatus } from "./hooks/useEngineStatus";
+import { DEFAULT_PERIOD, PeriodLabel, PixelIcon, SkyBackdrop, TabPanel, Tabs, tabId, type DayPeriod } from "./ui";
 
 type Tab = "chat" | "models";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "chat", label: "Chat" },
-  { id: "models", label: "Modelos" },
+const TABS = [
+  { id: "chat" as const, label: "Chat", icon: <PixelIcon name="chat" /> },
+  { id: "models" as const, label: "Modelos", icon: <PixelIcon name="gem" /> },
 ];
+
+const TAB_PREFIX = "app";
 
 export interface AppProps {
   backendOptions?: UseBackendOptions;
@@ -29,71 +32,35 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
   const { refresh } = engine;
   const chat = useChat(info, { onEngineProblem: () => void refresh() });
   const [tab, setTab] = useState<Tab>("chat");
-  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ chat: null, models: null });
+  // Período do dia é estado do mundo (não o relógio real). Sem Jornada, o padrão.
+  const [period] = useState<DayPeriod>(DEFAULT_PERIOD);
 
-  const selectTab = useCallback(
-    (next: Tab, focus = false) => {
-      setTab(next);
-      if (focus) tabRefs.current[next]?.focus();
-    },
-    [],
-  );
+  const openModels = useCallback(() => {
+    setTab("models");
+    document.getElementById(tabId(TAB_PREFIX, "models"))?.focus();
+  }, []);
 
   // Ao voltar para o Chat, confere de novo o estado do motor.
   useEffect(() => {
     if (tab === "chat") void refresh();
   }, [tab, refresh]);
 
-  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const index = TABS.findIndex((t) => t.id === tab);
-    let next: number | null = null;
-    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
-    else if (event.key === "ArrowLeft") next = (index - 1 + TABS.length) % TABS.length;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = TABS.length - 1;
-    const target = next === null ? undefined : TABS[next];
-    if (!target) return;
-    event.preventDefault();
-    selectTab(target.id, true);
-  };
-
   return (
     <div className="app">
-      <header className="app__header">
-        <h1 className="app__title">Henduran</h1>
-        <StatusIndicator status={status} />
+      <header className="app-bar">
+        <h1 className="app-bar__brand">
+          <PixelIcon name="star" size={24} className="app-bar__mark" />
+          Henduran
+        </h1>
+        <nav className="app-bar__nav" aria-label="Seções">
+          <Tabs items={TABS} value={tab} onChange={setTab} label="Seções do Henduran" idPrefix={TAB_PREFIX} />
+        </nav>
       </header>
-      <nav className="tabs" aria-label="Seções">
-        <div role="tablist" aria-label="Seções do Henduran" className="tabs__list">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              ref={(el) => {
-                tabRefs.current[t.id] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls={`panel-${t.id}`}
-              tabIndex={tab === t.id ? 0 : -1}
-              className={`tabs__tab${tab === t.id ? " tabs__tab--active" : ""}`}
-              onClick={() => selectTab(t.id)}
-              onKeyDown={onTabKeyDown}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+
+      <SkyBackdrop period={period} className="app__sky" />
+
       <main className="app__main">
-        <div
-          role="tabpanel"
-          id="panel-chat"
-          aria-labelledby="tab-chat"
-          className="app__panel"
-          hidden={tab !== "chat"}
-        >
+        <TabPanel idPrefix={TAB_PREFIX} id="chat" selected={tab === "chat"} className="app__panel">
           <ChatView
             entries={chat.entries}
             streaming={chat.streaming}
@@ -101,16 +68,10 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
             disabled={info === null}
             onSend={(text) => void chat.send(text)}
             onCancel={chat.cancel}
-            notice={<EngineNotice status={engine.status} onOpenModels={() => selectTab("models", true)} />}
+            notice={<EngineNotice status={engine.status} onOpenModels={openModels} />}
           />
-        </div>
-        <div
-          role="tabpanel"
-          id="panel-models"
-          aria-labelledby="tab-models"
-          className="app__panel app__panel--scroll"
-          hidden={tab !== "models"}
-        >
+        </TabPanel>
+        <TabPanel idPrefix={TAB_PREFIX} id="models" selected={tab === "models"} className="app__panel app__panel--scroll">
           {tab === "models" ? (
             info ? (
               <ModelsView
@@ -122,11 +83,18 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
                 {...(copyText ? { copyText } : {})}
               />
             ) : (
-              <p>Esperando o serviço local ficar pronto…</p>
+              <p className="app__waiting">Esperando o serviço local ficar pronto…</p>
             )
           ) : null}
-        </div>
+        </TabPanel>
       </main>
+
+      <footer className="status-bar">
+        <StatusIndicator status={status} />
+        <p className="status-bar__item">
+          <PeriodLabel period={period} />
+        </p>
+      </footer>
     </div>
   );
 }

@@ -328,13 +328,24 @@ describe("Modelos — remover e pastas", () => {
     expect(removeButtons).toHaveLength(1); // o da pasta extra não tem Remover
     expect(screen.getByText("O Henduran não apaga modelos de pastas extras.")).toBeInTheDocument();
     await user.click(removeButtons[0]!);
-    const group = screen.getByRole("group", { name: "Apagar q.gguf do disco?" });
-    expect(group).toHaveTextContent("Isto apaga o arquivo do disco e não pode ser desfeito.");
-    await user.click(within(group).getByRole("button", { name: "Cancelar" }));
+    const dialog = screen.getByRole("dialog", { name: "Apagar q.gguf do disco?" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveAccessibleDescription(/Isto apaga o arquivo do disco e não pode ser desfeito\./);
+    // Em confirmação destrutiva, o foco começa no Cancelar.
+    expect(within(dialog).getByRole("button", { name: "Cancelar" })).toHaveFocus();
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remover" })).toHaveFocus();
     expect(calls.some((c) => c.method === "DELETE")).toBe(false);
     await user.click(screen.getByRole("button", { name: "Remover" }));
-    await user.click(screen.getByRole("button", { name: "Apagar do disco" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Remover" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Apagar do disco" }));
     expect(await screen.findByText("q.gguf foi apagado do disco.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "Modelos locais" })).toHaveFocus();
     expect(calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual(["/models/Qwen/R/q.gguf"]);
   });
 

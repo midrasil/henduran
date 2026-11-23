@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { BackendInfo } from "../api/backend";
 import { cancelDownload, forgetDownload, retryDownload } from "../api/hub";
@@ -6,7 +6,6 @@ import {
   fetchEngineRelease,
   fetchHardware,
   fetchModels,
-  FIT_LABEL,
   formatBytes,
   installEngine,
   removeModel,
@@ -21,7 +20,9 @@ import {
   type ModelsResponse,
 } from "../api/engine";
 import { useDownloads } from "../hooks/useDownloads";
+import { Badge, Button, Dialog, ListCard, Panel, PixelIcon, ProgressBar } from "../ui";
 import { DownloadsPanel } from "./DownloadsPanel";
+import { FitBadge } from "./FitBadge";
 import { HubSearch } from "./HubSearch";
 import { ModelFolders } from "./ModelFolders";
 
@@ -71,6 +72,8 @@ export function ModelsView({
   const [removedNotice, setRemovedNotice] = useState("");
   const [completed, setCompleted] = useState(0);
   const ids = useId();
+  const modelsHeading = useRef<HTMLHeadingElement>(null);
+  const cancelRemoveRef = useRef<HTMLButtonElement>(null);
 
   const loadModels = useCallback(async () => {
     try {
@@ -162,8 +165,9 @@ export function ModelsView({
     } catch (error) {
       setActionError(describe(error));
     } finally {
+      // Atualiza a lista antes de fechar o diálogo: se o botão Remover sumiu, o foco vai para o título da lista.
+      await loadModels();
       setRemoving(null);
-      void loadModels();
     }
   };
 
@@ -182,17 +186,18 @@ export function ModelsView({
       ? `Não foi possível consultar o motor: ${engineError}`
       : "Consultando o motor…";
 
+  const removingModel = removing ? models?.models.find((m) => m.id === removing.id) ?? null : null;
+
   return (
     <section className="models" aria-labelledby={`${ids}-title`}>
-      <h2 id={`${ids}-title`} className="models__title">
+      <h2 id={`${ids}-title`} className="screen-title">
         Modelos
       </h2>
 
       {/* Hardware */}
-      <section className="panel" aria-labelledby={`${ids}-hw`}>
-        <h3 id={`${ids}-hw`}>Hardware deste PC</h3>
+      <Panel variant="parchment" title="Hardware deste PC">
         {hardwareError ? (
-          <p className="panel__error">Não foi possível ler o hardware: {hardwareError}</p>
+          <p className="text-danger">Não foi possível ler o hardware: {hardwareError}</p>
         ) : !hardware ? (
           <p>Lendo o hardware…</p>
         ) : (
@@ -217,11 +222,10 @@ export function ModelsView({
             <dd>{hardware.cpu || "desconhecido"}</dd>
           </dl>
         )}
-      </section>
+      </Panel>
 
       {/* Motor */}
-      <section className="panel" aria-labelledby={`${ids}-engine`}>
-        <h3 id={`${ids}-engine`}>Motor de IA</h3>
+      <Panel title="Motor de IA">
         <p className={`engine-state engine-state--${state}`} role="status" aria-live="polite">
           {engineLine}
         </p>
@@ -232,25 +236,18 @@ export function ModelsView({
             {engine.verified === false ? " — instalado sem verificação de integridade" : ""}
           </p>
         ) : null}
-        {downloading ? (
-          <progress
-            className="progress"
-            aria-label="Progresso do download do motor"
-            max={1}
-            value={engine?.progress ?? 0}
-          />
-        ) : null}
+        {downloading ? <ProgressBar label="Progresso do download do motor" value={engine?.progress ?? 0} /> : null}
 
         {!installed && !downloading ? (
           download.kind === "confirm" || download.kind === "sending" ? (
-            <div className="confirm" role="group" aria-labelledby={`${ids}-confirm`}>
+            <div className="confirm surface-parchment px-frame" role="group" aria-labelledby={`${ids}-confirm`}>
               <p id={`${ids}-confirm`} className="confirm__title">
                 Baixar {download.release.name} ({formatBytes(download.release.size)}), versão{" "}
                 {download.release.tag}, dos releases oficiais do llama.cpp no GitHub?
               </p>
               {!download.release.verifiable ? (
                 <>
-                  <p className="warning" role="alert">
+                  <p className="callout callout--warn" role="alert">
                     Atenção: o GitHub não publicou o SHA-256 deste arquivo, então não é possível verificar se ele
                     chegou íntegro. Só continue se aceitar esse risco.
                   </p>
@@ -259,9 +256,7 @@ export function ModelsView({
                       <input
                         type="checkbox"
                         checked={download.acknowledged}
-                        onChange={(event) =>
-                          setDownload({ ...download, acknowledged: event.target.checked })
-                        }
+                        onChange={(event) => setDownload({ ...download, acknowledged: event.target.checked })}
                       />
                       Entendo o risco e quero baixar sem verificação
                     </label>
@@ -271,24 +266,17 @@ export function ModelsView({
                 <p>A integridade do arquivo será conferida pelo SHA-256 publicado.</p>
               )}
               <div className="actions">
-                <button
-                  type="button"
-                  className="button button--primary"
-                  disabled={
-                    download.kind === "sending" || (!download.release.verifiable && !download.acknowledged)
-                  }
+                <Button
+                  variant="primary"
+                  loading={download.kind === "sending"}
+                  disabled={download.kind === "confirm" && !download.release.verifiable && !download.acknowledged}
                   onClick={() => void confirmDownload(download.release)}
                 >
                   Confirmar download
-                </button>
-                <button
-                  type="button"
-                  className="button button--secondary"
-                  disabled={download.kind === "sending"}
-                  onClick={() => setDownload({ kind: "idle" })}
-                >
+                </Button>
+                <Button disabled={download.kind === "sending"} onClick={() => setDownload({ kind: "idle" })}>
                   Cancelar
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -316,23 +304,18 @@ export function ModelsView({
                   CPU (só o processador; mais lento)
                 </label>
               </fieldset>
-              <button
-                type="button"
-                className="button button--primary"
-                disabled={download.kind === "checking"}
-                onClick={() => void askDownload()}
-              >
-                {download.kind === "checking" ? "Consultando o tamanho…" : "Baixar o motor de IA"}
-              </button>
+              <div className="actions">
+                <Button variant="primary" loading={download.kind === "checking"} onClick={() => void askDownload()}>
+                  {download.kind === "checking" ? "Consultando o tamanho…" : "Baixar o motor de IA"}
+                </Button>
+              </div>
             </div>
           )
         ) : null}
 
         {installed && (state === "ready" || state === "starting") ? (
           <div className="actions">
-            <button type="button" className="button button--secondary" onClick={() => void stop()}>
-              Parar o motor
-            </button>
+            <Button onClick={() => void stop()}>Parar o motor</Button>
           </div>
         ) : null}
 
@@ -350,21 +333,20 @@ export function ModelsView({
         ) : null}
 
         {actionError ? (
-          <p className="panel__error" role="alert">
+          <p className="callout callout--danger" role="alert">
             Erro: {actionError}
           </p>
         ) : null}
-      </section>
+      </Panel>
 
       {/* Modelos locais */}
-      <section className="panel" aria-labelledby={`${ids}-models`}>
-        <h3 id={`${ids}-models`}>Modelos locais</h3>
+      <Panel title="Modelos locais" titleRef={modelsHeading}>
         {modelsError ? (
-          <p className="panel__error">Não foi possível listar os modelos: {modelsError}</p>
+          <p className="text-danger">Não foi possível listar os modelos: {modelsError}</p>
         ) : !models ? (
           <p>Procurando modelos…</p>
         ) : models.models.length === 0 ? (
-          <div className="empty">
+          <div className="empty surface-parchment px-frame">
             <p>
               Nenhum modelo .gguf encontrado. Busque e baixe um modelo abaixo, adicione uma pasta onde você já tem
               modelos ou coloque um arquivo .gguf nesta pasta e atualize a lista:
@@ -373,12 +355,8 @@ export function ModelsView({
               <code className="path">{models.models_dir}</code>
             </p>
             <div className="actions">
-              <button type="button" className="button button--secondary" onClick={() => void copyPath(models.models_dir)}>
-                Copiar caminho
-              </button>
-              <button type="button" className="button button--secondary" onClick={() => void loadModels()}>
-                Atualizar lista
-              </button>
+              <Button onClick={() => void copyPath(models.models_dir)}>Copiar caminho</Button>
+              <Button onClick={() => void loadModels()}>Atualizar lista</Button>
             </div>
             <p className="hint" aria-live="polite">
               {copied ?? ""}
@@ -386,95 +364,76 @@ export function ModelsView({
           </div>
         ) : (
           <>
-            <ul className="model-list">
+            <ul className="card-list">
               {models.models.map((model) => {
                 const nameId = `${ids}-m-${model.id}`;
                 const isActive = model.id === models.active;
                 return (
-                  <li key={model.id} className={`model${isActive ? " model--active" : ""}`}>
-                    <p className="model__name" id={nameId}>
-                      {model.name}
-                      {isActive ? <span className="badge">Ativo</span> : null}
-                    </p>
-                    <p className="model__meta">
-                      {formatBytes(model.size_bytes)}
-                      {model.quant ? ` · ${model.quant}` : ""}
-                      {model.parts > 1 ? ` · ${model.parts} partes` : ""}
-                    </p>
-                    <p className={`fit fit--${model.fit}`}>{FIT_LABEL[model.fit]}</p>
-                    {!model.complete ? <p className="panel__error">Faltam partes deste modelo.</p> : null}
-                    {isActive && (state === "starting" || state === "ready") ? (
-                      <p className="model__state">{state === "starting" ? "Carregando o modelo…" : "Pronto"}</p>
-                    ) : null}
-                    {model.source === "extra" ? (
-                      <p className="model__meta">
-                        Numa pasta extra: <code className="path">{model.folder}</code>
-                      </p>
-                    ) : null}
-                    {removing?.id === model.id ? (
-                      <div className="confirm" role="group" aria-labelledby={`${nameId}-rm`}>
-                        <p id={`${nameId}-rm`} className="confirm__title">
-                          Apagar {model.name} do disco?
-                        </p>
-                        <p>
-                          Isto apaga o arquivo{model.parts > 1 ? ` (todas as ${model.parts} partes)` : ""} do disco e
-                          não pode ser desfeito. Para usar de novo, será preciso baixar outra vez.
-                        </p>
-                        <div className="actions">
-                          <button
-                            type="button"
-                            className="button button--danger"
-                            disabled={removing.sending}
-                            onClick={() => void confirmRemove(model.id, model.name)}
-                          >
-                            Apagar do disco
-                          </button>
-                          <button
-                            type="button"
-                            className="button button--secondary"
-                            disabled={removing.sending}
-                            onClick={() => setRemoving(null)}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="actions">
-                        <button
-                          type="button"
-                          className="button button--primary"
+                  <ListCard
+                    key={model.id}
+                    title={model.name}
+                    titleId={nameId}
+                    selected={isActive}
+                    tags={
+                      <>
+                        {isActive ? (
+                          <Badge tone="accent" icon={<PixelIcon name="star" />}>
+                            Ativo
+                          </Badge>
+                        ) : null}
+                        <FitBadge fit={model.fit} />
+                      </>
+                    }
+                    meta={
+                      <>
+                        {formatBytes(model.size_bytes)}
+                        {model.quant ? ` · ${model.quant}` : ""}
+                        {model.parts > 1 ? ` · ${model.parts} partes` : ""}
+                      </>
+                    }
+                    actions={
+                      <>
+                        <Button
+                          variant="primary"
                           aria-describedby={nameId}
+                          loading={pendingModel === model.id}
                           disabled={!installed || !model.complete || downloading || pendingModel !== null}
                           onClick={() => void chooseModel(model.id)}
                         >
                           Usar este modelo
-                        </button>
+                        </Button>
                         {model.removable !== false ? (
-                          <button
-                            type="button"
-                            className="button button--secondary"
+                          <Button
+                            variant="danger"
                             aria-describedby={nameId}
                             disabled={pendingModel !== null || removing !== null}
                             onClick={() => setRemoving({ id: model.id, sending: false })}
                           >
                             Remover
-                          </button>
+                          </Button>
                         ) : null}
-                      </div>
-                    )}
+                      </>
+                    }
+                  >
+                    {!model.complete ? <p className="text-danger">Faltam partes deste modelo.</p> : null}
+                    {isActive && (state === "starting" || state === "ready") ? (
+                      <p className="list-card__meta">{state === "starting" ? "Carregando o modelo…" : "Pronto"}</p>
+                    ) : null}
+                    {model.source === "extra" ? (
+                      <p className="list-card__meta">
+                        Numa pasta extra: <code className="path">{model.folder}</code>
+                      </p>
+                    ) : null}
                     {model.removable === false ? (
                       <p className="hint">O Henduran não apaga modelos de pastas extras.</p>
                     ) : null}
-                  </li>
+                  </ListCard>
                 );
               })}
             </ul>
             {!installed ? <p className="hint">Baixe o motor de IA antes de usar um modelo.</p> : null}
             <div className="actions">
-              <button type="button" className="button button--secondary" onClick={() => void loadModels()}>
-                Atualizar lista
-              </button>
+              <Button onClick={() => void loadModels()}>Atualizar lista</Button>
             </div>
             <p className="hint">
               Pasta de modelos: <code className="path">{models.models_dir}</code>
@@ -484,7 +443,40 @@ export function ModelsView({
         <p className="hint" aria-live="polite">
           {removedNotice}
         </p>
-      </section>
+      </Panel>
+
+      <Dialog
+        open={removing !== null && removingModel !== null}
+        tone="danger"
+        title={`Apagar ${removingModel?.name ?? ""} do disco?`}
+        description={
+          <p>
+            Isto apaga o arquivo
+            {removingModel && removingModel.parts > 1 ? ` (todas as ${removingModel.parts} partes)` : ""} do disco e não
+            pode ser desfeito. Para usar de novo, será preciso baixar outra vez.
+          </p>
+        }
+        onClose={() => {
+          if (!removing?.sending) setRemoving(null);
+        }}
+        dismissible={!removing?.sending}
+        initialFocusRef={cancelRemoveRef}
+        returnFocusRef={modelsHeading}
+        actions={
+          <>
+            <Button ref={cancelRemoveRef} disabled={removing?.sending} onClick={() => setRemoving(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              loading={removing?.sending ?? false}
+              onClick={() => removingModel && void confirmRemove(removingModel.id, removingModel.name)}
+            >
+              Apagar do disco
+            </Button>
+          </>
+        }
+      />
 
       <HubSearch info={info} onDownloadStarted={downloads.upsert} refreshToken={completed} />
 
