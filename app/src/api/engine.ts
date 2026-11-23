@@ -40,6 +40,16 @@ export interface LocalModel {
   complete: boolean;
   fit: ModelFit;
   active: boolean;
+  /** `app`: pasta de modelos do Henduran; `extra`: pasta extra do jogador (nunca apagada pelo app). */
+  source?: "app" | "extra";
+  folder?: string | null;
+  removable?: boolean;
+}
+
+export interface ModelFolder {
+  path: string;
+  kind: "app" | "extra";
+  exists: boolean;
 }
 
 export interface ModelsResponse {
@@ -58,10 +68,10 @@ export interface EngineRelease {
   verifiable: boolean;
 }
 
-async function request<T>(
+export async function request<T>(
   info: BackendInfo,
   path: string,
-  init: { method?: "GET" | "POST"; body?: unknown } = {},
+  init: { method?: "GET" | "POST" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   const headers: Record<string, string> = { ...authHeaders(info) };
   const options: RequestInit = { method: init.method ?? "GET", headers };
@@ -95,6 +105,21 @@ export const startEngine = (info: BackendInfo) =>
 
 export const stopEngine = (info: BackendInfo) =>
   request<EngineStatus>(info, "/engine/stop", { method: "POST" });
+
+/** Apaga do disco um modelo da pasta do app (todas as partes). */
+export const removeModel = (info: BackendInfo, id: string) =>
+  request<{ removed: string; files: number }>(info, `/models/${id.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "DELETE",
+  });
+
+export const fetchFolders = (info: BackendInfo) => request<{ folders: ModelFolder[] }>(info, "/models/folders");
+
+export const addFolder = (info: BackendInfo, path: string) =>
+  request<{ added: ModelFolder; folders: ModelFolder[] }>(info, "/models/folders", { method: "POST", body: { path } });
+
+/** Tira uma pasta extra da lista (nenhum arquivo é apagado). */
+export const removeFolder = (info: BackendInfo, path: string) =>
+  request<{ folders: ModelFolder[] }>(info, `/models/folders?path=${encodeURIComponent(path)}`, { method: "DELETE" });
 
 /** Tamanho legível em português (base 1024, vírgula decimal). */
 export function formatBytes(bytes: number): string {

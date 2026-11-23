@@ -118,3 +118,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Achados: o `/releases/latest` do llama.cpp não serve (devolve um marcador); os builds reais são releases `b<número>`. O `/health` do `llama-server` é público mesmo com chave.
 - Pendente: Tarefa B (download de modelos de dentro do app); limiares do `fit` e variante por hardware; licença do `llama-server`; `settings.json` provisório até o SQLite.
 - Arquivos: `backend/henduran/ai/`, `backend/henduran/providers/local.py`, `backend/henduran/api/app.py`, `app/src/components/ModelsView.tsx`, `docs/main/importacoes-caliope.md`.
+
+## 2026-11-22 — `baixar-modelos`
+
+- Rota: conversa com o planejador → Dev → Entrega.
+- Resultado: Tarefa B. `ai/modelhub.py` adaptado do Caliope (commit `1cab9e0`), rotas `/hub/*`, `/models/{id}` e `/models/folders`, e na aba Modelos: busca no Hugging Face, arquivos por quantização com tamanho, compatibilidade e licença, painel de downloads e pastas de modelos. Registro em `docs/main/importacoes-caliope.md`.
+- Validações: 250 testes do backend (1 pulado, sem permissão de link simbólico) e 53 do frontend passaram, conferidos pelo planejador. O dev relatou teste real com o Qwen2.5-0.5B-Instruct: busca, download de 469 MB com cancelar, retomada e retomada após fechar a janela, SHA-256 conferido, chat com o motor, pasta extra sem cópia, remoção, e nenhum processo órfão após fechar e após `taskkill /F`. Não verificados: aparência visual, leitor de tela, clique físico do mouse, repositório restrito, falta de espaço e erro 429 reais.
+- Feedback do responsável: tudo funcional, mas a interface está num estágio inicial e a busca e o funcionamento ainda estão longe do padrão do Caliope. Gaps registrados no backlog.
+- Achados da API do Hugging Face: limite de cerca de 500 chamadas a cada 5 minutos sem login; repositório inexistente ou privado responde 401; o hash SHA-256 vem do `lfs.oid` e fica mascarado em repositórios restritos; o CDN aceita `Range`.
+- Decisões da Tarefa B: remover modelo de pasta extra sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez; sem token do Hugging Face (repositórios restritos aparecem como não suportados).
+- Arquivos: `backend/henduran/ai/modelhub.py`, `backend/henduran/api/app.py`, `app/src/components/HubSearch.tsx`, `app/src/components/DownloadsPanel.tsx`, `app/src/components/ModelFolders.tsx`.

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 
 import type { BackendInfo } from "../api/backend";
+import { cancelDownload, forgetDownload, retryDownload } from "../api/hub";
 import {
   fetchEngineRelease,
   fetchHardware,
@@ -8,6 +9,7 @@ import {
   FIT_LABEL,
   formatBytes,
   installEngine,
+  removeModel,
   selectModel,
   startEngine,
   STATE_LABEL,
@@ -18,6 +20,10 @@ import {
   type HardwareInfo,
   type ModelsResponse,
 } from "../api/engine";
+import { useDownloads } from "../hooks/useDownloads";
+import { DownloadsPanel } from "./DownloadsPanel";
+import { HubSearch } from "./HubSearch";
+import { ModelFolders } from "./ModelFolders";
 
 export interface ModelsViewProps {
   info: BackendInfo;
@@ -27,6 +33,8 @@ export interface ModelsViewProps {
   refreshEngine: () => Promise<EngineStatus | null>;
   /** Copia texto para a área de transferência (injetável nos testes). */
   copyText?: (text: string) => Promise<void>;
+  /** Intervalo de consulta dos downloads ativos, em ms (os testes usam um valor curto). */
+  downloadsPollMs?: number;
 }
 
 type DownloadStep =
@@ -48,6 +56,7 @@ export function ModelsView({
   onEngineChange,
   refreshEngine,
   copyText = defaultCopy,
+  downloadsPollMs,
 }: ModelsViewProps) {
   const [hardware, setHardware] = useState<HardwareInfo | null>(null);
   const [hardwareError, setHardwareError] = useState<string | null>(null);
@@ -58,6 +67,9 @@ export function ModelsView({
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingModel, setPendingModel] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<{ id: string; sending: boolean } | null>(null);
+  const [removedNotice, setRemovedNotice] = useState("");
+  const [completed, setCompleted] = useState(0);
   const ids = useId();
 
   const loadModels = useCallback(async () => {
@@ -68,6 +80,14 @@ export function ModelsView({
       setModelsError(describe(error));
     }
   }, [info]);
+
+  const downloads = useDownloads(info, {
+    ...(downloadsPollMs !== undefined ? { pollMs: downloadsPollMs } : {}),
+    onCompleted: () => {
+      setCompleted((n) => n + 1);
+      void loadModels();
+    },
+  });
 
   useEffect(() => {
     let active = true;
@@ -129,6 +149,21 @@ export function ModelsView({
       onEngineChange(await stopEngine(info));
     } catch (error) {
       setActionError(describe(error));
+    }
+  };
+
+  const confirmRemove = async (id: string, name: string) => {
+    setActionError(null);
+    setRemoving({ id, sending: true });
+    try {
+      await removeModel(info, id);
+      setRemovedNotice(`${name} foi apagado do disco.`);
+      await refreshEngine();
+    } catch (error) {
+      setActionError(describe(error));
+    } finally {
+      setRemoving(null);
+      void loadModels();
     }
   };
 
@@ -330,7 +365,10 @@ export function ModelsView({
           <p>Procurando modelos…</p>
         ) : models.models.length === 0 ? (
           <div className="empty">
-            <p>Nenhum modelo .gguf encontrado. Coloque um arquivo .gguf nesta pasta e atualize a lista:</p>
+            <p>
+              Nenhum modelo .gguf encontrado. Busque e baixe um modelo abaixo, adicione uma pasta onde você já tem
+              modelos ou coloque um arquivo .gguf nesta pasta e atualize a lista:
+            </p>
             <p>
               <code className="path">{models.models_dir}</code>
             </p>
@@ -345,7 +383,6 @@ export function ModelsView({
             <p className="hint" aria-live="polite">
               {copied ?? ""}
             </p>
-            <p className="hint">O download de modelos dentro do app virá em breve.</p>
           </div>
         ) : (
           <>
@@ -369,15 +406,66 @@ export function ModelsView({
                     {isActive && (state === "starting" || state === "ready") ? (
                       <p className="model__state">{state === "starting" ? "Carregando o modelo…" : "Pronto"}</p>
                     ) : null}
-                    <button
-                      type="button"
-                      className="button button--primary"
-                      aria-describedby={nameId}
-                      disabled={!installed || !model.complete || downloading || pendingModel !== null}
-                      onClick={() => void chooseModel(model.id)}
-                    >
-                      Usar este modelo
-                    </button>
+                    {model.source === "extra" ? (
+                      <p className="model__meta">
+                        Numa pasta extra: <code className="path">{model.folder}</code>
+                      </p>
+                    ) : null}
+                    {removing?.id === model.id ? (
+                      <div className="confirm" role="group" aria-labelledby={`${nameId}-rm`}>
+                        <p id={`${nameId}-rm`} className="confirm__title">
+                          Apagar {model.name} do disco?
+                        </p>
+                        <p>
+                          Isto apaga o arquivo{model.parts > 1 ? ` (todas as ${model.parts} partes)` : ""} do disco e
+                          não pode ser desfeito. Para usar de novo, será preciso baixar outra vez.
+                        </p>
+                        <div className="actions">
+                          <button
+                            type="button"
+                            className="button button--danger"
+                            disabled={removing.sending}
+                            onClick={() => void confirmRemove(model.id, model.name)}
+                          >
+                            Apagar do disco
+                          </button>
+                          <button
+                            type="button"
+                            className="button button--secondary"
+                            disabled={removing.sending}
+                            onClick={() => setRemoving(null)}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="actions">
+                        <button
+                          type="button"
+                          className="button button--primary"
+                          aria-describedby={nameId}
+                          disabled={!installed || !model.complete || downloading || pendingModel !== null}
+                          onClick={() => void chooseModel(model.id)}
+                        >
+                          Usar este modelo
+                        </button>
+                        {model.removable !== false ? (
+                          <button
+                            type="button"
+                            className="button button--secondary"
+                            aria-describedby={nameId}
+                            disabled={pendingModel !== null || removing !== null}
+                            onClick={() => setRemoving({ id: model.id, sending: false })}
+                          >
+                            Remover
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
+                    {model.removable === false ? (
+                      <p className="hint">O Henduran não apaga modelos de pastas extras.</p>
+                    ) : null}
                   </li>
                 );
               })}
@@ -393,7 +481,29 @@ export function ModelsView({
             </p>
           </>
         )}
+        <p className="hint" aria-live="polite">
+          {removedNotice}
+        </p>
       </section>
+
+      <HubSearch info={info} onDownloadStarted={downloads.upsert} refreshToken={completed} />
+
+      <DownloadsPanel
+        downloads={downloads.downloads}
+        error={downloads.error}
+        onCancel={async (id) => {
+          downloads.upsert(await cancelDownload(info, id));
+        }}
+        onRetry={async (id) => {
+          downloads.upsert(await retryDownload(info, id));
+        }}
+        onForget={async (id) => {
+          await forgetDownload(info, id);
+          downloads.drop(id);
+        }}
+      />
+
+      <ModelFolders info={info} onChange={() => void loadModels()} />
     </section>
   );
 }

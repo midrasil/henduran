@@ -200,11 +200,13 @@ def quant_of(name: str) -> str | None:
     return found[-1].upper() if found else None
 
 
-def find_models(models_dir: Path) -> list[dict]:
+def find_models(models_dir: Path, *, id_prefix: str = "", source: str = "app") -> list[dict]:
     """Modelos ``.gguf`` em ``models_dir`` (subpastas incluídas), por nome.
 
     Modelos divididos aparecem uma vez, pela parte ``-00001-of-N``, com o tamanho
     somado e ``complete=False`` se faltar alguma parte. ``mmproj`` é ignorado.
+    ``files`` lista todos os arquivos do modelo (todas as partes presentes);
+    ``id_prefix`` distingue modelos de pastas extras (ver ``folder_prefix``).
     """
     if not models_dir.is_dir():
         return []
@@ -224,8 +226,9 @@ def find_models(models_dir: Path) -> list[dict]:
         match = SPLIT_RE.match(path.name)
         if not match:
             singles.append(
-                {"id": rel, "name": path.name, "path": str(path), "size_bytes": size,
-                 "quant": quant_of(path.name), "parts": 1, "complete": True}
+                {"id": id_prefix + rel, "name": path.name, "path": str(path), "size_bytes": size,
+                 "quant": quant_of(path.name), "parts": 1, "complete": True,
+                 "files": [str(path)], "root": str(models_dir), "source": source}
             )
             continue
         total = int(match.group("total"))
@@ -239,11 +242,23 @@ def find_models(models_dir: Path) -> list[dict]:
         path = first[0]
         complete = sorted(group["parts"]) == list(range(1, group["total"] + 1))
         singles.append(
-            {"id": path.relative_to(models_dir).as_posix(), "name": f"{group['base']}.gguf",
+            {"id": id_prefix + path.relative_to(models_dir).as_posix(), "name": f"{group['base']}.gguf",
              "path": str(path), "size_bytes": sum(s for _, s in group["parts"].values()),
-             "quant": quant_of(group["base"]), "parts": group["total"], "complete": complete}
+             "quant": quant_of(group["base"]), "parts": group["total"], "complete": complete,
+             "files": [str(p) for _, (p, _s) in sorted(group["parts"].items())],
+             "root": str(models_dir), "source": source}
         )
     return sorted(singles, key=lambda m: (m["name"].lower(), m["id"]))
+
+
+def folder_prefix(folder: str | Path) -> str:
+    """Prefixo estável do id dos modelos de uma pasta extra: ``ext:<8 hex>/``.
+
+    Usa ``:``, que não pode aparecer num nome de arquivo do Windows; assim um id
+    de pasta extra nunca colide com o caminho relativo de um modelo do app.
+    """
+    key = os.path.normcase(os.path.normpath(str(folder))).encode("utf-8", "surrogatepass")
+    return f"ext:{hashlib.sha256(key).hexdigest()[:8]}/"
 
 
 # ------------------------------------------------------------------ comando
@@ -474,8 +489,18 @@ class EngineManager:
         except (OSError, ValueError):
             return {}
 
+    def model_roots(self) -> list[tuple[str, Path, str]]:
+        """``(prefixo de id, pasta, origem)``: a pasta do app e depois as pastas extras."""
+        roots: list[tuple[str, Path, str]] = [("", self.paths.models_dir, "app")]
+        for folder in self.settings.get("model_folders"):
+            roots.append((folder_prefix(folder), Path(folder), "extra"))
+        return roots
+
     def models(self) -> list[dict]:
-        return find_models(self.paths.models_dir)
+        found: list[dict] = []
+        for prefix, folder, source in self.model_roots():
+            found.extend(find_models(folder, id_prefix=prefix, source=source))
+        return sorted(found, key=lambda m: (m["name"].lower(), m["id"]))
 
     def resolve_model(self, model_id: str | None) -> dict | None:
         if not model_id:
@@ -807,6 +832,6 @@ class EngineManager:
 
 __all__ = [
     "EngineError", "EngineManager", "ReleaseAsset", "build_command", "child_env", "extract_zip_safely",
-    "find_models", "fit_ladder", "out_of_memory", "pick_asset", "quant_of", "server_binary",
+    "find_models", "fit_ladder", "folder_prefix", "out_of_memory", "pick_asset", "quant_of", "server_binary",
     "CREATE_BREAKAWAY_FROM_JOB", "SPAWN_FLAGS",
 ]
