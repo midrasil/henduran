@@ -1,12 +1,12 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-22 após a tarefa `baixar-modelos`.
+Atualizado em 2026-11-23 após a tarefa `persistencia-sqlite`.
 
 ## Estado
 
-- Tarefa: baixar modelos de dentro do app (Tarefa B), sobre o motor local da Tarefa A.
-- Resultado: `backend/` (250 testes, 1 pulado) e `app/` (53 testes) passam. Teste real do dev: busca, download com retomada e SHA-256, chat, pasta extra e remoção, sem processo órfão. O responsável testou e confirmou que funciona, mas a interface está num estágio inicial e a busca e o funcionamento ainda estão longe do nível do Caliope. Só modo dev: o empacotamento do Python segue em aberto.
-- Branch: `feat/baixar-modelos` (PR aberto contra `main`).
+- Tarefa: fundação de persistência SQLite do app (ADR-050, ADR-074 proposto). A base de UI pixel art corre em paralelo, em PR separado.
+- Resultado: `backend/` com 298 testes (1 pulado) passando. Banco do app com migrações, backup antes de migrar e tratamento de banco corrompido; o `settings.json` provisório passou para o banco com importação única. A API não mudou, salvo o campo `database` em `/health`. Teste real do dev: importação do legado, persistência após reiniciar. Só modo dev: o empacotamento do Python segue em aberto.
+- Branch: `feat/persistencia-sqlite` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -20,7 +20,7 @@ Atualizado em 2026-11-22 após a tarefa `baixar-modelos`.
 
 ## Código existente
 
-- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (JSON provisório), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
+- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações, backup), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
 - `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, sem visual pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
@@ -29,11 +29,12 @@ Atualizado em 2026-11-22 após a tarefa `baixar-modelos`.
 
 ## Pendências relevantes
 
+- **Decidir um banco por Jornada ou um banco único** para os dados de jogo (ADR-050, ADR-058, ADR-074); revisar a política de corrupção e a durabilidade (`synchronous`) quando houver dados de jogo. Aprovar o ADR-074.
 - **Aba Modelos no nível do Caliope** (feedback do responsável): abas separadas, escolha de pasta pelo Windows, notas de qualidade por quantização, sugestões de busca, ocultar modelos, tela inicial sem modelo e ajustes de contexto e camadas da GPU. Detalhes no backlog.
 - Decisões da Tarefa B em aberto: remover modelo de pasta extra é sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez, sem fila.
 - Excluir `app/src-tauri/target/` e `node_modules/` da sincronização do OneDrive.
 - `aria-live` cobre o log inteiro: reavaliar quando a interface real for montada. Dependências transitivas do Python não estão travadas.
-- Limiares do indicador de compatibilidade (`fit`) são proposta a validar; variante do motor por hardware e comportamento sem GPU seguem em aberto (ADR-070); confirmar a licença do `llama-server` antes de distribuir; `settings.json` é provisório até o SQLite; sem limite de `max_tokens`.
+- Limiares do indicador de compatibilidade (`fit`) são proposta a validar; variante do motor por hardware e comportamento sem GPU seguem em aberto (ADR-070); confirmar a licença do `llama-server` antes de distribuir; sem limite de `max_tokens`.
 
 - Pendentes de regra: faixa de Dificuldade proposta pelo Narrador; critério de "progresso significativo" e de "defender" uma Convicção; política de avanço de tempo e definição de Amanhecer; testes de equilíbrio dos tetos por Dia.
 - Fatias 2 e 3 do Astra: ler e adaptar (equipamento, Carga, Progressão; Cena Tática sem mapa, Ações, dano, NPCs por orçamento, Condições necessárias).
@@ -45,4 +46,4 @@ Atualizado em 2026-11-22 após a tarefa `baixar-modelos`.
 
 ## Próximo passo recomendado
 
-⭐ Persistência SQLite (ADR-050), depois menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra). Em paralelo: subir a aba Modelos ao nível do Caliope, a UI pixel art (ADR-069) e a leitura da fatia 2 do Astra.
+⭐ Menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art, depois de decidir o banco por Jornada. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.

@@ -1,7 +1,4 @@
-"""Preferências mínimas do serviço em ``settings.json``.
-
-**Provisório:** existe só até a persistência SQLite do projeto (ADR-050) ser
-implementada; depois estes valores migram para o banco.
+"""Preferências mínimas do serviço, guardadas na tabela ``settings`` do banco do app.
 
 Guarda apenas:
 
@@ -12,8 +9,15 @@ Guarda apenas:
   do LM Studio), varridas junto com a pasta do app. Caminhos absolutos; o app
   nunca copia nem move arquivos dessas pastas.
 
-A leitura tolera arquivo ausente ou corrompido (volta aos padrões) e a escrita
-é atômica: grava num arquivo temporário na mesma pasta e troca pelo nome final.
+Cada preferência é uma linha (``key``, ``value`` em JSON, ``updated_at``). Valor
+inválido no banco é ignorado com aviso (vale o padrão). As leituras saem de uma
+cópia em memória; cada ``update`` grava numa transação e só então troca a cópia.
+
+**Importação única do ``settings.json`` legado:** se o arquivo existir, a tabela
+estiver vazia e a importação ainda não tiver sido feita, os valores válidos são
+gravados numa transação (os inválidos são descartados com aviso) e o arquivo é
+renomeado para ``settings.json.migrado`` (nunca apagado). JSON ausente ou
+corrompido não impede o serviço de subir.
 """
 
 from __future__ import annotations
@@ -25,6 +29,8 @@ import tempfile
 import threading
 from pathlib import Path
 from typing import Any
+
+from henduran.db.connection import Database, utc_now_iso
 
 log = logging.getLogger("henduran.settings")
 
@@ -38,6 +44,8 @@ DEFAULTS: dict[str, Any] = {
 MAX_MODEL_FOLDERS = 20
 CONTEXT_MIN = 512
 CONTEXT_MAX = 131072
+LEGACY_IMPORTED_KEY = "settings_json_imported_at"
+MIGRATED_SUFFIX = ".migrado"
 
 
 def _validate(key: str, value: Any) -> Any:
@@ -85,49 +93,117 @@ def atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
-class SettingsStore:
-    """Leitura e escrita de ``settings.json``, seguras entre threads."""
+def _copy(value: Any) -> Any:
+    return list(value) if isinstance(value, list) else value
 
-    def __init__(self, path: Path) -> None:
-        self.path = path
+
+def _read_legacy(path: Path) -> dict[str, Any] | None:
+    """Conteúdo do ``settings.json`` antigo, ou ``None`` se ausente/ilegível."""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as exc:
+        log.warning("settings.json legado ilegível (%s); nada importado", exc)
+        return {}
+    if not isinstance(raw, dict):
+        log.warning("settings.json legado não contém um objeto; nada importado")
+        return {}
+    return raw
+
+
+class SettingsStore:
+    """Preferências sobre o banco do app, seguras entre threads."""
+
+    def __init__(self, db: Database, *, legacy_file: Path | None = None) -> None:
+        self.db = db
+        self.legacy_file = legacy_file
         self._lock = threading.Lock()
+        if legacy_file is not None:
+            self._import_legacy(legacy_file)
         self._data = self._load()
 
-    def _load(self) -> dict[str, Any]:
-        data = {k: list(v) if isinstance(v, list) else v for k, v in DEFAULTS.items()}
+    # ------------------------------------------------------------- legado
+    def _import_legacy(self, path: Path) -> None:
+        if not path.is_file():
+            return
+        if self.db.query_one("SELECT 1 FROM app_meta WHERE key = ?", (LEGACY_IMPORTED_KEY,)):
+            return
+        if self.db.query_one("SELECT 1 FROM settings LIMIT 1"):
+            return
+        raw = _read_legacy(path)
+        if raw is None:
+            return
+        valid: dict[str, Any] = {}
+        for key, value in raw.items():
+            if key not in DEFAULTS:
+                log.warning("preferência desconhecida %r no settings.json legado; descartada", key)
+                continue
+            try:
+                valid[key] = _validate(key, value)
+            except (ValueError, KeyError):
+                log.warning("valor inválido para %s no settings.json legado; descartado", key)
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            return data
-        except (OSError, ValueError) as exc:
-            log.warning("settings.json ilegível (%s); usando os padrões", exc)
-            return data
-        if not isinstance(raw, dict):
-            log.warning("settings.json não contém um objeto; usando os padrões")
-            return data
-        for key in DEFAULTS:
-            if key in raw:
-                try:
-                    data[key] = _validate(key, raw[key])
-                except (ValueError, KeyError):
-                    log.warning("valor inválido para %s em settings.json; usando o padrão", key)
+            now = utc_now_iso()
+            with self.db.transaction() as tx:
+                for key, value in valid.items():
+                    tx.execute(
+                        "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)",
+                        (key, json.dumps(value, ensure_ascii=False), now),
+                    )
+                tx.execute(
+                    "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)",
+                    (LEGACY_IMPORTED_KEY, now),
+                )
+        except Exception:  # noqa: BLE001 — o legado nunca derruba o serviço
+            log.exception("falha ao importar o settings.json legado; usando os padrões")
+            return
+        log.info("settings.json legado importado para o banco (%d preferências)", len(valid))
+        target = path.with_name(path.name + MIGRATED_SUFFIX)
+        n = 1
+        while target.exists():
+            target = path.with_name(f"{path.name}{MIGRATED_SUFFIX}-{n}")
+            n += 1
+        try:
+            path.replace(target)
+        except OSError as exc:
+            log.warning("não foi possível renomear o settings.json legado: %s", exc)
+
+    # ------------------------------------------------------------- leitura
+    def _load(self) -> dict[str, Any]:
+        data = {k: _copy(v) for k, v in DEFAULTS.items()}
+        for row in self.db.query_all("SELECT key, value FROM settings"):
+            key = row["key"]
+            if key not in DEFAULTS:
+                continue
+            try:
+                data[key] = _validate(key, json.loads(row["value"]))
+            except (ValueError, KeyError):
+                log.warning("valor inválido para %s no banco; usando o padrão", key)
         return data
 
     def all(self) -> dict[str, Any]:
         with self._lock:
-            return {k: list(v) if isinstance(v, list) else v for k, v in self._data.items()}
+            return {k: _copy(v) for k, v in self._data.items()}
 
     def get(self, key: str) -> Any:
         with self._lock:
-            value = self._data[key]
-            return list(value) if isinstance(value, list) else value
+            return _copy(self._data[key])
 
+    # ------------------------------------------------------------- escrita
     def update(self, **changes: Any) -> dict[str, Any]:
-        """Valida, aplica e grava. Valor inválido levanta ``ValueError``/``KeyError``."""
+        """Valida, grava numa transação e aplica. Valor inválido levanta ``ValueError``/``KeyError``."""
         with self._lock:
+            validated = {key: _validate(key, value) for key, value in changes.items()}
+            now = utc_now_iso()
+            with self.db.transaction() as tx:
+                for key, value in validated.items():
+                    tx.execute(
+                        "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) "
+                        "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+                        (key, json.dumps(value, ensure_ascii=False), now),
+                    )
             new = dict(self._data)
-            for key, value in changes.items():
-                new[key] = _validate(key, value)
-            atomic_write_text(self.path, json.dumps(new, ensure_ascii=False, indent=2) + "\n")
+            new.update(validated)
             self._data = new
-            return dict(new)
+            return {k: _copy(v) for k, v in new.items()}

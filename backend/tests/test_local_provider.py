@@ -19,10 +19,10 @@ MESSAGES = [{"role": "user", "content": "Olá"}]
 @pytest.fixture
 def manager(tmp_path):
     from henduran.paths import DataPaths
-    from henduran.settings import SettingsStore
+    from .conftest import open_settings
 
     paths = DataPaths(tmp_path / "dados").ensure()
-    settings = SettingsStore(paths.settings_file)
+    settings = open_settings(paths)
     return EngineManager(paths, settings, launcher=fake_launcher, poll_interval=0.05, ready_timeout=20)
 
 

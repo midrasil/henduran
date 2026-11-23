@@ -10,7 +10,9 @@ Estrutura::
         engine/         motor de IA (llama-server) baixado
         models/         modelos .gguf do jogador
         logs/           log do motor
-        settings.json   preferências provisórias (ver ``henduran.settings``)
+        henduran.db     banco SQLite do app: preferências e metadados (ver ``henduran.db``)
+        backups/        cópias do banco feitas antes de cada migração (as 5 últimas)
+        settings.json.migrado   arquivo antigo de preferências, já importado para o banco
 """
 
 from __future__ import annotations
@@ -55,7 +57,16 @@ class DataPaths:
 
     @property
     def settings_file(self) -> Path:
+        """``settings.json`` legado: só lido uma vez, para importar ao banco."""
         return self.root / "settings.json"
+
+    @property
+    def database_file(self) -> Path:
+        return self.root / "henduran.db"
+
+    @property
+    def backups_dir(self) -> Path:
+        return self.root / "backups"
 
     def ensure(self) -> DataPaths:
         """Cria as pastas que ainda não existem."""

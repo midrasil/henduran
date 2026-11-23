@@ -38,7 +38,8 @@ from henduran.ai.engine import (
     quant_of,
 )
 from henduran.paths import DataPaths
-from henduran.settings import SettingsStore
+
+from .conftest import open_settings
 
 FAKE_SERVER = Path(__file__).with_name("fake_llama_server.py")
 TAG = "b12635"
@@ -87,7 +88,7 @@ def paths(tmp_path: Path) -> DataPaths:
 
 @pytest.fixture
 def settings(paths: DataPaths) -> SettingsStore:
-    return SettingsStore(paths.settings_file)
+    return open_settings(paths)
 
 
 def make_manager(paths, settings, *, releases=None, data: bytes | None = None, fetched=None, **kw) -> EngineManager:
@@ -421,11 +422,12 @@ def test_motor_morre_quando_o_servico_e_morto_a_forca(tmp_path):
         from pathlib import Path
         from henduran.ai.engine import EngineManager
         from henduran.paths import DataPaths
+        from henduran.db import open_app_database
         from henduran.settings import SettingsStore
         paths = DataPaths(Path({str(data)!r})).ensure()
         (paths.engine_dir / "llama-server.exe").write_bytes(b"x")
         (paths.models_dir / "m.gguf").write_bytes(b"0")
-        s = SettingsStore(paths.settings_file)
+        s = SettingsStore(open_app_database(paths.database_file)[0])
         s.update(active_model="m.gguf")
         m = EngineManager(paths, s, launcher=lambda b: [sys.executable, "-I", {str(FAKE_SERVER)!r}], poll_interval=0.05)
         async def main():
