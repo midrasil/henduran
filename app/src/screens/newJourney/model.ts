@@ -23,7 +23,16 @@ export interface CharacterForm {
   skill_profile: string | null;
   /** Perícias com valor; as ausentes valem 0. */
   skills: Record<string, number>;
+  /** Descrição opcional, sem efeito de regra (vazio = não informado). */
+  age: string;
+  height: string;
+  origin: string;
+  personality: string;
 }
+
+/** Campos opcionais da descrição, na ordem do formulário. */
+export const OPTIONAL_FIELDS = ["age", "height", "origin", "personality"] as const;
+export type OptionalField = (typeof OPTIONAL_FIELDS)[number];
 
 export function emptyCharacter(rules: CreationRules): CharacterForm {
   return {
@@ -37,6 +46,10 @@ export function emptyCharacter(rules: CreationRules): CharacterForm {
     attributes: Object.fromEntries(rules.attributes.map((a) => [a.id, null])),
     skill_profile: null,
     skills: {},
+    age: "",
+    height: "",
+    origin: "",
+    personality: "",
   };
 }
 
@@ -58,6 +71,10 @@ export function toDraft(form: CharacterForm): CharacterDraft {
     skills,
   };
   if (form.skill_profile !== null) draft.skill_profile = form.skill_profile;
+  // Opcionais: só vão quando preenchidos (o servidor trata vazio como não informado).
+  for (const key of OPTIONAL_FIELDS) {
+    if (form[key].trim()) draft[key] = form[key];
+  }
   return draft;
 }
 
@@ -66,7 +83,7 @@ export const defaultJourneyName = (characterName: string) => `A Jornada de ${cha
 
 /** O jogador já escreveu ou escolheu algo no personagem? */
 export function characterTouched(form: CharacterForm): boolean {
-  const texts = [form.name, form.concept, form.appearance, form.history, form.ambition, form.desire];
+  const texts = [form.name, form.concept, form.appearance, form.history, form.ambition, form.desire, ...OPTIONAL_FIELDS.map((k) => form[k])];
   return (
     texts.some((t) => t.trim() !== "") ||
     form.convictions.some((c) => c.text.trim() !== "" || c.pillar.trim() !== "") ||

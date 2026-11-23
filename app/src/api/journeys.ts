@@ -154,6 +154,11 @@ export interface CharacterDraft {
   attributes: Record<string, number>;
   skill_profile?: string;
   skills: Record<string, number>;
+  /** Descrição opcional, sem efeito de regra (limites em `text_limits`). Vazio ou ausente = não informado. */
+  age?: string;
+  height?: string;
+  origin?: string;
+  personality?: string;
 }
 
 export interface DerivedPreview {
@@ -212,11 +217,30 @@ export interface SheetConviction {
   fractures: number;
 }
 
+/** Enquadramento do retrato: centro (`x`, `y`, de 0 a 1) e aproximação (`zoom`, de 1 a 8). */
+export interface PortraitCrop {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+export interface PortraitInfo {
+  crop: PortraitCrop;
+  /** Rota da imagem original (exige o token: buscar com `fetch`, não com `<img src>`). */
+  url_path: string;
+}
+
 export interface CharacterSheet {
   name: string;
   concept: string;
   appearance: string;
   history: string;
+  /** Campos opcionais da descrição (nulos quando não informados; ausentes em Jornadas antigas). */
+  age?: string | null;
+  height?: string | null;
+  origin?: string | null;
+  personality?: string | null;
+  portrait?: PortraitInfo | null;
   skill_profile: string;
   created_at: string;
   attributes: Record<string, number>;
@@ -241,6 +265,70 @@ export interface OpenJourneySummary {
   created_at: string | null;
   last_saved_at: string | null;
   rules_version: string | null;
+  start_place_id?: string | null;
+  current_place_id?: string | null;
+  calendar_year?: number | null;
+  calendar_month?: number | null;
+  calendar_day?: number | null;
+}
+
+/* ------------------------------------------------- Cena, proposta e lugar */
+
+export type JourneyMode = "fora_de_cena" | "em_cena";
+export type MessageChannel = "fora_de_cena" | "cena";
+
+/** Cena como a API entrega (`status` `proposta` só durante a abertura ou o aceite). */
+export interface SceneView {
+  id: number | null;
+  status: "proposta" | "aberta" | "encerrada" | string;
+  title: string | null;
+  opening_tone: string | null;
+  place_id: string | null;
+  place_name: string | null;
+  day_period: string | null;
+  motive: string | null;
+  participants: string[];
+  objective_id: number | null;
+  summary: string | null;
+  opened_at: string | null;
+  closed_at: string | null;
+}
+
+export interface ProposalPlace {
+  kind: "conhecido" | "novo";
+  id: string | null;
+  name: string | null;
+  type: string | null;
+  description: string | null;
+}
+
+export interface SceneProposal {
+  id: number;
+  status: string;
+  title: string | null;
+  place: ProposalPlace;
+  motive: string | null;
+  participants: string[];
+  created_at: string | null;
+}
+
+export interface CurrentPlace {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  source: "mundo" | "jornada";
+}
+
+/** Data no calendário do Mundo (ADR-076, item 16). */
+export interface CalendarDate {
+  year: number;
+  month: number;
+  month_name: string;
+  day: number;
+  weekday: number;
+  weekday_name: string;
+  era_label: string;
 }
 
 /** O que `GET /journeys/current` e `POST /journeys/{id}/open` devolvem. */
@@ -248,6 +336,12 @@ export interface JourneySnapshot {
   journey: OpenJourneySummary;
   character: CharacterSheet | null;
   world: { id: string; version: number; content: WorldContent | null };
+  /** Campos da tela da Jornada (ausentes em respostas antigas). */
+  mode?: JourneyMode;
+  scene?: SceneView | null;
+  proposal?: SceneProposal | null;
+  current_place?: CurrentPlace | null;
+  calendar?: CalendarDate | null;
 }
 
 export interface BackupInfo {

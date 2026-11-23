@@ -71,7 +71,7 @@ export interface EngineRelease {
 export async function request<T>(
   info: BackendInfo,
   path: string,
-  init: { method?: "GET" | "POST" | "DELETE"; body?: unknown } = {},
+  init: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   const headers: Record<string, string> = { ...authHeaders(info) };
   const options: RequestInit = { method: init.method ?? "GET", headers };

@@ -158,6 +158,11 @@ TEXT_LIMITS = MappingProxyType(
         "conviction_pillar": 300,
         "appearance": 4000,
         "history": 4000,
+        # Descrição opcional, sem efeito de regra (ADR-076; tela da Jornada, item 2.6).
+        "age": 100,
+        "height": 100,
+        "origin": 200,
+        "personality": 1000,
     }
 )
 

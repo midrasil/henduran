@@ -29,7 +29,7 @@ O escopo do MVP diz que o Narrador Geral (**Aduran**) abre as Cenas por intenç�
    A Cena e a mensagem de abertura são **gravadas juntas, numa transação, só quando a narração termina**. Se a narração for cancelada ou falhar, nada é gravado e a próxima tentativa sorteia o tom e propõe a Cena do zero (item 2). Ajuste aprovado em 2026-11-23, na implementação.
 
    Uma proposta inválida é recusada pelo motor, que pede nova proposta um número limitado de vezes e depois informa o erro, sem inventar a Cena.
-6. **Encerramento de Cena:** o jogador encerra por um botão, ou o Narrador **propõe** o encerramento e o jogador confirma. O Narrador não encerra uma Cena sozinho. Ao encerrar, o Narrador propõe um **resumo** da Cena e o motor o grava com a Cena; a Jornada volta para Fora de Cena, com o Aduran.
+6. **Encerramento de Cena:** **só o jogador** encerra, por um botão, com confirmação (revisto em 2026-11-23: o jogador funciona como um mestre auxiliar confiável; a proposta de encerramento pelo Narrador fica para depois). O Narrador não encerra uma Cena sozinho. Ao encerrar, o Narrador propõe um **resumo** da Cena e o motor o grava com a Cena; a Jornada volta para Fora de Cena, com o Aduran.
 7. **O texto do Narrador não altera estado.** Abrir Cena, encerrar Cena e gravar resumo só acontecem por operações validadas pelo motor (ADR-004). Fatos persistentes além do resumo, testes (ADR-006) e avanço de tempo (ADR-073) entram depois, cada um com sua validação.
 8. **Histórico persistido no `journey.db`** (ADR-075): Cenas (motivo, local, momento, participantes, estado, resumo, abertura e encerramento) e mensagens (canal Fora de Cena ou Cena, Cena de origem, papel, texto e se foi concluída ou cancelada). Reabrir o app retoma o histórico e o estado Fora de Cena ou Em Cena (critério 4 do MVP).
 
@@ -37,6 +37,16 @@ O escopo do MVP diz que o Narrador Geral (**Aduran**) abre as Cenas por intenç�
 
 10. **Mensagem do jogador só depois da abertura.** Enquanto a Jornada não tiver a abertura, a interface desabilita a digitação e o envio; o serviço também recusa (`abertura_pendente`) como proteção. Aprovado em 2026-11-23.
 11. **Resumos das Cenas encerradas entram no contexto** dos dois Narradores (as 5 mais recentes no MVP), para o Aduran saber o que acabou de acontecer. Aprovado em 2026-11-23.
+
+12. **Novas Cenas nascem da conversa com o Aduran** (2026-11-23). Fora de Cena, o jogador tira dúvidas com o Aduran e diz o que o personagem fará a seguir. O Aduran **avalia se a ação pede uma Cena**: se pedir, **propõe** a Cena (lugar, motivo e participantes) e o jogador aceita ou recusa; se não pedir, o Aduran responde Fora de Cena com o que o personagem sabe ou consegue, sem abrir Cena. Exemplo: pesquisar numa biblioteca pode ser uma Cena ou só uma resposta do Aduran. A proposta passa pela mesma validação estruturada do item 5 e só é aplicada depois do aceite. **Enquanto a Reserva de Dados (ADR-006) não existir, o Aduran não resolve ações incertas por conta própria**: responde só com o que é conhecimento comum ou já estabelecido, ou propõe uma Cena; testes Fora de Cena entram com o ADR-006. Uma ação Fora de Cena não avança o tempo até existir o ADR de passagem de tempo.
+13. **Registro de lugares** (2026-11-23). A Jornada guarda o **lugar atual** e o histórico de lugares por onde o personagem passou. Uma Cena pode acontecer num lugar do Mundo ou num **lugar novo** proposto pelo Aduran (por exemplo, a estrada que sai da cidade), coerente com o que o jogador disse que fará: se o personagem vai sair da cidade, a Cena não acontece na cidade. Lugares novos ficam no `journey.db`, porque o `world.db` é só leitura para a Jornada (ADR-075). Ao aceitar a Cena, o motor valida e atualiza o lugar atual. Não é mapa: é um registro em lista, como o campo "Local" do Caliope.
+14. **Log da Jornada** (2026-11-23). O serviço registra eventos do motor para o Log da tela da Jornada (`docs/ui-ux/09-tela-da-jornada.md`), com cada evento ligado à sua Cena quando houver, para o Log de uma Cena mostrar só os dela: no MVP, Cena aberta, Cena encerrada, resumo salvo e troca de lugar. Rolagens e memórias entram quando existirem.
+
+15. **Nome da Cena e arco** (2026-11-23). A proposta de Cena (item 5) passa a trazer um **título**, proposto pelo Narrador e validado pelo motor (tamanho); **o jogador pode renomear** a Cena, e a troca entra no Log. Cada Cena guarda a **Ambição ativa** quando foi aberta: o conjunto de Cenas de uma Ambição forma um **arco** (`docs/ui-ux/09-tela-da-jornada.md`, item 2.2). A troca de Ambição (ADR-073) fica para a tarefa de Objetivos; até lá, há um só arco.
+
+16. **Data no calendário do Mundo** (2026-11-23). Em vez de "Dia N", a Jornada guarda a **data atual no calendário do Mundo** (ano, mês e dia; o dia da semana é calculado). Ao criar a Jornada, o motor **sorteia o mês e o dia** (o ano é o do calendário), como sorteia o período. A data só muda quando existir o ADR de passagem de tempo. A interface mostra período e data (por exemplo, "Noite · 12 de Alvorim, Solário · Ano 476").
+17. **Proposta de Cena pelo Aduran** (2026-11-23, completa o item 12). O Aduran sinaliza com uma **marcação no fim da resposta**, que o serviço remove do texto antes de gravar; então o serviço pede a proposta estruturada (título, lugar conhecido ou novo, motivo, participantes), valida e grava como **pendente**, para o cartão sobreviver a reabrir o app. O jogador aceita, pede outra ou recusa.
+18. **Retrato** (2026-11-23). A imagem original fica em `assets\` da Jornada, com o enquadramento guardado na ficha; PNG, JPEG ou WebP conferidos pelo conteúdo, **até 20 MB** (por causa dos backups e da memória da tela, não de segurança).
 
 ## Consequências
 
@@ -49,6 +59,7 @@ O escopo do MVP diz que o Narrador Geral (**Aduran**) abre as Cenas por intenç�
 
 - Passagem de tempo entre períodos (quem propõe, quanto avança de uma vez, a virada do Dia): ADR próprio. A lista dos 6 períodos também será confirmada nesse ADR.
 - Limite de mensagens recentes no contexto e quando passar a usar resumos (memória fica fora do MVP).
-- Como o Narrador sinaliza a proposta de encerramento no texto (cartão no chat, botão sugerido) e o formato do resumo.
+- Como o Aduran sinaliza que vai propor uma Cena (marcação no texto ou chamada estruturada) e o formato do resumo.
+- Proposta de encerramento pelo Narrador (adiada pelo item 6).
 - Se uma Cena encerrada pode continuar direto em outra Cena "por continuidade justificada" (`02-loop-de-gameplay.md`, seção 5) sem passar pelo Aduran.
 - Reabertura de Cenas encerradas e o `@Aduran` durante a Cena (`ESCOPO-MVP.md`, seção 2, item 6) seguem para a entrega seguinte.

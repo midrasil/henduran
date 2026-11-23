@@ -176,7 +176,8 @@ def test_abertura_feliz(make):
     assert msg["scene_id"] == body["scene"]["id"]
     # O pedido estruturado leva o esquema, o lugar e o tom sorteado; o lugar e o período não vêm do modelo.
     [(proposal_messages, schema)] = provider.complete_calls
-    assert set(schema["properties"]) == {"motive", "participants"}
+    assert set(schema["properties"]) == {"title", "motive", "participants"}
+    assert proposed["title"] == DEFAULT_SCENE_PROPOSAL["title"] and done["scene"]["title"] == proposed["title"]
     assert content["places"][1]["name"] in proposal_messages[0]["content"]
     assert "Tom de partida sorteado" in proposal_messages[0]["content"]
     # Reabrir mostra o modo e a Cena.
@@ -195,7 +196,7 @@ def test_abertura_cancelada_nao_grava_nada_e_pode_gerar_de_novo(make):
     events = stream_and_cancel(srv, "/journeys/current/opening")
     assert "scene" in names(events) and events[-1] == ("done", {"reason": "cancelled"})
     body = history(srv)
-    assert body == {"mode": "fora_de_cena", "scene": None, "messages": []}
+    assert body == {"mode": "fora_de_cena", "scene": None, "proposal": None, "messages": []}
     assert srv.app.state.narrating == {}
     provider._delay = 0
     events = stream(srv, "/journeys/current/opening")
@@ -216,7 +217,7 @@ def test_abertura_com_erro_nao_grava_nada(make, failure):
     assert data["code"] == ("generation_failed" if failure == "stream" else "engine_not_ready")
     if failure == "complete":
         assert "scene" not in names(events)
-    assert history(srv) == {"mode": "fora_de_cena", "scene": None, "messages": []}
+    assert history(srv) == {"mode": "fora_de_cena", "scene": None, "proposal": None, "messages": []}
     assert srv.app.state.narrating == {}
 
 
@@ -227,7 +228,7 @@ def test_proposta_invalida_tres_vezes(make):
     events = stream(srv, "/journeys/current/opening")
     assert names(events) == ["start", "error"] and events[-1][1]["code"] == "proposta_invalida"
     assert len(provider.complete_calls) == 3 and provider.stream_calls == []
-    assert history(srv) == {"mode": "fora_de_cena", "scene": None, "messages": []}
+    assert history(srv) == {"mode": "fora_de_cena", "scene": None, "proposal": None, "messages": []}
     # Na segunda vez o provedor volta a responder certo.
     assert stream(srv, "/journeys/current/opening")[-1][1]["reason"] == "completed"
 

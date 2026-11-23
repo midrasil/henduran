@@ -1,6 +1,5 @@
 /** Navegação do app: um redutor simples, sem biblioteca de rotas. */
 import type { JourneySnapshot } from "./api/journeys";
-import type { JourneyTab } from "./screens/journey/JourneyTabs";
 
 export type Screen = "menu" | "jornadas" | "nova-jornada" | "modelos" | "jornada";
 
@@ -8,8 +7,6 @@ export interface NavState {
   screen: Screen;
   /** Jornada aberta no serviço (somente leitura na interface). */
   journey: JourneySnapshot | null;
-  /** Aba da Jornada aberta. */
-  tab: JourneyTab;
   /** Para onde "Voltar" leva a partir de Modelos. */
   modelsBack: "menu" | "jornada";
   /** Aviso a mostrar na tela de destino. */
@@ -19,10 +16,9 @@ export interface NavState {
 export type NavAction =
   | { type: "go"; screen: Screen; notice?: string }
   | { type: "opened"; snapshot: JourneySnapshot }
-  | { type: "closed" }
-  | { type: "tab"; tab: JourneyTab };
+  | { type: "closed" };
 
-export const initialNav: NavState = { screen: "menu", journey: null, tab: "chat", modelsBack: "menu", notice: null };
+export const initialNav: NavState = { screen: "menu", journey: null, modelsBack: "menu", notice: null };
 
 export function navReducer(state: NavState, action: NavAction): NavState {
   switch (action.type) {
@@ -33,16 +29,8 @@ export function navReducer(state: NavState, action: NavAction): NavState {
       return { ...state, screen: action.screen, modelsBack, notice: action.notice ?? null };
     }
     case "opened":
-      return {
-        ...state,
-        screen: "jornada",
-        journey: action.snapshot,
-        tab: state.journey?.journey.id === action.snapshot.journey.id ? state.tab : "chat",
-        notice: null,
-      };
+      return { ...state, screen: "jornada", journey: action.snapshot, notice: null };
     case "closed":
-      return { ...state, screen: "menu", journey: null, tab: "chat", notice: null };
-    case "tab":
-      return { ...state, tab: action.tab };
+      return { ...state, screen: "menu", journey: null, notice: null };
   }
 }

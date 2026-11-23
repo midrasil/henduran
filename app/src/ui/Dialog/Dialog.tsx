@@ -19,6 +19,8 @@ export interface DialogProps {
   /** Impede fechar com Esc (por exemplo, enquanto uma operação termina). */
   dismissible?: boolean;
   tone?: "default" | "danger";
+  /** `wide` para conteúdos grandes (ficha completa, recorte do retrato). */
+  size?: "default" | "wide";
   children?: ReactNode;
 }
 
@@ -39,6 +41,7 @@ export function Dialog({
   returnFocusRef,
   dismissible = true,
   tone = "default",
+  size = "default",
   children,
 }: DialogProps) {
   const ids = useId();
@@ -110,7 +113,7 @@ export function Dialog({
         aria-labelledby={`${ids}-title`}
         aria-describedby={description ? `${ids}-desc` : undefined}
         tabIndex={-1}
-        className={`dialog dialog--${tone} surface-dark px-frame`}
+        className={`dialog dialog--${tone}${size === "wide" ? " dialog--wide" : ""} surface-dark px-frame`}
         onKeyDown={onKeyDown}
       >
         <div className="dialog__titlebar">

@@ -2,6 +2,8 @@
 
 ## Arquitetura de navegação
 
+> **MVP (2026-11-23):** a tela da Jornada não tem barra de navegação nem abas (só uma barra fina com o nome da Jornada, o modelo e o ⚙); o layout aprovado está em `09-tela-da-jornada.md`.
+
 **PROPOSTO:** `Menu → Mundos → Jornadas → Jornada ativa`, com superfícies globais de configurações e backups. Dentro da Jornada, navegação persistente e contida: Chat/Cena, mapa-múndi, ficha, inventário, diário e continuidades. A transição narrativa↔tática preserva a mesma Cena e histórico (ADR-020); não cria um “lobby de combate”.
 
 ## Telas obrigatórias

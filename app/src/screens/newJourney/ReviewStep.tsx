@@ -76,6 +76,16 @@ export function ReviewStep({
             <dt>Desejo</dt>
             <dd>{form.desire}</dd>
           </dl>
+          <dl className="facts">
+            <dt>Idade</dt>
+            <dd>{form.age.trim() || "não informada"}</dd>
+            <dt>Altura</dt>
+            <dd>{form.height.trim() || "não informada"}</dd>
+            <dt>Origem</dt>
+            <dd>{form.origin.trim() || "não informada"}</dd>
+            <dt>Personalidade</dt>
+            <dd className="prose">{form.personality.trim() || "não informada"}</dd>
+          </dl>
           <details className="details">
             <summary>Aparência e história</summary>
             <p className="prose">{form.appearance}</p>

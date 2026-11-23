@@ -452,73 +452,7 @@ h3[tabindex="-1"]:focus,
   text-decoration: underline;
 }
 
-/* ------------------------------------------------------- Jornada aberta */
-
-.journey {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--space-2);
-  width: 100%;
-  max-width: 1200px;
-  min-width: 0;
-  min-height: 0;
-}
-
-.journey__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px var(--space-2);
-  margin: 4px 4px 0;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-surface);
-  --frame-inner: var(--color-frame);
-  --frame-hi: var(--color-surface-raised);
-  --frame-lo: var(--color-outline);
-}
-
-.journey__title {
-  font-size: var(--font-size-xl);
-  color: var(--color-accent);
-}
-
-.journey__chat {
-  flex-direction: column;
-}
-
-.journey__aside {
-  padding: 0 4px;
-  font-size: var(--font-size-sm);
-  font-style: italic;
-  color: var(--color-text-muted);
-}
-
-.sheet,
-.world-view,
-.objectives {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.month-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 2px var(--space-2);
-  margin: 0;
-  padding-left: var(--space-3);
-}
-
-.place-here {
-  margin-left: var(--space-1);
-}
-
-.objective__text {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
+/* A Jornada aberta tem folha própria: screens/journey/JourneyScreen.css. */
 
 /* ------------------------------------------------------- janelas estreitas */
 

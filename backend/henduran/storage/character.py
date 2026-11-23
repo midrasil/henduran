@@ -1,18 +1,26 @@
-"""Personagem no banco da Jornada (migração ``journey/0002_character.sql``).
+"""Personagem no banco da Jornada (migrações ``journey/0002_character.sql`` e ``0004``).
 
 ``write_character`` grava tudo numa transação já aberta (a do chamador): a ficha,
 os 6 Atributos, as 22 Perícias, as 3 Convicções e a Ambição e o Desejo ativos.
 ``read_character`` e ``character_sheet`` leem de volta, com os valores derivados
 (tamanho das trilhas de Vida e Vontade) calculados pelas regras da fatia 1.
+
+A ``0004`` acrescenta os campos opcionais da descrição (``age``, ``height``,
+``origin``, ``personality``; sem efeito de regra) e o retrato: o nome do arquivo em
+``assets`` e o enquadramento ``{x, y, zoom}``. A ficha expõe
+``portrait: {"crop", "url_path"}`` ou ``None``.
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any, Protocol
 
 from henduran.rules import fatia1 as R
 from henduran.rules.creation import Character
 from henduran.storage.errors import StorageError
+
+PORTRAIT_URL_PATH = "/journeys/current/portrait"
 
 
 class _Writer(Protocol):
@@ -33,9 +41,12 @@ def write_character(tx: _Writer, character: Character, now: str) -> None:
     if tx.query_one("SELECT 1 FROM character") is not None:
         raise StorageError("personagem_existente", "Esta Jornada já tem um personagem.")
     tx.execute(
-        "INSERT INTO character (id, name, concept, appearance, history, creation_profile, created_at) "
-        "VALUES (1, ?, ?, ?, ?, ?, ?)",
-        (character.name, character.concept, character.appearance, character.history, character.skill_profile, now),
+        "INSERT INTO character (id, name, concept, appearance, history, creation_profile, created_at, age, height, "
+        "origin, personality) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            character.name, character.concept, character.appearance, character.history, character.skill_profile, now,
+            character.age, character.height, character.origin, character.personality,
+        ),
     )
     tx.executemany(
         "INSERT INTO character_attributes (attribute, value) VALUES (?, ?)",
@@ -59,7 +70,8 @@ def read_character(db: _Reader) -> dict[str, Any] | None:
     """O personagem como gravado (ou ``None`` se a Jornada ainda não tem personagem)."""
     row = db.query_one(
         "SELECT name, concept, appearance, history, creation_profile, vida_superficial, vida_agravada, "
-        "vontade_superficial, vontade_agravada, created_at FROM character WHERE id = 1"
+        "vontade_superficial, vontade_agravada, created_at, age, height, origin, personality, portrait_file, "
+        "portrait_crop FROM character WHERE id = 1"
     )
     if row is None:
         return None
@@ -80,6 +92,11 @@ def read_character(db: _Reader) -> dict[str, Any] | None:
         "concept": row["concept"],
         "appearance": row["appearance"],
         "history": row["history"],
+        "age": row["age"],
+        "height": row["height"],
+        "origin": row["origin"],
+        "personality": row["personality"],
+        "portrait": portrait_view(row["portrait_file"], row["portrait_crop"]),
         "skill_profile": row["creation_profile"],
         "created_at": row["created_at"],
         # Ordem fixa das regras; ids gravados e desconhecidos pela versão atual vêm ao fim.
@@ -115,4 +132,36 @@ def character_sheet(db: _Reader) -> dict[str, Any] | None:
     return data
 
 
-__all__ = ["character_sheet", "read_character", "write_character"]
+def portrait_view(portrait_file: str | None, crop: str | None) -> dict[str, Any] | None:
+    if not portrait_file or not crop:
+        return None
+    return {"crop": json.loads(crop), "url_path": PORTRAIT_URL_PATH}
+
+
+def portrait_file(db: _Reader) -> str | None:
+    """O nome do arquivo do retrato em ``assets`` (ou ``None``)."""
+    row = db.query_one("SELECT portrait_file FROM character WHERE id = 1")
+    if row is None:
+        raise StorageError("personagem_ausente", "A Jornada ainda não tem personagem.")
+    return row["portrait_file"]
+
+
+def set_portrait(tx: _Writer, file_name: str | None, crop: dict[str, float] | None) -> None:
+    """Grava (ou limpa, com ``None``) o retrato: nome do arquivo e enquadramento validados."""
+    payload = None if crop is None else json.dumps(crop)
+    changed = tx.execute(
+        "UPDATE character SET portrait_file = ?, portrait_crop = ? WHERE id = 1", (file_name, payload)
+    )
+    if not changed:
+        raise StorageError("personagem_ausente", "A Jornada ainda não tem personagem.")
+
+
+__all__ = [
+    "PORTRAIT_URL_PATH",
+    "character_sheet",
+    "portrait_file",
+    "portrait_view",
+    "read_character",
+    "set_portrait",
+    "write_character",
+]

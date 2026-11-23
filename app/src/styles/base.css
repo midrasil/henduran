@@ -186,3 +186,114 @@ select {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/*
+ * Barras de rolagem em pixel (WebView2/Chromium): douradas no escuro, marrons
+ * no pergaminho e roxas na margem do cronista (.surface-margin). Outros
+ * navegadores recebem a versão simples (scrollbar-color).
+ */
+:root,
+.surface-dark {
+  --sb-track: var(--scrollbar-track);
+  --sb-thumb: var(--scrollbar-thumb);
+  --sb-hi: var(--scrollbar-hi);
+  --sb-lo: var(--scrollbar-lo);
+}
+
+.surface-parchment {
+  --sb-track: var(--color-parchment-deep);
+  --sb-thumb: var(--px-brown-700);
+  --sb-hi: var(--color-parchment-edge);
+  --sb-lo: var(--px-brown-900);
+}
+
+.surface-margin {
+  --sb-thumb: var(--px-purple-500);
+  --sb-hi: var(--px-purple-200);
+  --sb-lo: var(--px-purple-800);
+}
+
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--sb-track);
+  box-shadow: inset 2px 0 0 0 rgba(0, 0, 0, 0.35);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border: 3px solid var(--sb-track);
+  box-shadow:
+    inset 2px 2px 0 0 var(--sb-hi),
+    inset -2px -2px 0 0 var(--sb-lo);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-hi);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--sb-track);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--sb-thumb) var(--sb-track);
+    scrollbar-width: thin;
+  }
+}
+
+/* Dica em pixel (data-tip): aparece ao passar o mouse e com foco do teclado. Repete o aria-label. */
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: var(--z-overlay);
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 2px 8px;
+  background: var(--px-ink-950);
+  color: var(--color-text);
+  border: 2px solid var(--color-accent);
+  font: 400 12px/1.4 var(--font-pixel);
+  pointer-events: none;
+}
+
+.tip-below[data-tip]:hover::after,
+.tip-below[data-tip]:focus-visible::after {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+
+.tip-start[data-tip]:hover::after,
+.tip-start[data-tip]:focus-visible::after {
+  left: 0;
+  transform: none;
+}
+
+.tip-end[data-tip]:hover::after,
+.tip-end[data-tip]:focus-visible::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.pixel-art {
+  display: inline-block;
+  flex: none;
+  shape-rendering: crispEdges;
+  vertical-align: middle;
+}

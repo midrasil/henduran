@@ -3,29 +3,26 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { version as APP_VERSION } from "../package.json";
 import { BackendError, canExitApp, exitApp, type BackendInfo } from "./api/backend";
 import { closeJourney, openJourney, type JourneySnapshot, type JourneySummary } from "./api/journeys";
-import { ChatView } from "./components/ChatView";
-import { EngineNotice } from "./components/EngineNotice";
 import { ModelsView, type ModelsViewProps } from "./components/ModelsView";
 import { StatusIndicator } from "./components/StatusIndicator";
 import { useBackend, type UseBackendOptions } from "./hooks/useBackend";
-import { useChat } from "./hooks/useChat";
 import { useEngineStatus } from "./hooks/useEngineStatus";
 import { useCreationRules, useJourneyList } from "./hooks/useGameData";
 import { describeError, openErrorMessage, toPeriod } from "./lib/format";
 import { initialNav, navReducer, type Screen } from "./navigation";
-import { JOURNEY_TABS, journeyTitle, ObjectivesTab, SheetTab, WorldTab, type JourneyTab } from "./screens/journey/JourneyTabs";
+import { JourneyScreen } from "./screens/journey/JourneyScreen";
 import { JourneysScreen } from "./screens/JourneysScreen";
 import { MainMenu, pickLastJourney } from "./screens/MainMenu";
 import { NewJourneyWizard } from "./screens/newJourney/NewJourneyWizard";
-import { Button, PeriodLabel, PixelIcon, SkyBackdrop, TabPanel, Tabs } from "./ui";
-
-const TAB_PREFIX = "jornada";
+import { Button, PeriodLabel, PixelIcon, SkyBackdrop } from "./ui";
 
 export interface AppProps {
   backendOptions?: UseBackendOptions;
   /** Intervalo de consulta do motor, em ms (os testes usam um valor curto). */
   enginePollMs?: number;
   copyText?: ModelsViewProps["copyText"];
+  /** Cópia das mensagens da Jornada (os testes trocam a área de transferência). */
+  copyMessage?: (text: string) => Promise<void>;
 }
 
 /** Abre a Jornada; se o serviço ainda tiver outra aberta (por exemplo, depois de recarregar a tela), fecha e tenta de novo. */
@@ -41,13 +38,11 @@ async function openWithRetry(info: BackendInfo, id: string): Promise<JourneySnap
   }
 }
 
-export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
+export function App({ backendOptions, enginePollMs, copyText, copyMessage }: AppProps = {}) {
   const status = useBackend(backendOptions);
   const info = status.kind === "connected" ? status.info : null;
   const engine = useEngineStatus(info, enginePollMs);
   const { refresh } = engine;
-  const chat = useChat(info, { onEngineProblem: () => void refresh() });
-  const { reset: resetChat } = chat;
   const rules = useCreationRules(info);
   const journeys = useJourneyList(info);
   const { reload: reloadJourneys } = journeys;
@@ -76,10 +71,10 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
     if (nav.screen === "menu" || nav.screen === "jornadas") void reloadJourneys();
   }, [nav.screen, reloadJourneys]);
 
-  // No Chat, confere de novo o estado do motor.
+  // Na Jornada, confere de novo o estado do motor.
   useEffect(() => {
-    if (nav.screen === "jornada" && nav.tab === "chat") void refresh();
-  }, [nav.screen, nav.tab, refresh]);
+    if (nav.screen === "jornada") void refresh();
+  }, [nav.screen, refresh]);
 
   const open = useCallback(
     async (journey: Pick<JourneySummary, "id">, from: "menu" | "jornadas") => {
@@ -89,7 +84,6 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
       setMenuError(null);
       try {
         const snapshot = await openWithRetry(info, journey.id);
-        if (lastOpenedId.current !== snapshot.journey.id) resetChat();
         lastOpenedId.current = snapshot.journey.id;
         dispatch({ type: "opened", snapshot });
       } catch (err) {
@@ -100,7 +94,7 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
         setOpening(null);
       }
     },
-    [info, resetChat],
+    [info],
   );
 
   const backToMenu = async () => {
@@ -119,7 +113,6 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
     if (!info) return;
     try {
       const snapshot = await openWithRetry(info, journey.id);
-      resetChat();
       lastOpenedId.current = snapshot.journey.id;
       dispatch({ type: "opened", snapshot });
     } catch (err) {
@@ -147,29 +140,15 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
 
   return (
     <div className={`app app--${screen}`}>
-      {screen !== "menu" ? (
+      {screen !== "menu" && screen !== "jornada" ? (
         <header className="app-bar">
           <p className="app-bar__brand">
             <PixelIcon name="star" size={24} className="app-bar__mark" />
             Henduran
           </p>
-          <nav className="app-bar__nav" aria-label="Navegação">
-            {screen === "jornada" ? (
-              <Tabs
-                items={JOURNEY_TABS}
-                value={nav.tab}
-                onChange={(tab: JourneyTab) => dispatch({ type: "tab", tab })}
-                label="Seções da Jornada"
-                idPrefix={TAB_PREFIX}
-              />
-            ) : null}
-          </nav>
+          <div className="app-bar__nav" />
           <div className="app-bar__actions">
-            {screen === "jornada" ? (
-              <Button onClick={() => void backToMenu()}>
-                <PixelIcon name="back" /> Menu
-              </Button>
-            ) : screen === "modelos" && nav.modelsBack === "jornada" ? (
+            {screen === "modelos" && nav.modelsBack === "jornada" ? (
               <Button onClick={() => dispatch({ type: "go", screen: "jornada" })}>
                 <PixelIcon name="back" /> Voltar à Jornada
               </Button>
@@ -182,7 +161,7 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
         </header>
       ) : null}
 
-      <SkyBackdrop period={period} className={`app__sky app__sky--${screen}`} />
+      {screen !== "jornada" ? <SkyBackdrop period={period} className={`app__sky app__sky--${screen}`} /> : null}
 
       <main ref={mainRef} className={`app__main app__main--${screen}`}>
         {screen === "menu" ? (
@@ -262,64 +241,24 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
           </div>
         ) : null}
 
-        {screen === "jornada" && snapshot ? (
-          <div className="journey">
-            <header className="journey__header px-frame">
-              <h2 className="journey__title">Jornada: {journeyTitle(snapshot)}</h2>
-              {snapshot.world.content ? <p className="hint">Mundo: {snapshot.world.content.name}</p> : null}
-            </header>
-            <TabPanel idPrefix={TAB_PREFIX} id="chat" selected={nav.tab === "chat"} className="app__panel journey__chat">
-              <ChatView
-                entries={chat.entries}
-                streaming={chat.streaming}
-                error={chat.error}
-                disabled={info === null}
-                onSend={(text) => void chat.send(text)}
-                onCancel={chat.cancel}
-                notice={
-                  <>
-                    <p className="journey__aside">
-                      O Narrador ainda não recebe o contexto da sua Jornada. Isso virá numa etapa seguinte.
-                    </p>
-                    <EngineNotice status={engine.status} onOpenModels={openModels} />
-                  </>
-                }
-              />
-            </TabPanel>
-            <TabPanel idPrefix={TAB_PREFIX} id="ficha" selected={nav.tab === "ficha"} className="app__panel app__panel--scroll">
-              {nav.tab === "ficha" ? <SheetTab character={snapshot.character} rules={rules.rules} /> : null}
-            </TabPanel>
-            <TabPanel idPrefix={TAB_PREFIX} id="mundo" selected={nav.tab === "mundo"} className="app__panel app__panel--scroll">
-              {nav.tab === "mundo" ? <WorldTab world={snapshot.world.content} location={snapshot.journey.location} /> : null}
-            </TabPanel>
-            <TabPanel
-              idPrefix={TAB_PREFIX}
-              id="objetivos"
-              selected={nav.tab === "objetivos"}
-              className="app__panel app__panel--scroll"
-            >
-              {nav.tab === "objetivos" ? <ObjectivesTab character={snapshot.character} /> : null}
-            </TabPanel>
-          </div>
+        {screen === "jornada" && snapshot && info ? (
+          <JourneyScreen
+            key={snapshot.journey.id}
+            info={info}
+            snapshot={snapshot}
+            rules={rules.rules}
+            engine={engine.status}
+            onEngineProblem={() => void refresh()}
+            onOpenModels={openModels}
+            onBackToMenu={() => void backToMenu()}
+            {...(copyMessage ? { copyText: copyMessage } : {})}
+          />
         ) : null}
       </main>
 
+      {screen !== "jornada" ? (
       <footer className="status-bar">
         <StatusIndicator status={status} />
-        {screen === "jornada" && snapshot ? (
-          <>
-            <p className="status-bar__item">
-              <PixelIcon name="pin" className="status-bar__icon" />
-              <span className="visually-hidden">Local: </span>
-              {snapshot.journey.location ?? "local desconhecido"}
-            </p>
-            <p className="status-bar__item">
-              <PixelIcon name="person" className="status-bar__icon" />
-              <span className="visually-hidden">Personagem: </span>
-              {snapshot.journey.character_name ?? snapshot.character?.name ?? "sem personagem"}
-            </p>
-          </>
-        ) : null}
         <p className="status-bar__item">
           <PeriodLabel period={period} />
         </p>
@@ -329,6 +268,7 @@ export function App({ backendOptions, enginePollMs, copyText }: AppProps = {}) {
           </p>
         ) : null}
       </footer>
+      ) : null}
     </div>
   );
 }

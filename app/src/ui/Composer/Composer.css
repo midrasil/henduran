@@ -1,0 +1,102 @@
+/* Campo de escrita que cresce: escuro por padrão; em pergaminho, papel e tinta marrom. */
+.composer {
+  --composer-bg: var(--color-input-bg);
+  --composer-border: var(--color-input-border);
+  --composer-border-focus: var(--color-accent-light);
+  --composer-text: var(--color-text);
+  --composer-placeholder: var(--color-text-muted);
+  display: grid;
+  gap: 4px;
+}
+
+.surface-parchment .composer {
+  --composer-bg: var(--color-input-bg-on-parchment);
+  --composer-border: var(--color-input-border-on-parchment);
+  --composer-border-focus: var(--color-ink-on-parchment-accent);
+  --composer-text: var(--color-text-on-parchment);
+  --composer-placeholder: var(--color-text-on-parchment-muted);
+}
+
+.composer__field {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 4px 4px 4px 12px;
+  background: var(--composer-bg);
+  border: 3px solid var(--composer-border);
+  box-shadow: inset 2px 2px 0 0 rgba(0, 0, 0, 0.35);
+}
+
+.composer__field:focus-within {
+  border-color: var(--composer-border-focus);
+}
+
+.composer--off .composer__field {
+  border-color: var(--color-disabled-frame);
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--composer-text);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-md);
+  line-height: 1.4;
+  padding: 8px 0;
+  max-height: 190px;
+  overflow-y: hidden;
+}
+
+.composer__input::placeholder {
+  color: var(--composer-placeholder);
+  font-style: italic;
+  opacity: 1;
+}
+
+.composer__input:disabled {
+  cursor: not-allowed;
+}
+
+/* O foco do campo aparece na borda do conjunto (o contorno do textarea fica oculto). */
+.composer__field:has(.composer__input:focus-visible) {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.composer__send {
+  width: var(--target-primary);
+  height: var(--target-primary);
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 2px solid var(--color-outline);
+  box-shadow:
+    inset 2px 2px 0 0 var(--color-primary-bevel),
+    inset -2px -2px 0 0 var(--color-primary-active);
+  cursor: pointer;
+}
+
+.composer__send:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.composer__send:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.composer__hint {
+  min-height: 1em;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--fg-muted);
+}

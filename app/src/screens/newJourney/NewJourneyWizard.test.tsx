@@ -296,6 +296,36 @@ describe("Nova Jornada — passo 3, Revisão e criação", () => {
     expect(body.character.name).toBe(VALID_DRAFT.name);
   });
 
+  it("campos opcionais do Protagonista (idade, altura, origem, personalidade) vão na criação e aparecem na Revisão", async () => {
+    const { user, api } = setup();
+    await finishWorld(user);
+    const age = screen.getByRole("textbox", { name: "Idade (opcional)" });
+    expect(age).toHaveAttribute("maxLength", String(RULES.text_limits.age));
+    expect(screen.getByRole("textbox", { name: "Personalidade (opcional)" })).toHaveAttribute("maxLength", String(RULES.text_limits.personality));
+    await fill(user, age, "27 anos");
+    await fill(user, screen.getByRole("textbox", { name: "Origem (opcional)" }), "Palafitas de Vel");
+    await fill(user, screen.getByRole("textbox", { name: "Personalidade (opcional)" }), "Calada e teimosa.");
+    await fillCharacter(user);
+    await waitFor(() => expect(screen.getByText("Tudo certo. Pode avançar.")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Avançar" }));
+    await waitFor(() => expect(stepTitle()).toHaveTextContent("Passo 3 de 3: Revisão"));
+
+    const hero = screen.getByRole("region", { name: "Protagonista" });
+    expect(within(hero).getByText("27 anos")).toBeInTheDocument();
+    expect(within(hero).getByText("Palafitas de Vel")).toBeInTheDocument();
+    expect(within(hero).getByText("Calada e teimosa.")).toBeInTheDocument();
+    // Altura ficou em branco: não informada, e não vai no rascunho.
+    expect(within(hero).getAllByText("não informada").length).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: "Criar Jornada" }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === "POST" && c.path === "/journeys")).toBe(true));
+    const body = api.calls.find((c) => c.method === "POST" && c.path === "/journeys")?.body as { character: Record<string, unknown> };
+    expect(body.character.age).toBe("27 anos");
+    expect(body.character.origin).toBe("Palafitas de Vel");
+    expect(body.character.personality).toBe("Calada e teimosa.");
+    expect(body.character).not.toHaveProperty("height");
+  });
+
   it("422 volta ao passo do erro e destaca o campo, sem perder o que foi preenchido", async () => {
     const { user, onCreated } = setup({
       createResponse: () =>

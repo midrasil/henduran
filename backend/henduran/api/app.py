@@ -17,10 +17,20 @@ Narrador na Jornada aberta (ADR-076), com os mesmos eventos e o mesmo cancelamen
   — ``{"scene": {...}}`` com a Cena proposta e validada (``status: "proposta"``, ainda não
   gravada). ``done`` com ``reason: "completed"`` traz ``mode``, ``scene`` e ``message`` gravados;
   cancelada ou com erro, nada é gravado. ``error.code`` também pode ser ``proposta_invalida``.
-- ``POST /journeys/current/messages`` (SSE): mensagem do jogador no canal atual; ``done`` traz
-  ``message`` (a resposta gravada, ``concluida`` ou ``cancelada``; ``null`` se nada foi gerado).
-- ``GET /journeys/current/messages``: ``{mode, scene, messages}``.
+- ``POST /journeys/current/messages`` (SSE): ``{content, channel?}``; mensagem do jogador no canal
+  pedido (padrão: o atual). ``done`` traz ``message`` (a resposta gravada, ``concluida`` ou
+  ``cancelada``; ``null`` se nada foi gerado) e ``proposal`` (a pendente ou ``null``). Se o Aduran
+  pedir uma Cena (marcação no fim, removida do texto), ``event: proposal`` — ``{"proposal"}`` ou
+  ``event: proposal_error`` — ``{"code", "message"}``, antes do ``done``.
+- ``POST /journeys/current/messages/regenerate`` e ``/continue`` (SSE): ``{channel?}``; refazem ou
+  continuam a última resposta do Narrador do canal.
+- ``POST /journeys/current/proposal/accept`` (SSE): ``scene`` → ``token``s → ``done`` (Cena gravada).
+- ``POST /journeys/current/proposal/reroll`` e ``/decline`` (JSON).
+- ``GET /journeys/current/messages``: ``{mode, scene, proposal, messages}``.
 - ``POST /journeys/current/scene/close`` (JSON): resumo validado e Cena encerrada.
+- ``PATCH /journeys/current/scenes/{id}``, ``GET /journeys/current/scenes/{id}``, ``GET .../arcs``,
+  ``GET .../events``, ``GET .../places`` e o retrato (``PUT``/``PATCH``/``GET``/``DELETE``
+  ``/journeys/current/portrait``). Contrato completo em ``backend/README.md``.
 
 Erros HTTP: ``{"detail": {"code": "...", "message": "..."}}``. Nas validações (422), ``detail`` traz
 também ``errors: [{"field", "code", "message"}]``.
@@ -40,7 +50,7 @@ from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from henduran.ai import hardware as hw
@@ -52,6 +62,7 @@ from henduran.providers.base import NarratorProvider, ProviderUnavailable
 from henduran.narrative.scene import ProposalRejected
 from henduran.rules.creation import creation_catalog, preview_derived, validate_character
 from henduran.services import narration
+from henduran.services import portrait as portraits
 from henduran.services.journey_creation import (
     JourneyCreationFailed,
     JourneyCreationInvalid,
@@ -111,6 +122,7 @@ ERROR_STATUS = {
     "proposta_invalida": 502,
     "generation_failed": 502,
     "geracao_em_andamento": 409,
+    "imagem_grande_demais": 413,
 }
 
 # Erros de Jornadas e Mundos (StorageError, JourneyDamaged, MigrationError).
@@ -149,6 +161,21 @@ STORAGE_STATUS = {
     "lugar_inicial_ausente": 409,
     "periodo_invalido": 409,
     "mensagem_invalida": 422,
+    # Tela da Jornada (ADR-076, itens 12 a 18)
+    "canal_invalido": 422,
+    "sem_proposta_pendente": 409,
+    "sem_resposta_do_narrador": 409,
+    "mensagem_no_limite": 409,
+    "mensagem_nao_encontrada": 404,
+    "cena_nao_encontrada": 404,
+    "titulo_invalido": 422,
+    "lugar_duplicado": 409,
+    "lugar_desconhecido": 409,
+    "enquadramento_invalido": 422,
+    "formato_invalido": 422,
+    "imagem_grande_demais": 413,
+    "retrato_ausente": 404,
+    "retrato_falhou": 500,
 }
 
 # Limite do corpo das rotas de Nova Jornada (o conteúdo do Mundo tem até 256 KB).
@@ -221,7 +248,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=ALLOWED_ORIGINS,
-        allow_methods=["GET", "POST", "DELETE"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -787,48 +814,84 @@ def create_app(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
-    @app.get("/journeys/current/messages", dependencies=auth)
-    async def journeys_messages() -> dict:
+    async def read_view(work: Callable, *args) -> dict:
         journey = current_journey()
         try:
-            return await asyncio.to_thread(narration.history_view, journey)
+            return await asyncio.to_thread(work, journey, *args)
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
 
-    @app.post("/journeys/current/opening", dependencies=auth)
-    async def journeys_opening() -> StreamingResponse:
+    async def start_stream(prepare: Callable, run: Callable) -> StreamingResponse:
+        """Reserva a geração da Jornada, confere as pré-condições (``prepare``) e devolve o SSE de ``run``."""
         journey = current_journey()
         generation_id, cancel = reserve(journey.id)
         try:
-            plan = await asyncio.to_thread(narration.prepare_opening, journey)
+            plan = await asyncio.to_thread(prepare, journey)
         except (StorageError, DatabaseError) as exc:
             release(journey.id, generation_id)
             raise storage_error(exc) from exc
         except BaseException:
             release(journey.id, generation_id)
             raise
-        source = narration.run_opening(provider, journey, plan, cancel, rng=rng)
-        return narrative_stream(journey.id, generation_id, cancel, source)
+        return narrative_stream(journey.id, generation_id, cancel, run(journey, plan, cancel))
+
+    def scene_id_of(raw: str) -> int:
+        if not raw.isdigit() or len(raw) > 18:
+            raise _http_error("cena_nao_encontrada", "Cena não encontrada.", 404)
+        return int(raw)
+
+    async def read_channel(request: Request) -> str | None:
+        body = await read_json(request, ("channel",))
+        channel = body.get("channel")
+        try:
+            narration.check_channel(channel)
+        except StorageError as exc:
+            raise invalid(exc.code, str(exc), [{"field": "channel", "code": exc.code, "message": str(exc)}]) from exc
+        return channel
+
+    @app.get("/journeys/current/messages", dependencies=auth)
+    async def journeys_messages() -> dict:
+        return await read_view(narration.history_view)
+
+    @app.post("/journeys/current/opening", dependencies=auth)
+    async def journeys_opening() -> StreamingResponse:
+        return await start_stream(
+            narration.prepare_opening,
+            lambda journey, plan, cancel: narration.run_opening(provider, journey, plan, cancel, rng=rng),
+        )
 
     @app.post("/journeys/current/messages", dependencies=auth)
     async def journeys_send(request: Request) -> StreamingResponse:
-        body = await read_json(request, ("content",))
+        body = await read_json(request, ("content", "channel"))
         try:
             narration.check_player_text(body.get("content"))
         except StorageError as exc:
             raise invalid(exc.code, str(exc), [{"field": "content", "code": exc.code, "message": str(exc)}]) from exc
-        journey = current_journey()
-        generation_id, cancel = reserve(journey.id)
+        channel = body.get("channel")
         try:
-            plan = await asyncio.to_thread(narration.prepare_reply, journey, body["content"])
-        except (StorageError, DatabaseError) as exc:
-            release(journey.id, generation_id)
-            raise storage_error(exc) from exc
-        except BaseException:
-            release(journey.id, generation_id)
-            raise
-        source = narration.run_reply(provider, journey, plan, cancel)
-        return narrative_stream(journey.id, generation_id, cancel, source)
+            narration.check_channel(channel)
+        except StorageError as exc:
+            raise invalid(exc.code, str(exc), [{"field": "channel", "code": exc.code, "message": str(exc)}]) from exc
+        return await start_stream(
+            lambda journey: narration.prepare_reply(journey, body["content"], channel),
+            lambda journey, plan, cancel: narration.run_reply(provider, journey, plan, cancel),
+        )
+
+    @app.post("/journeys/current/messages/regenerate", dependencies=auth)
+    async def journeys_regenerate(request: Request) -> StreamingResponse:
+        channel = await read_channel(request)
+        return await start_stream(
+            lambda journey: narration.prepare_redo(journey, channel, continuing=False),
+            lambda journey, plan, cancel: narration.run_regenerate(provider, journey, plan, cancel),
+        )
+
+    @app.post("/journeys/current/messages/continue", dependencies=auth)
+    async def journeys_continue(request: Request) -> StreamingResponse:
+        channel = await read_channel(request)
+        return await start_stream(
+            lambda journey: narration.prepare_redo(journey, channel, continuing=True),
+            lambda journey, plan, cancel: narration.run_continue(provider, journey, plan, cancel),
+        )
 
     @app.post("/journeys/current/scene/close", dependencies=auth)
     async def journeys_scene_close() -> dict:
@@ -849,5 +912,164 @@ def create_app(
             raise _http_error("generation_failed", "Falha ao gerar o resumo da Cena; ela continua aberta.") from exc
         finally:
             release(journey.id, generation_id)
+
+    # ------------------------------------------------- propostas de Cena do Aduran (ADR-076, itens 12 e 17)
+    @app.post("/journeys/current/proposal/accept", dependencies=auth)
+    async def journeys_proposal_accept() -> StreamingResponse:
+        return await start_stream(
+            narration.prepare_accept,
+            lambda journey, plan, cancel: narration.run_accept(provider, journey, plan, cancel),
+        )
+
+    @app.post("/journeys/current/proposal/reroll", dependencies=auth)
+    async def journeys_proposal_reroll() -> dict:
+        journey = current_journey()
+        generation_id, _ = reserve(journey.id)
+        try:
+            pending = await asyncio.to_thread(narration.prepare_reroll, journey)
+            return await narration.run_reroll(provider, journey, pending)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        except ProviderUnavailable as exc:
+            raise _http_error(exc.code, str(exc)) from exc
+        except ProposalRejected as exc:
+            logger.warning("nova proposta recusada: %s", exc.reasons)
+            raise _http_error(exc.code, str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001 — a proposta anterior continua pendente
+            logger.exception("falha ao pedir outra proposta de Cena")
+            raise _http_error("generation_failed", "Falha ao pedir outra proposta; a anterior continua.") from exc
+        finally:
+            release(journey.id, generation_id)
+
+    @app.post("/journeys/current/proposal/decline", dependencies=auth)
+    async def journeys_proposal_decline() -> dict:
+        journey = current_journey()
+        generation_id, _ = reserve(journey.id)
+        try:
+            return await asyncio.to_thread(narration.decline_proposal, journey)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        finally:
+            release(journey.id, generation_id)
+
+    # ------------------------------------------------- Cenas, arcos, Log e lugares
+    @app.get("/journeys/current/arcs", dependencies=auth)
+    async def journeys_arcs() -> dict:
+        return await read_view(narration.arcs_view)
+
+    @app.get("/journeys/current/scenes/{scene_id}", dependencies=auth)
+    async def journeys_scene(scene_id: str) -> dict:
+        return await read_view(narration.scene_view, scene_id_of(scene_id))
+
+    @app.patch("/journeys/current/scenes/{scene_id}", dependencies=auth)
+    async def journeys_scene_rename(scene_id: str, request: Request) -> dict:
+        number = scene_id_of(scene_id)
+        body = await read_json(request, ("title",))
+        journey = current_journey()
+        try:
+            return await asyncio.to_thread(narration.rename_scene, journey, number, body.get("title"))
+        except StorageError as exc:
+            if exc.code == "titulo_invalido":
+                raise invalid(exc.code, str(exc), [{"field": "title", "code": exc.code, "message": str(exc)}]) from exc
+            raise storage_error(exc) from exc
+        except DatabaseError as exc:
+            raise storage_error(exc) from exc
+
+    @app.get("/journeys/current/events", dependencies=auth)
+    async def journeys_events(scene_id: str | None = None) -> dict:
+        number = None if scene_id is None else scene_id_of(scene_id)
+        return await read_view(narration.events_view, number)
+
+    @app.get("/journeys/current/places", dependencies=auth)
+    async def journeys_places() -> dict:
+        return await read_view(narration.places_view)
+
+    # ------------------------------------------------- retrato (ADR-076, item 18)
+    def assets_of(journey: OpenJourney):
+        store, _ = need_journeys()
+        return store.paths.journey_assets_dir(journey.id)
+
+    async def read_image(request: Request) -> bytes:
+        """Corpo binário com até 20 MB (o limite de 1 MB das rotas JSON não vale aqui)."""
+        declared = request.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > portraits.MAX_BYTES:
+            raise _http_error("imagem_grande_demais", "A imagem passa de 20 MB.", 413)
+        chunks: list[bytes] = []
+        size = 0
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > portraits.MAX_BYTES:
+                raise _http_error("imagem_grande_demais", "A imagem passa de 20 MB.", 413)
+            chunks.append(chunk)
+        return b"".join(chunks)
+
+    def crop_error(exc: StorageError) -> HTTPException:
+        return invalid(exc.code, str(exc), [{"field": "crop", "code": exc.code, "message": str(exc)}])
+
+    @app.put("/journeys/current/portrait", dependencies=auth)
+    async def journeys_portrait_put(
+        request: Request, x: str | None = None, y: str | None = None, zoom: str | None = None
+    ) -> dict:
+        d = portraits.DEFAULT_CROP
+        try:
+            crop = portraits.check_crop(
+                d["x"] if x is None else x, d["y"] if y is None else y, d["zoom"] if zoom is None else zoom
+            )
+        except StorageError as exc:
+            raise crop_error(exc) from exc
+        data = await read_image(request)
+        journey = current_journey()
+        try:
+            result = await asyncio.to_thread(portraits.save_portrait, journey, assets_of(journey), data, crop)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return {"portrait": result}
+
+    @app.patch("/journeys/current/portrait", dependencies=auth)
+    async def journeys_portrait_patch(request: Request) -> dict:
+        body = await read_json(request, ("x", "y", "zoom"))
+        missing = [k for k in ("x", "y", "zoom") if k not in body]
+        if missing:
+            raise invalid(
+                "enquadramento_invalido",
+                "Informe x, y e zoom.",
+                [{"field": k, "code": "obrigatorio", "message": "Obrigatório."} for k in missing],
+            )
+        try:
+            crop = portraits.check_crop(
+                *(body[k] if not isinstance(body[k], str) else None for k in ("x", "y", "zoom"))
+            )
+        except StorageError as exc:
+            raise crop_error(exc) from exc
+        journey = current_journey()
+        try:
+            return {"portrait": await asyncio.to_thread(portraits.update_crop, journey, crop)}
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+
+    @app.get("/journeys/current/portrait", dependencies=auth)
+    async def journeys_portrait_get() -> Response:
+        journey = current_journey()
+
+        def work() -> tuple[bytes, str]:
+            path, media = portraits.portrait_path(journey, assets_of(journey))
+            return path.read_bytes(), media
+
+        try:
+            data, media = await asyncio.to_thread(work)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        except OSError as exc:
+            raise _http_error("retrato_ausente", "O arquivo do retrato não pôde ser lido.", 404) from exc
+        return Response(content=data, media_type=media, headers={"Cache-Control": "no-store"})
+
+    @app.delete("/journeys/current/portrait", dependencies=auth)
+    async def journeys_portrait_delete() -> dict:
+        journey = current_journey()
+        try:
+            await asyncio.to_thread(portraits.delete_portrait, journey, assets_of(journey))
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return {"portrait": None}
 
     return app
