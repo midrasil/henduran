@@ -2,6 +2,17 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-23 — `largura-mensagens-chat`
+
+- Rota: conversa com o planejador → ajuste direto → Entrega.
+- Pedido do responsável: mensagens do Narrador e do jogador não usavam todo o espaço útil e quebravam linha cedo.
+- Diagnóstico: `.msg` limitava a `68ch`, mas a unidade era medida na Pixelify Sans de 16 px herdada de `.jscreen`, enquanto o corpo usa Crimson Pro de 20 px; na janela padrão de 1024 px isso ocupava cerca da metade da coluna central.
+- Decisões do responsável: usar 100% da largura disponível (em vez de limite de ~80 caracteres ou versão híbrida) e sincronizar protótipo e documentação; por isso a fala do jogador continua com balão ajustado ao texto e teto de 100%.
+- Resultado: `.msg { max-width: 100% }` e `.msg--player { width: fit-content; max-width: 100% }`; regras equivalentes no protótipo aprovado e nota sobre a largura em `09-tela-da-jornada.md`.
+- Validações: `npm run test` (275/275) e `npm run typecheck` passaram. A conferência visual no app real fica com o responsável, porque jsdom não calcula layout.
+- Arquivos: `app/src/screens/journey/JourneyScreen.css`, `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/context/handoff.md`.
+- Entrega: PR a registrar nesta entrada.
+
 ## 2026-11-22 — `mapeamento-ui-ux`
 
 - Rota: PM → Tech Lead → Dev → Revisor → QA → Entrega.

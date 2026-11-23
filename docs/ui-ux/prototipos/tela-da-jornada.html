@@ -222,13 +222,13 @@ svg.px { shape-rendering: crispEdges; display: block; }
 .btn.ghost { background: transparent; border-color: var(--frame); color: var(--gold-200); }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 .log { flex: 1; overflow: auto; min-height: 0; padding: var(--s3) var(--s3) var(--s2); display: flex; flex-direction: column; gap: var(--s3); }
-.msg { max-width: 68ch; position: relative; }
+.msg { max-width: 100%; position: relative; }
 .msg .who { font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
 .msg .body { font-family: var(--font-serif); font-size: var(--fs-lg); line-height: 1.5; }
 .msg .body p { margin: 0 0 .5em; }
 .msg .body p:last-child { margin-bottom: 0; }
 .msg .body q { quotes: "“" "”"; font-weight: 600; }
-.msg.player { align-self: flex-end; }
+.msg.player { align-self: flex-end; width: fit-content; max-width: 100%; }
 .msg.player .body { background: var(--purple-800); color: var(--ivory-100); border: 3px solid var(--ink-950); padding: 10px 14px; font-size: var(--fs-md); box-shadow: 3px 3px 0 var(--ink-950); white-space: pre-wrap; }
 .msg.player .who { text-align: right; color: var(--purple-300); }
 .msg.cut .body::after { content: " …"; }
