@@ -41,6 +41,7 @@ from henduran.services.journey_creation import (
     JourneyCreationInvalid,
     create_journey_with_character,
 )
+from henduran.services.journey_deletion import delete_journey_and_orphan_world
 from henduran.services.session import JourneySession
 from henduran.storage import JourneyStore, StorageError, WorldStore
 from henduran.worldgen import SEED_MAX, generate_world, validate_world_content
@@ -641,10 +642,12 @@ def create_app(
     async def journeys_delete(journey_id: str, confirm: str = "") -> dict:
         store, _ = need_journeys()
         try:
-            await asyncio.to_thread(store.delete_journey, journey_id, confirm=confirm.lower() in ("true", "1"))
+            result = await asyncio.to_thread(
+                delete_journey_and_orphan_world, store, journey_id, confirm=confirm.lower() in ("true", "1")
+            )
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
-        return {"deleted": journey_id.lower()}
+        return result.to_dict()
 
     @app.get("/journeys/{journey_id}/backups", dependencies=auth)
     async def journeys_backups(journey_id: str) -> dict:

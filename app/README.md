@@ -1,9 +1,16 @@
 # Henduran — aplicativo desktop (app)
 
-Interface do Henduran: shell **Tauri 2** (Rust) com **React + TypeScript** (Vite). Duas abas: **Chat**, que conversa em streaming com o Narrador pelo serviço Python de `backend/` (HTTP local com SSE), e **Modelos**, que mostra o hardware do PC, baixa o motor de IA (`llama-server`), busca e baixa modelos `.gguf` do Hugging Face e deixa o jogador escolher, remover e encontrar modelos em outras pastas.
+Interface do Henduran: shell **Tauri 2** (Rust) com **React + TypeScript** (Vite). O app abre no **menu inicial** (Continuar Jornada, Nova Jornada, Jornadas, Modelos e Sair), com o cartão da última Jornada e o céu do período dela. A **Nova Jornada** é um assistente de 3 passos (Mundo, Protagonista e Revisão) sobre as rotas de regras, Mundo e Jornadas do serviço Python de `backend/` (HTTP local com SSE); a **Jornada aberta** tem as abas Chat, Ficha, Mundo e Objetivos (somente leitura, exceto o chat). **Modelos** mostra o hardware do PC, baixa o motor de IA (`llama-server`), busca e baixa modelos `.gguf` do Hugging Face e deixa o jogador escolher, remover e encontrar modelos em outras pastas.
 
 - Stack: ADR-001. Protocolo: ADR-072. Interface de provedor: ADR-071.
 - Plataforma: somente Windows.
+
+### Telas de jogo
+
+- **Menu inicial:** "Continuar Jornada" abre a última Jornada jogada (`last_journey_id`; sem ela, a salva mais recentemente) e fica desativado se ela não estiver utilizável; o cartão mostra nome, personagem, local, "Salvo em", período e o aviso quando a Jornada está danificada, é de versão mais nova ou perdeu o Mundo. "Sair" chama o comando `exit_app` do shell (só no Tauri; no navegador o botão não aparece).
+- **Jornadas:** lista com Abrir, Excluir (diálogo; apaga a Jornada do disco e, se nenhuma outra o usa, o Mundo dela) e, para as danificadas, Restaurar a partir de um backup.
+- **Nova Jornada:** gera o Mundo por semente (sorteada no cliente ou digitada), permite editar tudo (nome, era, tom, calendário com meses e dias da semana, religiões e lugares, dentro dos limites de `GET /worlds/schema`) e escolher o lugar inicial; o Protagonista tem identidade, Ambição, Desejo, Convicções com Pilar, Atributos, perfil e valores de Perícias e as trilhas de Vida e Vontade, com validação ao vivo no servidor (`/worlds/validate`, `/characters/validate`), erros por campo e "Distribuir ao acaso" a partir do catálogo. Nenhuma regra é duplicada na interface: tudo vem de `GET /rules/creation`.
+- **Jornada aberta:** "Menu" fecha a Jornada no serviço e volta ao menu. O Narrador ainda não recebe o contexto da Jornada.
 
 ## Pré-requisitos
 
@@ -36,7 +43,7 @@ O indicador na barra de status (embaixo) mostra "Iniciando serviço…", "Conect
 
 Variáveis úteis (o shell repassa o ambiente ao serviço): `HENDURAN_PROVIDER=fake` usa o Narrador falso; `HENDURAN_DATA_DIR` troca a pasta de dados (padrão `%LOCALAPPDATA%\Henduran`).
 
-### Aba Modelos
+### Tela Modelos
 
 - **Hardware:** placa(s) de vídeo com memória, RAM e processador.
 - **Motor de IA:** estado e versão. Sem motor, "Baixar o motor de IA" (variante Vulkan, padrão, ou CPU) mostra arquivo, versão e tamanho e pede confirmação; se o GitHub não publicar o SHA-256, exibe um aviso e exige marcar "Entendo o risco…". O progresso aparece durante o download.
@@ -49,7 +56,7 @@ Variáveis úteis (o shell repassa o ambiente ao serviço): `HENDURAN_PROVIDER=f
 - **Pastas de modelos:** lista a pasta do app e as extras; adiciona por caminho digitado (sem diálogo nativo nem novas permissões do Tauri) e tira da lista sem apagar arquivos.
 - O estado do motor é consultado a cada ~1,5 s somente enquanto ele baixa ou carrega; os downloads de modelos, a cada ~1 s somente enquanto houver um ativo.
 
-No Chat, se o motor local não estiver pronto, um aviso leva à aba Modelos, e os erros `no_model`, `engine_not_installed` e `engine_not_ready` aparecem com mensagens claras.
+No Chat, se o motor local não estiver pronto, um aviso leva à tela Modelos, e os erros `no_model`, `engine_not_installed` e `engine_not_ready` aparecem com mensagens claras.
 
 ### Encerramento
 
@@ -69,7 +76,8 @@ src/
   styles/      tokens.css (paleta, bordas, espaçamento, --text-scale), fonts.css, base.css
                (superfícies, foco, moldura .px-frame), shell.css, screens.css, index.css
   ui/          biblioteca de componentes: Button, Panel, Tabs, ProgressBar, ListCard,
-               TextField/TextArea, Badge, Dialog, StatusIndicator, ChatBubble, SkyBackdrop,
+               TextField/TextArea, Select, RadioGroup, FieldGroup, Stepper, TrailBoxes,
+               Badge, Dialog, StatusIndicator, ChatBubble, SkyBackdrop,
                PixelIcon (exportados por ui/index.ts, cada um com CSS e testes)
   assets/fonts Pixelify Sans e Crimson Pro (woff2 locais, SIL OFL 1.1, licença em OFL.txt)
   gallery/     galeria de componentes (só desenvolvimento)

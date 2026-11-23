@@ -139,5 +139,16 @@ export function useChat(info: BackendInfo | null, { onEngineProblem }: UseChatOp
     controller.abort();
   }, [info]);
 
-  return { entries, streaming, error, errorCode, send, cancel };
+  /** Limpa a conversa (por exemplo, ao abrir outra Jornada); interrompe a resposta em curso. */
+  const reset = useCallback(() => {
+    if (abortRef.current) {
+      cancelledRef.current = true;
+      abortRef.current.abort();
+    }
+    update(() => []);
+    setError(null);
+    setErrorCode(null);
+  }, [update]);
+
+  return { entries, streaming, error, errorCode, send, cancel, reset };
 }

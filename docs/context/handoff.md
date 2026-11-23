@@ -1,13 +1,13 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `api-jornada-mundo-personagem`.
+Atualizado em 2026-11-23 após a tarefa `menu-e-nova-jornada`.
 
 ## Estado
 
-- Tarefa: backend do passo "Nova Jornada" (metade 1 do passo 2): regras de criação da fatia 1, gerador de mundo por código, esquema mínimo de personagem e API de Jornadas.
-- Resultado: `backend/` com 517 testes (1 pulado) passando. `rules/` em código (6 Atributos, 22 Perícias, 3 perfis, Vida e Vontade derivadas, validação com erros por campo), `worldgen/` (mundo determinístico por semente, esquema v1 com validação), migração `journey/0002_character.sql` (personagem, Atributos, Perícias, Convicções, objetivos; `rules_version` em `journey_meta`), criação atômica de Jornada com compensação, e rotas `GET /rules/creation`, `POST /worlds/generate`, `POST /worlds/validate`, `GET /worlds/schema`, `POST /characters/validate`, `POST /journeys`, `GET /journeys/current`, `POST /journeys/{id}/open`, `POST /journeys/close`, `DELETE /journeys/{id}?confirm=true`, `GET /journeys/{id}/backups`, `POST /journeys/{id}/restore`. Teste real do dev pela API: criar, abrir, reiniciar e reabrir. Sem mudanças em `app/`.
-- A infraestrutura dos bancos (PR #18) já está na `main`.
-- Branch: `feat/jornada-mundo-personagem-api` (PR aberto contra `main`).
+- Tarefa: interface do menu inicial, do assistente de Nova Jornada e da Jornada aberta (metade 2 do passo 2).
+- Resultado: o app abre no **menu inicial** (céu no período da última Jornada, cartão "Última Jornada", Continuar, Nova Jornada, Jornadas, Modelos, Sair). **Assistente de Nova Jornada** em 3 passos (Mundo editável com lugar inicial; Protagonista com erros por campo, "Distribuir ao acaso" e Vida e Vontade ao vivo; Revisão). **Tela Jornadas** (abrir, excluir com confirmação, restaurar). **Jornada aberta** com abas Chat, Ficha, Mundo e Objetivos, só de leitura. `exit_app` no Tauri (sem permissão nova). Excluir uma Jornada apaga também o Mundo quando nenhuma outra o usa. 222 testes do frontend e 521 do backend (1 pulado) passam. Teste real do dev no app, com capturas de tela: fluxo completo, excluir, Sair e `taskkill /F` sem processo órfão.
+- A API de Jornadas (PR #19) já está na `main`.
+- Branch: `feat/menu-e-nova-jornada` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -23,7 +23,7 @@ Atualizado em 2026-11-23 após a tarefa `api-jornada-mundo-personagem`.
 ## Código existente
 
 - `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações por conjunto, backup), `storage/` (`WorldStore`, `JourneyStore`, bloqueio, leitura sem migrar, `character.py`), `rules/` (fatia 1 em código), `worldgen/` (gerador e esquema do Mundo v1), `services/` (criação atômica e sessão da Jornada aberta). Modelo de dados em `docs/main/modelo-de-dados-jogo.md`, `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
-- `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, busca e downloads de modelos, tudo com a base de UI pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
+- `app/src/`: navegação por telas (`navigation.ts`): `menu`, `jornadas`, `nova-jornada`, `modelos` e `jornada` (abas Chat, Ficha, Mundo, Objetivos). Telas em `screens/` (`MainMenu`, `JourneysScreen`, `newJourney/`, `journey/`), cliente de API em `api/journeys.ts`, validação do servidor em `hooks/useServerValidation.ts`, componentes novos em `ui/` (`Select`, `RadioGroup`, `FieldGroup`, `Stepper`, `TrailBoxes`), tudo na galeria. A interface não duplica regras: vem de `GET /rules/creation`. O fixture de testes `app/src/test/gameData.ts` é gerado do backend e precisa ser regerado se as regras mudarem. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
 - Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`.
@@ -33,7 +33,8 @@ Atualizado em 2026-11-23 após a tarefa `api-jornada-mundo-personagem`.
 
 ## Pendências relevantes
 
-- **Passo 2, metade 2:** menu inicial e assistente de Nova Jornada (Mundo, Protagonista, Revisão) na interface, sobre a API acima, com `GET /rules/creation` como fonte única das regras. Fazer junto: excluir o Mundo quando a Jornada é excluída e nenhum outro a usa (hoje fica um Mundo órfão).
+- **O Narrador ainda não recebe o contexto da Jornada**: o Chat é o chat solto, com um aviso na tela. Essa é a próxima etapa.
+- Pequenos ajustes da interface: a Jornada só guarda o local atual, então a aba Mundo marca "Você está aqui" em vez do lugar inicial (gravar o id do lugar inicial); o máximo de Fraturas não vem no catálogo de regras; o passo 1 fica longo com mundos grandes (seções recolhíveis). Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200% e reflow a 320 px.
 - O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
 - Gerador de mundo: os nomes de lugar de um mesmo mundo repetem raízes (por exemplo Lumícia, Lumais e Lumanor) e as descrições são repetitivas; melhorar a variedade. Os textos ficam em `backend/henduran/worldgen/data.py`.
 - Pendências da infraestrutura: a lista não roda `quick_check` (dano em outras páginas só aparece ao abrir); `delete_journey` pode deixar a pasta parcialmente apagada se um arquivo estiver preso; corrida teórica entre `world_in_use` e a exclusão do Mundo.
@@ -55,4 +56,4 @@ Atualizado em 2026-11-23 após a tarefa `api-jornada-mundo-personagem`.
 
 ## Próximo passo recomendado
 
-⭐ Passo 2, metade 2: menu inicial e assistente de Nova Jornada na interface, com o céu da última Jornada, sobre a API já pronta. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.
+⭐ Narrador com o contexto da Jornada: o Aduran recebe o Mundo e o personagem, o histórico do chat é persistido, e o loop Fora de Cena ↔ Cena (abrir e encerrar Cenas). Depois, os testes da Reserva de Dados com confirmação do jogador (ADR-006). Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.

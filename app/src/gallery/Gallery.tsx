@@ -11,6 +11,7 @@ import {
   Button,
   ChatBubble,
   Dialog,
+  FieldGroup,
   ListCard,
   Panel,
   PeriodLabel,
@@ -18,12 +19,16 @@ import {
   PERIODS,
   PixelIcon,
   ProgressBar,
+  RadioGroup,
+  Select,
   SkyBackdrop,
   StatusIndicator,
+  Stepper,
   TabPanel,
   Tabs,
   TextArea,
   TextField,
+  TrailBoxes,
   type DayPeriod,
 } from "../ui";
 import { contrastRatio, parseContrastPairs, parseCustomProperties } from "../ui/contrast";
@@ -37,6 +42,9 @@ const SECTIONS = [
   { id: "progresso", title: "Barras de progresso" },
   { id: "listas", title: "Itens de lista" },
   { id: "campos", title: "Campos de texto" },
+  { id: "escolhas", title: "Seleção, opções e grupos" },
+  { id: "passos", title: "Passos (assistente)" },
+  { id: "trilhas", title: "Trilhas de Vida e Vontade" },
   { id: "etiquetas", title: "Etiquetas e estados" },
   { id: "chat", title: "Balões de chat" },
   { id: "dialogo", title: "Diálogo" },
@@ -381,6 +389,117 @@ function Fields() {
   );
 }
 
+/* ------------------------------------------------- seleção, opções e grupos */
+
+const VALUE_OPTIONS = ["4", "3", "2", "1"].map((v) => ({ value: v, label: v }));
+
+function Choices() {
+  const [profile, setProfile] = useState<string | null>("equilibrado");
+  const [place, setPlace] = useState<string | null>(null);
+  return (
+    <Section id="escolhas" title="Seleção, opções e grupos">
+      <div className="g-two">
+        <div className="g-stack">
+          <Select label="Força" hint="potência física" placeholder="—" options={VALUE_OPTIONS} defaultValue="" />
+          <Select label="Agilidade" options={VALUE_OPTIONS} defaultValue="4" error="O valor 4 passou da conta." />
+          <Select label="Lutar" options={VALUE_OPTIONS} disabled defaultValue="1" hint="Escolha um perfil primeiro." />
+        </div>
+        <Panel variant="parchment" title="Sobre pergaminho">
+          <Select label="Vigor" placeholder="—" options={VALUE_OPTIONS} defaultValue="3" />
+          <RadioGroup
+            legend="Backups"
+            value="b1"
+            onChange={() => undefined}
+            options={[
+              { value: "b1", label: "22/11/2026 às 10:15:00", description: "journey-v2-20261122-101500.db · 40 KB" },
+              { value: "b2", label: "20/11/2026 às 08:00:00", description: "journey-v1-20261120-080000.db · 20 KB" },
+            ]}
+          />
+        </Panel>
+      </div>
+      <RadioGroup
+        legend="Perfil de Perícias (caixas)"
+        hint="O perfil diz quantas Perícias recebem cada valor."
+        appearance="cards"
+        value={profile}
+        onChange={setProfile}
+        options={[
+          { value: "generalista", label: "Generalista", description: "1 em 3, 6 em 2 e 6 em 1 (13 Perícias)." },
+          { value: "equilibrado", label: "Equilibrado", description: "2 em 3, 4 em 2 e 6 em 1 (12 Perícias)." },
+          { value: "especialista", label: "Especialista", description: "1 em 4, 2 em 3, 2 em 2 e 2 em 1 (7 Perícias)." },
+        ]}
+      />
+      <RadioGroup
+        legend="Lugar inicial (com erro)"
+        appearance="cards"
+        value={place}
+        onChange={setPlace}
+        error={place ? undefined : "Escolha o lugar onde a Jornada começa."}
+        options={[
+          { value: "a", label: "Norilunde", description: "estalagem" },
+          { value: "b", label: "Vinarunde", description: "cidade" },
+          { value: "c", label: "Rosedor", description: "montanha" },
+        ]}
+      />
+      <FieldGroup
+        legend="Valores dos Atributos"
+        hint="Distribua os valores 4, 3, 3, 2, 2 e 1 entre os 6 Atributos."
+        error="Os Atributos devem ter 1 em 4, 2 em 3, 2 em 2, 1 em 1."
+        extra={<Button size="sm">Distribuir ao acaso</Button>}
+      >
+        <p className="counts">
+          <span className="counts__label">Ainda faltam:</span> 1 em 2.
+          <span className="counts__extra"> Passou da conta: 1 em 3.</span>
+        </p>
+      </FieldGroup>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------- passos */
+
+function StepsDemo() {
+  const [current, setCurrent] = useState(1);
+  const steps = [
+    { id: "mundo", label: "Mundo" },
+    { id: "protagonista", label: "Protagonista" },
+    { id: "revisao", label: "Revisão" },
+  ];
+  return (
+    <Section id="passos" title="Passos (assistente)">
+      <div className="g-two">
+        <Stepper steps={steps} current={current} label="Passos de exemplo" onSelect={setCurrent} />
+        <div className="actions">
+          <Button onClick={() => setCurrent((c) => Math.max(0, c - 1))}>Voltar</Button>
+          <Button variant="primary" onClick={() => setCurrent((c) => Math.min(steps.length - 1, c + 1))}>
+            Avançar
+          </Button>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------- trilhas */
+
+function Trails() {
+  return (
+    <Section id="trilhas" title="Trilhas de Vida e Vontade">
+      <div className="g-two">
+        <Panel title="Sobre fundo escuro">
+          <TrailBoxes label="Vida" size={7} legend />
+          <TrailBoxes label="Vontade" size={6} superficial={2} agravada={1} />
+          <TrailBoxes label="Vida (ainda sem Vigor)" size={null} />
+        </Panel>
+        <Panel variant="parchment" title="Sobre pergaminho">
+          <TrailBoxes label="Vida" size={5} superficial={1} legend />
+          <TrailBoxes label="Vontade" size={8} agravada={2} superficial={3} />
+        </Panel>
+      </div>
+    </Section>
+  );
+}
+
 /* ------------------------------------------------------------ etiquetas */
 
 function Tags() {
@@ -412,7 +531,12 @@ function Tags() {
         ))}
       </Row>
       <Row label="Ícones">
-        {(["sun", "moon", "check", "cross", "hourglass", "hollow", "chat", "gem", "star", "warning"] as const).map((n) => (
+        {(
+          [
+            "sun", "moon", "check", "cross", "hourglass", "hollow", "chat", "gem", "star", "warning",
+            "plus", "list", "door", "pin", "person", "clock", "globe", "sword", "back", "next",
+          ] as const
+        ).map((n) => (
           <span key={n} className="g-icon">
             <PixelIcon name={n} size={32} /> {n}
           </span>
@@ -591,6 +715,9 @@ export function Gallery() {
         <Progress />
         <Lists />
         <Fields />
+        <Choices />
+        <StepsDemo />
+        <Trails />
         <Tags />
         <Chat />
         <DialogDemo />

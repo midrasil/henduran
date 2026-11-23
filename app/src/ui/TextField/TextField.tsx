@@ -2,7 +2,7 @@ import { useId, type ComponentPropsWithRef, type ReactNode } from "react";
 
 import "./TextField.css";
 
-interface FieldExtras {
+export interface FieldExtras {
   label: ReactNode;
   /** Dica sempre visível abaixo do campo. */
   hint?: ReactNode;
@@ -15,12 +15,14 @@ interface FieldExtras {
   className?: string;
 }
 
-function describedBy(...ids: (string | false | undefined)[]): string | undefined {
+/** Junta os ids não vazios para `aria-describedby`. */
+export function describedBy(...ids: (string | false | undefined)[]): string | undefined {
   const list = ids.filter(Boolean).join(" ");
   return list || undefined;
 }
 
-function Field({
+/** Moldura comum dos campos (rótulo, linha do controle, dica e erro); usada também pelo `Select`. */
+export function Field({
   id,
   label,
   hint,

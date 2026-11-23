@@ -1,6 +1,7 @@
 /* Shell do app: barra superior (marca e abas), faixa do céu, área principal e barra de status. */
 
 .app {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -27,6 +28,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  margin: 0;
+  font-family: var(--font-pixel);
+  line-height: var(--line-height-tight);
   font-size: var(--font-size-2xl);
   color: var(--color-accent);
 }
@@ -37,12 +41,47 @@
 
 .app-bar__nav {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-bar__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+  padding: 4px;
 }
 
 .app__sky {
   flex: none;
   height: var(--sky-band-height);
   border-bottom: var(--border-thin) solid var(--color-outline);
+}
+
+/* Fora da Jornada, o céu é uma faixa estreita; na Nova Jornada, fundo neutro (sem céu). */
+.app__sky--jornadas,
+.app__sky--modelos {
+  height: calc(var(--sky-band-height) / 2);
+}
+
+.app .app__sky--nova-jornada {
+  display: none;
+}
+
+/* No menu, o céu cobre a janela inteira atrás dos painéis (o texto fica sempre em fundo sólido).
+   Seletor com ".app" para valer sobre o ".sky" do componente. */
+.app .app__sky--menu {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-sky);
+  height: auto;
+  border-bottom: 0;
+}
+
+.app--menu .app__main {
+  position: relative;
+  z-index: var(--z-base);
+  padding-top: 0;
 }
 
 .app__main {
@@ -98,8 +137,17 @@
 .status-bar__item {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   font-family: var(--font-pixel);
   font-size: var(--font-size-sm);
+}
+
+.status-bar__icon {
+  color: var(--color-accent);
+}
+
+.status-bar__tagline {
+  color: var(--color-text-muted);
 }
 
 /* Janelas baixas: céu menor, para o chat continuar com espaço. */

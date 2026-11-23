@@ -19,12 +19,20 @@ async fn get_backend_info(backend: State<'_, Arc<Backend>>) -> Result<BackendInf
         .map_err(|e| format!("falha interna: {e}"))?
 }
 
+/// Encerra o app pelo botão "Sair" do menu. O serviço Python é encerrado pelo
+/// caminho de sempre (`RunEvent::Exit` chama `Backend::shutdown`); o Job Object
+/// garante o resto. Comando do próprio app: não exige permissão nova do Tauri.
+#[tauri::command]
+fn exit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 fn main() {
     let backend = Arc::new(Backend::new());
 
     let app = tauri::Builder::default()
         .manage(backend.clone())
-        .invoke_handler(tauri::generate_handler![get_backend_info])
+        .invoke_handler(tauri::generate_handler![get_backend_info, exit_app])
         .setup(|app| {
             app.state::<Arc<Backend>>().start();
             Ok(())

@@ -1,6 +1,7 @@
-/* Folhas globais do app, em ordem: tokens, fontes, base, shell e telas. */
+/* Folhas globais do app, em ordem: tokens, fontes, base, shell, telas e telas de jogo. */
 @import "./tokens.css";
 @import "./fonts.css";
 @import "./base.css";
 @import "./shell.css";
 @import "./screens.css";
+@import "./game.css";

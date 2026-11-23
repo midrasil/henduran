@@ -1,0 +1,115 @@
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.radio-group__legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+  color: var(--fg);
+}
+
+.radio-group__hint {
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+}
+
+.radio-group__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.radio-group__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-height: var(--target-primary);
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.radio-group__option input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: inherit;
+}
+
+.radio-group__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.radio-group__label {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+  line-height: 24px;
+}
+
+.radio-group__desc {
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+}
+
+/* Opções em caixas (perfis, lugares). */
+.radio-group--cards .radio-group__options {
+  padding: 4px;
+  gap: var(--space-2);
+}
+
+.radio-group--cards .radio-group__option {
+  flex: 1 1 14rem;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  --fg-muted: var(--color-text-muted);
+  --frame-inner: var(--color-frame-dark);
+  --frame-hi: var(--color-secondary-hover);
+  --frame-lo: var(--color-outline);
+}
+
+.radio-group--cards .radio-group__option--checked {
+  --frame-inner: var(--color-accent);
+  background: var(--color-primary-active);
+}
+
+.radio-group__option:has(input:focus-visible) {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.radio-group__option input:focus-visible {
+  outline: none;
+}
+
+.radio-group:disabled .radio-group__option,
+.radio-group__option:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--color-disabled-text);
+}
+
+.radio-group__error {
+  font-size: var(--font-size-sm);
+  color: var(--fg-danger);
+}
+
+.radio-group__error::before {
+  content: "! ";
+  font-family: var(--font-pixel);
+}
+
+.radio-group--invalid.radio-group--cards .radio-group__option {
+  --frame-inner: var(--fg-danger);
+}

@@ -177,3 +177,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Observações do planejador: os nomes de lugar de um mundo repetem raízes e as descrições são repetitivas (backlog); excluir uma Jornada deixa o Mundo órfão (a corrigir na metade 2).
 - Pendente: interface do menu e do assistente; excluir o Mundo junto; esquema de jogo além do personagem; troca de Ambição e Desejo com histórico.
 - Arquivos: `backend/henduran/rules/`, `backend/henduran/worldgen/`, `backend/henduran/services/`, `backend/henduran/storage/character.py`, `backend/henduran/db/migrations/journey/0002_character.sql`, `docs/main/modelo-de-dados-jogo.md`.
+
+## 2026-11-23 — `menu-e-nova-jornada`
+
+- Rota: conversa com o planejador → Dev → Entrega. Metade 2 do passo 2 (interface).
+- Resultado: o app passou a abrir no menu inicial. Menu com céu do período da última Jornada e cartão "Última Jornada"; assistente de Nova Jornada em 3 passos (Mundo editável, Protagonista, Revisão) com validação do servidor por campo; tela Jornadas (abrir, excluir, restaurar); Jornada aberta com abas Chat, Ficha, Mundo e Objetivos, só de leitura; comando Tauri `exit_app`; `DELETE /journeys/{id}` apaga também o Mundo quando nenhuma outra Jornada o usa.
+- Validações: 222 testes do frontend (167 anteriores e 55 novos) e 521 do backend (517 e 4 novos) passaram, conferidos pelo planejador, e o build de produção segue sem a galeria. O planejador examinou 3 das 21 capturas de tela. O dev relatou o fluxo completo no app real, a exclusão (pastas de Jornada e de Mundo vazias), Sair e `taskkill /F` sem processo órfão. Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200%, reflow a 320 px.
+- Motivo da etapa: o responsável abriu o app e não viu nada novo, porque as tarefas anteriores foram só de backend; a interface foi priorizada para tornar tudo visível, incluindo telas de leitura (Ficha, Mundo, Objetivos).
+- Decisões do dev: a interface não duplica regras (vem de `GET /rules/creation` e `GET /worlds/schema`); "Distribuir ao acaso" usa o catálogo recebido; Continuar usa a Jornada salva mais recentemente se `last_journey_id` estiver vazio; `DELETE` devolve `world_deleted`, `world_id` e `world_kept_reason`; a aba Mundo marca "Você está aqui" porque a Jornada não guarda o id do lugar inicial.
+- Pendente: Narrador com o contexto da Jornada (próxima etapa); id do lugar inicial; máximo de Fraturas no catálogo; seções recolhíveis no passo 1.
+- Arquivos: `app/src/screens/`, `app/src/navigation.ts`, `app/src/api/journeys.ts`, `app/src/ui/`, `app/src-tauri/src/main.rs`, `backend/henduran/services/journey_deletion.py`.
