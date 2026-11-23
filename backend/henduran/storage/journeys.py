@@ -57,10 +57,11 @@ DAMAGED_SUFFIX = ".danificado-"
 _BACKUP_NAME_RE = re.compile(r"^journey-v\d+-\d{8}-\d{6}(?:-\d+)?\.db$")
 _DAMAGE_CODES = ("banco_danificado", "banco_ausente", "banco_vazio", "sem_resumo")
 _UNSET: Any = object()
-# Campos do resumo devolvidos por OpenJourney.summary() (rules_version existe a partir da migração 0002).
+# Campos do resumo devolvidos por OpenJourney.summary() (rules_version existe a partir da migração 0002;
+# start_place_id, da 0003).
 _SUMMARY_KEYS = (
     "id", "name", "character_name", "location", "day_period", "world_id", "world_version",
-    "created_at", "last_saved_at", "rules_version",
+    "created_at", "last_saved_at", "rules_version", "start_place_id",
 )
 
 # Uma Jornada aberta por vez neste processo (entre todas as instâncias de JourneyStore).

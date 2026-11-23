@@ -9,6 +9,7 @@ import pytest
 
 from henduran.db import Database
 from henduran.db.migrations import backup_database
+from henduran.narrative.periods import DAY_PERIODS
 from henduran.paths import DataPaths, new_id
 from henduran.providers.fake import FakeNarratorProvider
 from henduran.rules import fatia1 as R
@@ -181,7 +182,7 @@ def test_criar_jornada(srv):
     assert r.status_code == 201, r.text
     journey = r.json()["journey"]
     assert journey["status"] == "ok" and journey["name"] == "A Jornada de Ilsa Corvalho"
-    assert journey["location"] == content["places"][0]["name"] and journey["day_period"] == "amanhecer"
+    assert journey["location"] == content["places"][0]["name"] and journey["day_period"] in DAY_PERIODS
     assert journey["rules_version"] == "fatia-1" and journey["world_name"] == content["name"]
     listed = call(srv, "GET", "/journeys").json()
     assert [j["id"] for j in listed["journeys"]] == [journey["id"]]

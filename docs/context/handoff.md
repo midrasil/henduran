@@ -1,13 +1,14 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
+Atualizado em 2026-11-23 após a tarefa `narrador-cena-inicial` (backend).
 
 ## Estado
 
-- Tarefa: decisão sobre a Cena inicial e o ciclo de Cena no MVP (só documentação).
-- Resultado: **ADR-076 aprovado**. Toda Jornada começa Em Cena, no lugar inicial, com a primeira mensagem do Narrador. A abertura é gerada na primeira vez que a Jornada abre sem mensagens (botão "Gerar abertura" se o modelo não estiver pronto). O motor sorteia um tom de partida. A Cena nasce em duas etapas (proposta em JSON validada pelo motor, depois narração em *streaming*). O encerramento é feito pelo jogador ou proposto pelo Narrador e confirmado pelo jogador, com resumo gravado. Histórico de Cenas e mensagens no `journey.db`. Ajustados `02-loop-de-gameplay.md`, `05-narrador-ia.md` e `ESCOPO-MVP.md`.
-- A interface do menu e da Nova Jornada (PR #20) já está na `main`.
-- Branch: `docs/cena-inicial`, PR [#21](https://github.com/midrasil/henduran/pull/21) aberto contra `main`.
+- Tarefa: backend do ADR-076 (Narrador com contexto, Cena inicial e ciclo de Cena).
+- Resultado: migração `journey/0003_scenes_messages.sql` (`start_place_id`, `scenes`, `messages`); período inicial **sorteado** na criação; pacote `backend/henduran/narrative/` (períodos, tons, contexto do Aduran e do Narrador da Cena com as 30 mensagens recentes e os resumos das 5 últimas Cenas, validação estrita da proposta e do resumo com até 2 novas tentativas); `services/narration.py`; rotas `GET /journeys/current/messages`, `POST /journeys/current/opening` (SSE, evento `scene` antes dos tokens), `POST /journeys/current/messages` (SSE), `POST /journeys/current/scene/close`; uma geração por Jornada (`geracao_em_andamento`); `snapshot()` traz `mode` e `scene`. A Cena e a abertura são gravadas juntas só no fim da narração. Mensagem antes da abertura: 409 `abertura_pendente`. `FakeNarratorProvider.complete` com JSON configurável.
+- Testes: backend 565 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 70 dos arquivos novos e alterados); frontend 222 de 222 depois de subir o limite do `NewJourneyWizard.test.tsx` para 20 s (estourava 5 s nesta máquina). Roteiro manual com `HENDURAN_PROVIDER=fake` e curl executado pelo dev.
+- **Não testado com modelo local real**: depende da interface.
+- Branch: `feat/narrador-cena-inicial`, PR [#22](https://github.com/midrasil/henduran/pull/22) aberto contra `main`.
 
 ## Decisões vigentes
 
@@ -18,7 +19,7 @@ Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
 - **Caliope:** uso autorizado pelo autor; ordem de importação `llm.py`, `runtime.py` + `hardware.py`, `modelhub.py`; todas as skills entram.
 - **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em três fatias: (1) chat, ficha, testes, Vontade, Convicções e Descanso; (2) equipamento, Carga e Progressão; (3) combate sem mapa e NPCs por orçamento sem Capacidades.
 - **Dia do Mundo (ADR-073):** limitador de benefícios, começando no Amanhecer; o gatilho continua sendo o acontecimento validado (ADR-010, 012, 013). Ambição e Desejo podem ser trocados quando deixarem de fazer sentido, sem recompensa pela troca.
-- **Cena inicial e ciclo de Cena (ADR-076):** Jornada começa Em Cena no lugar inicial; abertura na primeira abertura da Jornada; tom de partida sorteado; proposta de Cena em JSON validada antes da narração; encerramento pelo jogador ou proposto e confirmado; resumo gravado.
+- **Cena inicial e ciclo de Cena (ADR-076):** Jornada começa Em Cena no lugar inicial, em período sorteado pelo motor; tempo em períodos, sem horas; abertura na primeira abertura da Jornada; 6 tons com peso igual; proposta (motivo e participantes) em JSON validada antes da narração; Cena e abertura gravadas juntas no fim; nada de mensagem do jogador antes da abertura; encerramento pelo jogador ou proposto e confirmado, com resumo; resumos das Cenas encerradas no contexto.
 - **Fatia 1:** 22 Perícias de mundo medieval (sem Dirigir, Pilotar e Conhecimento Específico); sem dano de Vida, Tratamento e Condições; rerrolagem gratuita por Convicção excluída (ADR-013); testes fora de combate com confirmação do jogador (ADR-006).
 
 ## Código existente
@@ -34,8 +35,8 @@ Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
 
 ## Pendências relevantes
 
-- **O Narrador ainda não recebe o contexto da Jornada**: o Chat é o chat solto, com um aviso na tela. Essa é a próxima etapa, já decidida no ADR-076.
-- **Aprovar a lista de tons de partida** do ADR-076, item 4 (em movimento, chegada, encontro, rotina interrompida, em apuros, consequência). Também em aberto no ADR: limite de mensagens no contexto, formato da proposta de encerramento e do resumo, e Cena seguida de outra Cena sem passar pelo Aduran.
+- **A interface ainda não usa as rotas do Narrador**: o Chat continua solto. Próxima etapa (entrega 3 do ADR-076).
+- Em aberto no ADR-076: formato da proposta de encerramento pelo Narrador no chat, Cena seguida de outra sem passar pelo Aduran, quando trocar mensagens recentes por resumos. Passagem de tempo em períodos vai para ADR próprio (backlog).
 - Pequenos ajustes da interface: a Jornada só guarda o local atual, então a aba Mundo marca "Você está aqui" em vez do lugar inicial (gravar o id do lugar inicial); o máximo de Fraturas não vem no catálogo de regras; o passo 1 fica longo com mundos grandes (seções recolhíveis). Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200% e reflow a 320 px.
 - O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
 - Gerador de mundo: os nomes de lugar de um mesmo mundo repetem raízes (por exemplo Lumícia, Lumais e Lumanor) e as descrições são repetitivas; melhorar a variedade. Os textos ficam em `backend/henduran/worldgen/data.py`.
@@ -58,4 +59,4 @@ Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
 
 ## Próximo passo recomendado
 
-⭐ Backend do ADR-076 (entrega 2): migração com `scenes` e `messages` no `journey.db`, id do lugar inicial na Jornada, montador de contexto (Aduran e Narrador da Cena), abertura da Cena inicial em duas etapas, rotas de histórico, mensagem (SSE), abertura e encerramento de Cena, e testes com o `FakeNarratorProvider`. Depois a interface (entrega 3): Chat com histórico, abertura em *streaming*, cabeçalho da Cena, botão de encerrar, painel do Aduran, cancelar e regenerar. Em seguida, os testes da Reserva de Dados (ADR-006).
+⭐ Interface do ADR-076 (entrega 3): Chat com o histórico salvo, abertura em *streaming* com "Gerar abertura", digitação e envio desabilitados até a abertura, cabeçalho da Cena e botão de encerrar, painel do Aduran recolhido Fora de Cena, cancelar e regenerar; depois, testar com modelo local real (proposta JSON, fidelidade ao lugar, período e tom, resumo). Em seguida, Reserva de Dados (ADR-006) e o ADR de passagem de tempo.

@@ -18,7 +18,10 @@
 - [x] infra: infraestrutura dos bancos por Jornada e por Mundo (migrações por conjunto, `WorldStore`, `JourneyStore`, bloqueio, anexo do Mundo em leitura, backups e dano) — feito em 2026-11-23; ADR-075
 - [x] feat: backend do passo Nova Jornada — regras da fatia 1 em código, gerador de mundo por código, esquema mínimo de personagem, criação atômica e API de Jornadas — feito em 2026-11-23
 - [x] feat: interface do menu inicial, do assistente de Nova Jornada, da tela Jornadas e da Jornada aberta (Chat, Ficha, Mundo, Objetivos) — feito em 2026-11-23
-- [ ] ⭐ feat: Narrador (Aduran) com o contexto da Jornada e o loop Fora de Cena ↔ Cena conforme o ADR-076 (Jornada começa Em Cena com a Cena inicial do Narrador): histórico do chat persistido, abrir e encerrar Cenas, Reserva de Dados com confirmação do jogador (ADR-006) — origem: `ESCOPO-MVP.md`
+- [x] feat: backend do ADR-076: Cenas e mensagens no `journey.db`, contexto do Aduran e do Narrador da Cena, Cena inicial em duas etapas, mensagens nos dois canais, encerramento com resumo — feito em 2026-11-23
+- [ ] ⭐ feat: interface do ADR-076: Chat com histórico salvo, abertura em *streaming* ("Gerar abertura" se o modelo não estiver pronto), digitação e envio desabilitados até a abertura, cabeçalho da Cena com botão de encerrar, painel do Aduran recolhido Fora de Cena, cancelar e regenerar — origem: ADR-076
+- [ ] feat: Reserva de Dados com confirmação do jogador (ADR-006) no chat da Cena — origem: `ESCOPO-MVP.md`
+- [ ] design: ADR de passagem de tempo em períodos (sem horas e minutos): quem propõe o avanço, quanto avança de uma vez, a virada do Dia no Amanhecer e a lista definitiva dos 6 períodos (madrugada, amanhecer, manhã, tarde, entardecer, noite) — origem: decisão do responsável em 2026-11-23 (ADR-076, item 9)
 - [ ] infra: gravar o id do lugar inicial na Jornada, expor o máximo de Fraturas no `GET /rules/creation` e tornar recolhíveis as seções do passo 1 do assistente — origem: interface de Nova Jornada
 - [x] infra: excluir o Mundo junto com a Jornada quando nenhuma outra o usa — feito em 2026-11-23
 - [ ] infra: melhorar a variedade do gerador de mundo (nomes de lugar com raízes repetidas, descrições repetitivas) — origem: revisão do gerador

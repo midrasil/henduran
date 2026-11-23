@@ -10,6 +10,18 @@ Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no AD
 - ``event: error`` — ``{"message": "...", "code": "..."}``; encerra o fluxo. ``code``:
   ``no_model``, ``engine_not_installed``, ``engine_not_ready`` ou ``generation_failed``.
 
+Narrador na Jornada aberta (ADR-076), com os mesmos eventos e o mesmo cancelamento
+(``/chat/{id}/cancel``); uma geração por vez por Jornada (``geracao_em_andamento``):
+
+- ``POST /journeys/current/opening`` (SSE): Cena inicial. Antes dos ``token``, ``event: scene``
+  — ``{"scene": {...}}`` com a Cena proposta e validada (``status: "proposta"``, ainda não
+  gravada). ``done`` com ``reason: "completed"`` traz ``mode``, ``scene`` e ``message`` gravados;
+  cancelada ou com erro, nada é gravado. ``error.code`` também pode ser ``proposta_invalida``.
+- ``POST /journeys/current/messages`` (SSE): mensagem do jogador no canal atual; ``done`` traz
+  ``message`` (a resposta gravada, ``concluida`` ou ``cancelada``; ``null`` se nada foi gerado).
+- ``GET /journeys/current/messages``: ``{mode, scene, messages}``.
+- ``POST /journeys/current/scene/close`` (JSON): resumo validado e Cena encerrada.
+
 Erros HTTP: ``{"detail": {"code": "...", "message": "..."}}``. Nas validações (422), ``detail`` traz
 também ``errors: [{"field", "code", "message"}]``.
 """
@@ -19,8 +31,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import random
 import secrets
 import uuid
+import weakref
 from collections.abc import AsyncIterator, Callable
 from typing import Literal
 
@@ -35,15 +49,19 @@ from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubErro
 from henduran.db.connection import Database, DatabaseError
 from henduran.db.migrations import schema_version
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
+from henduran.narrative.scene import ProposalRejected
 from henduran.rules.creation import creation_catalog, preview_derived, validate_character
+from henduran.services import narration
 from henduran.services.journey_creation import (
     JourneyCreationFailed,
     JourneyCreationInvalid,
     create_journey_with_character,
 )
 from henduran.services.journey_deletion import delete_journey_and_orphan_world
+from henduran.services.narration import NarrationFailed
 from henduran.services.session import JourneySession
 from henduran.storage import JourneyStore, StorageError, WorldStore
+from henduran.storage.journeys import OpenJourney
 from henduran.worldgen import SEED_MAX, generate_world, validate_world_content
 from henduran.worldgen import limits as world_limits
 
@@ -60,6 +78,7 @@ ERROR_STATUS = {
     "busy": 409,
     "digest_unavailable": 409,
     "engine_not_installed": 409,
+    "engine_not_ready": 409,
     "no_model": 409,
     "model_incomplete": 409,
     "invalid_variant": 422,
@@ -88,6 +107,10 @@ ERROR_STATUS = {
     "download_desconhecido": 404,
     "engine_unavailable": 503,
     "storage_unavailable": 503,
+    # Narrador (ADR-076)
+    "proposta_invalida": 502,
+    "generation_failed": 502,
+    "geracao_em_andamento": 409,
 }
 
 # Erros de Jornadas e Mundos (StorageError, JourneyDamaged, MigrationError).
@@ -117,6 +140,15 @@ STORAGE_STATUS = {
     "checksum_divergente": 409,
     "migracao_desconhecida": 409,
     "banco_inacessivel": 503,
+    # Narrador e ciclo de Cena (ADR-076)
+    "abertura_existente": 409,
+    "abertura_pendente": 409,
+    "sem_cena_aberta": 409,
+    "cena_ja_aberta": 409,
+    "personagem_ausente": 409,
+    "lugar_inicial_ausente": 409,
+    "periodo_invalido": 409,
+    "mensagem_invalida": 422,
 }
 
 # Limite do corpo das rotas de Nova Jornada (o conteúdo do Mundo tem até 256 KB).
@@ -171,6 +203,7 @@ def create_app(
     database: Database | None = None,
     journeys: JourneyStore | None = None,
     worlds: WorldStore | None = None,
+    rng: random.Random | None = None,
 ) -> FastAPI:
     """Cria a aplicação. ``token`` é o segredo por execução exigido em todas as rotas.
 
@@ -178,6 +211,8 @@ def create_app(
     Face, a remoção de modelos e as pastas extras. Sem eles, respondem 503.
     ``database`` acrescenta o campo ``database`` em ``/health``. ``journeys`` e
     ``worlds`` habilitam ``GET /journeys`` e ``GET /worlds`` (sem eles, 503).
+    ``rng`` sorteia o período inicial das Jornadas e o tom de partida da Cena
+    inicial (injetável nos testes; padrão: o gerador do módulo ``random``).
     """
     if not token:
         raise ValueError("token de acesso obrigatório")
@@ -599,6 +634,7 @@ def create_app(
                 start_place_id=body.get("start_place_id"),
                 character=body.get("character"),
                 name=body.get("name"),
+                rng=rng,
             )
         except JourneyCreationInvalid as exc:
             raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
@@ -681,5 +717,137 @@ def create_app(
             "restored_from": result.restored_from,
             "preserved_as": result.preserved_as.name if result.preserved_as else None,
         }
+
+    # ------------------------------------------------- Narrador e ciclo de Cena (ADR-076)
+    # Geração em curso por Jornada: id da Jornada -> id da geração.
+    narrating: dict[str, str] = {}
+    app.state.narrating = narrating
+
+    def current_journey() -> OpenJourney:
+        _, sess = need_journeys()
+        try:
+            return sess.require()
+        except StorageError as exc:
+            raise storage_error(exc) from exc
+
+    def reserve(journey_id: str) -> tuple[str, asyncio.Event]:
+        if journey_id in narrating:
+            raise _http_error("geracao_em_andamento", "O Narrador já está respondendo nesta Jornada.", 409)
+        generation_id = str(uuid.uuid4())
+        narrating[journey_id] = generation_id
+        return generation_id, asyncio.Event()
+
+    def release(journey_id: str, generation_id: str) -> None:
+        if narrating.get(journey_id) == generation_id:
+            del narrating[journey_id]
+        generations.pop(generation_id, None)
+
+    def narrative_stream(
+        journey_id: str,
+        generation_id: str,
+        cancel: asyncio.Event,
+        source: AsyncIterator[tuple[str, dict]],
+    ) -> StreamingResponse:
+        generations[generation_id] = cancel
+
+        async def events() -> AsyncIterator[str]:
+            try:
+                yield _sse("start", {"id": generation_id})
+                async for name, data in source:
+                    yield _sse(name, data)
+            except asyncio.CancelledError:
+                cancel.set()
+                raise
+            except ProviderUnavailable as exc:
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except ProposalRejected as exc:
+                logger.warning("proposta recusada em %s: %s", generation_id, exc.reasons)
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except NarrationFailed as exc:
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except (StorageError, DatabaseError) as exc:
+                logger.error("erro ao gravar a narração %s (%s): %s", generation_id, exc.code, exc)
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except Exception:  # noqa: BLE001 — o erro vira evento, sem vazar detalhes
+                logger.exception("falha na geração %s", generation_id)
+                yield _sse(
+                    "error",
+                    {"message": "Falha ao gerar a resposta do Narrador.", "code": "generation_failed"},
+                )
+            finally:
+                cancel.set()
+                release(journey_id, generation_id)
+
+        stream = events()
+        # Se a resposta nunca chegar a ser iterada (cliente saiu antes), libera a Jornada mesmo assim.
+        weakref.finalize(stream, release, journey_id, generation_id)
+        return StreamingResponse(
+            stream,
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    @app.get("/journeys/current/messages", dependencies=auth)
+    async def journeys_messages() -> dict:
+        journey = current_journey()
+        try:
+            return await asyncio.to_thread(narration.history_view, journey)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+
+    @app.post("/journeys/current/opening", dependencies=auth)
+    async def journeys_opening() -> StreamingResponse:
+        journey = current_journey()
+        generation_id, cancel = reserve(journey.id)
+        try:
+            plan = await asyncio.to_thread(narration.prepare_opening, journey)
+        except (StorageError, DatabaseError) as exc:
+            release(journey.id, generation_id)
+            raise storage_error(exc) from exc
+        except BaseException:
+            release(journey.id, generation_id)
+            raise
+        source = narration.run_opening(provider, journey, plan, cancel, rng=rng)
+        return narrative_stream(journey.id, generation_id, cancel, source)
+
+    @app.post("/journeys/current/messages", dependencies=auth)
+    async def journeys_send(request: Request) -> StreamingResponse:
+        body = await read_json(request, ("content",))
+        try:
+            narration.check_player_text(body.get("content"))
+        except StorageError as exc:
+            raise invalid(exc.code, str(exc), [{"field": "content", "code": exc.code, "message": str(exc)}]) from exc
+        journey = current_journey()
+        generation_id, cancel = reserve(journey.id)
+        try:
+            plan = await asyncio.to_thread(narration.prepare_reply, journey, body["content"])
+        except (StorageError, DatabaseError) as exc:
+            release(journey.id, generation_id)
+            raise storage_error(exc) from exc
+        except BaseException:
+            release(journey.id, generation_id)
+            raise
+        source = narration.run_reply(provider, journey, plan, cancel)
+        return narrative_stream(journey.id, generation_id, cancel, source)
+
+    @app.post("/journeys/current/scene/close", dependencies=auth)
+    async def journeys_scene_close() -> dict:
+        journey = current_journey()
+        generation_id, _ = reserve(journey.id)
+        try:
+            plan = await asyncio.to_thread(narration.prepare_close, journey)
+            return await narration.run_close(provider, journey, plan)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        except ProviderUnavailable as exc:
+            raise _http_error(exc.code, str(exc)) from exc
+        except ProposalRejected as exc:
+            logger.warning("resumo recusado: %s", exc.reasons)
+            raise _http_error(exc.code, str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001 — sem vazar detalhes; a Cena continua aberta
+            logger.exception("falha ao encerrar a Cena")
+            raise _http_error("generation_failed", "Falha ao gerar o resumo da Cena; ela continua aberta.") from exc
+        finally:
+            release(journey.id, generation_id)
 
     return app
