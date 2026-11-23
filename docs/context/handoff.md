@@ -11,7 +11,7 @@ Atualizado em 2026-11-23 após a tarefa `chat-da-jornada` (entrega 3a: tela da J
   - **Frontend:** tela sem abas, com barra superior com céu do período e data, coluna de Arcos recolhível, centro em pergaminho (Cena) ou margem do cronista (Aduran e Log), cartão de proposta, ações das mensagens no hover, campo que cresce, ficha com retrato e trilhas em ícones, ficha completa em abas, recorte do retrato, Mundo e lugares no ⚙, abas em telas estreitas; campos opcionais no assistente; galeria atualizada. Removidos `JourneyTabs`, `ChatView` e `useChat`. CSP com `blob:` em `img-src` para o retrato.
 - Testes: backend 590 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 79 dos arquivos novos e alterados); frontend 275 de 275 e typecheck sem erros (o planejador rodou 3 vezes seguidas). O dev testou o fluxo inteiro no app real com o provedor falso (capturas no scratchpad da sessão).
 - **Não testado com modelo local real** (marcação de proposta, instruções novas do Aduran).
-- Branch: `feat/chat-da-jornada` (PR aberto contra `main`).
+- Branch: `feat/chat-da-jornada`, PR [#23](https://github.com/midrasil/henduran/pull/23) aberto contra `main`.
 
 ## Decisões vigentes
 
