@@ -31,18 +31,18 @@ export class StreamError extends Error {
   }
 }
 
-/** Códigos que indicam que falta preparar o motor ou o modelo na aba Modelos. */
+/** Códigos que indicam que falta preparar o motor ou o modelo na tela Modelos. */
 export const ENGINE_ERROR_CODES = new Set(["no_model", "engine_not_installed", "engine_not_ready"]);
 
 /** Mensagem clara para cada código de erro do chat. */
 export function chatErrorMessage(code: string | undefined, fallback: string): string {
   switch (code) {
     case "no_model":
-      return "Nenhum modelo de IA escolhido. Abra a aba Modelos e escolha um modelo.";
+      return "Nenhum modelo de IA escolhido. Abra a tela Modelos e escolha um modelo.";
     case "engine_not_installed":
-      return "O motor de IA ainda não foi baixado. Abra a aba Modelos para baixá-lo.";
+      return "O motor de IA ainda não foi baixado. Abra a tela Modelos para baixá-lo.";
     case "engine_not_ready":
-      return "O motor de IA não está pronto. Abra a aba Modelos e carregue um modelo.";
+      return "O motor de IA não está pronto. Abra a tela Modelos e carregue um modelo.";
     default:
       return fallback;
   }

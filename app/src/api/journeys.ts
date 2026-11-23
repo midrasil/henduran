@@ -1,0 +1,316 @@
+/**
+ * Cliente tipado das rotas de regras, Mundos, personagem e Jornadas (backend/README.md, "API").
+ *
+ * A interface não duplica regras: Atributos, Perícias, distribuições, perfis, teto
+ * e limites vêm de `GET /rules/creation` e `GET /worlds/schema`; a validação
+ * definitiva é a do servidor. Erros chegam como `BackendError` (código, mensagem
+ * e, nas validações, erros por campo).
+ */
+import type { BackendInfo, FieldError } from "./backend";
+import { request } from "./engine";
+
+/* ------------------------------------------------------------------ regras */
+
+export interface RuleCategory {
+  id: string;
+  name: string;
+}
+
+export interface RuleAttribute {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  /** Ids das Perícias ligadas a este Atributo. */
+  skills: string[];
+}
+
+export interface RuleSkill {
+  id: string;
+  name: string;
+  attribute: string;
+  description: string;
+}
+
+export interface SkillProfile {
+  id: string;
+  name: string;
+  distribution: { value: number; count: number }[];
+  total_skills: number;
+}
+
+export interface DerivedRule {
+  id: string;
+  name: string;
+  base: number;
+  attribute: string;
+  formula: string;
+}
+
+export interface CreationRules {
+  rules_version: string;
+  categories: RuleCategory[];
+  attributes: RuleAttribute[];
+  skills: RuleSkill[];
+  attribute_distribution: number[];
+  skill_profiles: SkillProfile[];
+  creation_max: number;
+  ranges: { attribute: { min: number; max: number }; skill: { min: number; max: number } };
+  derived: DerivedRule[];
+  convictions: { count: number };
+  text_limits: Record<string, number>;
+  fields: string[];
+}
+
+/* ------------------------------------------------------------------- Mundo */
+
+export interface Range {
+  min: number;
+  max: number;
+}
+
+export interface WorldSchema {
+  schema: number;
+  content_max_bytes: number;
+  seed_max: number;
+  name_max: number;
+  description_max: number;
+  short_name_max: number;
+  domain_max: number;
+  year: Range;
+  months: Range;
+  month_days: Range;
+  weekdays: Range;
+  religions: Range;
+  places: Range;
+  place_id_pattern: string;
+}
+
+export interface NamedText {
+  name: string;
+  description: string;
+}
+
+export interface WorldMonth {
+  name: string;
+  /** `null` enquanto o campo está vazio na edição. */
+  days: number | null;
+}
+
+export interface WorldCalendar {
+  name: string;
+  year: number | null;
+  era_label: string;
+  months: WorldMonth[];
+  weekdays: string[];
+}
+
+export interface WorldReligion {
+  name: string;
+  domain: string;
+  description: string;
+}
+
+export interface WorldPlace {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+}
+
+/** Conteúdo de Mundo, esquema v1. */
+export interface WorldContent {
+  schema: number;
+  name: string;
+  era: NamedText;
+  tone: NamedText;
+  calendar: WorldCalendar;
+  religions: WorldReligion[];
+  places: WorldPlace[];
+}
+
+export interface WorldValidation {
+  valid: boolean;
+  errors: FieldError[];
+  content: WorldContent | null;
+}
+
+/* -------------------------------------------------------------- personagem */
+
+export interface ConvictionDraft {
+  text: string;
+  pillar: string;
+}
+
+/** Rascunho enviado ao servidor (`POST /characters/validate` e `POST /journeys`). */
+export interface CharacterDraft {
+  name: string;
+  concept: string;
+  appearance: string;
+  history: string;
+  ambition: string;
+  desire: string;
+  convictions: ConvictionDraft[];
+  attributes: Record<string, number>;
+  skill_profile?: string;
+  skills: Record<string, number>;
+}
+
+export interface DerivedPreview {
+  [id: string]: number | null;
+}
+
+export interface CharacterValidation {
+  valid: boolean;
+  errors: FieldError[];
+  derived: DerivedPreview;
+}
+
+/* ---------------------------------------------------------------- Jornadas */
+
+export type JourneyStatus = "ok" | "danificada" | "mais_nova" | "sem_mundo";
+
+export interface JourneySummary {
+  id: string;
+  name: string | null;
+  character_name: string | null;
+  location: string | null;
+  day_period: string | null;
+  world_id: string | null;
+  world_version: number | null;
+  world_name: string | null;
+  created_at: string | null;
+  last_saved_at: string | null;
+  schema_version: number;
+  status: JourneyStatus;
+  error_code: string | null;
+  error_message: string | null;
+  rules_version: string | null;
+}
+
+export interface JourneyList {
+  journeys: JourneySummary[];
+  last_journey_id: string | null;
+}
+
+export interface Track {
+  size: number | null;
+  superficial: number;
+  agravada: number;
+}
+
+export interface Objective {
+  id: number;
+  text: string;
+  created_at: string;
+}
+
+export interface SheetConviction {
+  position: number;
+  text: string;
+  pillar: string;
+  fractures: number;
+}
+
+export interface CharacterSheet {
+  name: string;
+  concept: string;
+  appearance: string;
+  history: string;
+  skill_profile: string;
+  created_at: string;
+  attributes: Record<string, number>;
+  skills: Record<string, number>;
+  convictions: SheetConviction[];
+  ambition: Objective | null;
+  desire: Objective | null;
+  tracks: Record<string, Track>;
+  derived: Record<string, number | null>;
+  rules_version: string | null;
+}
+
+/** Resumo da Jornada aberta (`journey_meta`). */
+export interface OpenJourneySummary {
+  id: string;
+  name: string | null;
+  character_name: string | null;
+  location: string | null;
+  day_period: string | null;
+  world_id: string | null;
+  world_version: number | null;
+  created_at: string | null;
+  last_saved_at: string | null;
+  rules_version: string | null;
+}
+
+/** O que `GET /journeys/current` e `POST /journeys/{id}/open` devolvem. */
+export interface JourneySnapshot {
+  journey: OpenJourneySummary;
+  character: CharacterSheet | null;
+  world: { id: string; version: number; content: WorldContent | null };
+}
+
+export interface BackupInfo {
+  name: string;
+  schema_version: number;
+  /** `AAAAMMDD-HHMMSS`, hora local, do nome do arquivo. */
+  created: string;
+  size_bytes: number;
+}
+
+export interface JourneyDeletion {
+  deleted: string;
+  world_id: string | null;
+  world_deleted: boolean;
+  world_kept_reason: string | null;
+}
+
+export interface NewJourneyBody {
+  name?: string;
+  world: { content: WorldContent };
+  start_place_id: string;
+  character: CharacterDraft;
+}
+
+/* ------------------------------------------------------------------- rotas */
+
+const journeyPath = (id: string) => `/journeys/${encodeURIComponent(id)}`;
+
+export const fetchCreationRules = (info: BackendInfo) => request<CreationRules>(info, "/rules/creation");
+export const fetchWorldSchema = (info: BackendInfo) => request<WorldSchema>(info, "/worlds/schema");
+
+export const generateWorld = (info: BackendInfo, seed?: number) =>
+  request<{ seed: number; content: WorldContent }>(info, "/worlds/generate", {
+    method: "POST",
+    body: seed === undefined ? {} : { seed },
+  });
+
+export const validateWorld = (info: BackendInfo, content: WorldContent) =>
+  request<WorldValidation>(info, "/worlds/validate", { method: "POST", body: { content } });
+
+export const validateCharacter = (info: BackendInfo, draft: CharacterDraft) =>
+  request<CharacterValidation>(info, "/characters/validate", { method: "POST", body: { draft } });
+
+export const createJourney = (info: BackendInfo, body: NewJourneyBody) =>
+  request<{ journey: JourneySummary }>(info, "/journeys", { method: "POST", body });
+
+export const listJourneys = (info: BackendInfo) => request<JourneyList>(info, "/journeys");
+export const fetchCurrentJourney = (info: BackendInfo) => request<JourneySnapshot>(info, "/journeys/current");
+
+export const openJourney = (info: BackendInfo, id: string) =>
+  request<JourneySnapshot>(info, `${journeyPath(id)}/open`, { method: "POST" });
+
+export const closeJourney = (info: BackendInfo) =>
+  request<{ closed: string | null }>(info, "/journeys/close", { method: "POST" });
+
+export const deleteJourney = (info: BackendInfo, id: string) =>
+  request<JourneyDeletion>(info, `${journeyPath(id)}?confirm=true`, { method: "DELETE" });
+
+export const listBackups = (info: BackendInfo, id: string) =>
+  request<{ backups: BackupInfo[] }>(info, `${journeyPath(id)}/backups`);
+
+export const restoreBackup = (info: BackendInfo, id: string, backup: string) =>
+  request<{ restored_from: string; preserved_as: string | null }>(info, `${journeyPath(id)}/restore`, {
+    method: "POST",
+    body: { backup },
+  });

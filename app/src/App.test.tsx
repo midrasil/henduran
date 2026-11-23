@@ -4,12 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 import { controlledSse, jsonResponse, sse, sseResponse } from "./test/fakeFetch";
+import { createFakeGameApi, summary, type FakeGameOptions } from "./test/fakeGameApi";
 
-const { getBackendInfo } = vi.hoisted(() => ({ getBackendInfo: vi.fn() }));
+const { getBackendInfo, canExitApp, exitApp } = vi.hoisted(() => ({
+  getBackendInfo: vi.fn(),
+  canExitApp: vi.fn(() => false),
+  exitApp: vi.fn(async () => undefined),
+}));
 
 vi.mock("./api/backend", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./api/backend")>();
-  return { ...actual, getBackendInfo };
+  return { ...actual, getBackendInfo, canExitApp, exitApp };
 });
 
 const info = { port: 5000, token: "t" };
@@ -32,17 +37,25 @@ const engineStatus = (patch: Record<string, unknown> = {}) => ({
   ...patch,
 });
 
-function stubFetch(routes: { stream?: Route; cancel?: Route; health?: Route; engine?: Route; other?: Route }) {
+const ONE_JOURNEY: FakeGameOptions = { journeys: [summary()], lastJourneyId: summary().id };
+
+function stubFetch(
+  routes: { stream?: Route; cancel?: Route; health?: Route; engine?: Route; other?: Route },
+  game: FakeGameOptions = ONE_JOURNEY,
+) {
+  const api = createFakeGameApi(game);
   const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
     if (url.endsWith("/health")) return routes.health ? routes.health(url, init) : jsonResponse(healthOk);
     if (url.endsWith("/engine/status")) return routes.engine ? routes.engine(url, init) : jsonResponse(engineStatus());
-    if (routes.other && !url.endsWith("/chat/stream") && !url.includes("/cancel")) return routes.other(url, init);
     if (url.endsWith("/chat/stream") && routes.stream) return routes.stream(url, init);
-    if (url.includes("/cancel") && routes.cancel) return routes.cancel(url, init);
+    if (url.includes("/chat/") && url.includes("/cancel") && routes.cancel) return routes.cancel(url, init);
+    const handled = api.handle(url, init);
+    if (handled) return handled;
+    if (routes.other) return routes.other(url, init);
     throw new Error(`rota inesperada: ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
+  return Object.assign(fetchMock, { api });
 }
 
 /** Espera a consulta a /engine/status ser respondida e a tela se atualizar. */
@@ -56,9 +69,31 @@ async function renderConnected() {
   await screen.findByText("Conectado");
 }
 
+/** Abre o app, continua a última Jornada e espera a aba Chat. */
+async function renderInJourney() {
+  const user = userEvent.setup();
+  await renderConnected();
+  const button = await screen.findByRole("button", { name: "Continuar Jornada" });
+  await waitFor(() => expect(button).toBeEnabled());
+  await user.click(button);
+  await screen.findByRole("tab", { name: "Chat" });
+  return user;
+}
+
+const modelsRoutes: Route = (url) => {
+  if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
+  if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\m", active: null });
+  if (url.endsWith("/models/folders")) return jsonResponse({ folders: [] });
+  if (url.endsWith("/hub/downloads")) return jsonResponse({ downloads: [] });
+  throw new Error(`rota inesperada: ${url}`);
+};
+
 beforeEach(() => {
   getBackendInfo.mockReset();
   getBackendInfo.mockResolvedValue(info);
+  canExitApp.mockReset();
+  canExitApp.mockReturnValue(false);
+  exitApp.mockClear();
 });
 
 afterEach(() => {
@@ -70,9 +105,9 @@ describe("App", () => {
     stubFetch({});
     render(<App backendOptions={{ attempts: 2, retryDelayMs: 1 }} />);
     expect(screen.getByRole("status")).toHaveTextContent("Iniciando serviço…");
-    expect(screen.getByLabelText("Mensagem para o Narrador")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeDisabled();
     await screen.findByText("Conectado");
-    expect(screen.getByLabelText("Mensagem para o Narrador")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeEnabled();
   });
 
   it("mostra erro quando o shell não fornece o serviço", async () => {
@@ -98,8 +133,7 @@ describe("App", () => {
         return fake.response;
       },
     });
-    const user = userEvent.setup();
-    await renderConnected();
+    const user = await renderInJourney();
 
     expect(screen.getByRole("button", { name: "Enviar" })).toBeDisabled();
     await user.type(screen.getByLabelText("Mensagem para o Narrador"), "Olá");
@@ -133,8 +167,7 @@ describe("App", () => {
         return sseResponse([sse("start", { id: "g" }), sse("token", { text: "Resposta" }), sse("done", { reason: "completed" })]);
       },
     });
-    const user = userEvent.setup();
-    await renderConnected();
+    const user = await renderInJourney();
     const input = screen.getByLabelText("Mensagem para o Narrador");
     await user.type(input, "Primeira{Enter}");
     await screen.findByText("Resposta");
@@ -165,8 +198,7 @@ describe("App", () => {
         return jsonResponse({ status: "cancelled" });
       },
     });
-    const user = userEvent.setup();
-    await renderConnected();
+    const user = await renderInJourney();
     await user.type(screen.getByLabelText("Mensagem para o Narrador"), "Conte uma história{Enter}");
     fake?.push(sse("start", { id: "abc" }) + sse("token", { text: "Era uma vez" }));
     await screen.findByText("Era uma vez");
@@ -184,8 +216,7 @@ describe("App", () => {
     stubFetch({
       stream: () => sseResponse([sse("start", { id: "g" }), sse("error", { message: "Falha ao gerar a resposta do Narrador." })]),
     });
-    const user = userEvent.setup();
-    await renderConnected();
+    const user = await renderInJourney();
     await user.type(screen.getByLabelText("Mensagem para o Narrador"), "Oi{Enter}");
     expect(await screen.findByRole("alert")).toHaveTextContent("Erro: Falha ao gerar a resposta do Narrador.");
     expect(screen.getByText("Resposta não concluída.")).toBeInTheDocument();
@@ -194,66 +225,58 @@ describe("App", () => {
 });
 
 describe("App — abas e aviso do motor", () => {
-  it("tem abas Chat e Modelos navegáveis pelo teclado", async () => {
-    stubFetch({
-      other: (url) => {
-        if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
-        if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\dados\\models", active: null });
-        throw new Error(`rota inesperada: ${url}`);
-      },
-    });
-    const user = userEvent.setup();
-    await renderConnected();
+  it("tem as abas Chat, Ficha, Mundo e Objetivos navegáveis pelo teclado", async () => {
+    stubFetch({});
+    const user = await renderInJourney();
     const chatTab = screen.getByRole("tab", { name: "Chat" });
     expect(chatTab).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Chat" })).toBeVisible();
 
     chatTab.focus();
     await user.keyboard("{ArrowRight}");
-    const modelsTab = screen.getByRole("tab", { name: "Modelos" });
-    expect(modelsTab).toHaveAttribute("aria-selected", "true");
-    expect(modelsTab).toHaveFocus();
-    expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+    const sheetTab = screen.getByRole("tab", { name: "Ficha" });
+    expect(sheetTab).toHaveAttribute("aria-selected", "true");
+    expect(sheetTab).toHaveFocus();
+    expect(await screen.findByRole("heading", { name: "Ficha de Ilsa Corvalho" })).toBeInTheDocument();
 
+    await user.keyboard("{End}");
+    expect(screen.getByRole("tab", { name: "Objetivos" })).toHaveAttribute("aria-selected", "true");
     await user.keyboard("{Home}");
     expect(chatTab).toHaveAttribute("aria-selected", "true");
   });
 
   it("não mostra aviso com o provedor falso", async () => {
     const fetchMock = stubFetch({});
-    await renderConnected();
+    await renderInJourney();
     await waitForEngineStatus(fetchMock);
-    expect(screen.queryByText(/aba Modelos/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/tela Modelos/)).not.toBeInTheDocument();
   });
 
   it("mostra aviso com atalho para Modelos quando o motor local não está pronto", async () => {
     stubFetch({
       engine: () => jsonResponse(engineStatus({ provider: "local", installed: false })),
-      other: (url) => {
-        if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
-        if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\m", active: null });
-        throw new Error(`rota inesperada: ${url}`);
-      },
+      other: modelsRoutes,
     });
-    const user = userEvent.setup();
-    await renderConnected();
-    expect(await screen.findByText("O motor de IA ainda não foi baixado. Baixe-o na aba Modelos.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Ir para a aba Modelos" }));
-    expect(screen.getByRole("tab", { name: "Modelos" })).toHaveAttribute("aria-selected", "true");
+    const user = await renderInJourney();
+    expect(await screen.findByText("O motor de IA ainda não foi baixado. Baixe-o na tela Modelos.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Ir para Modelos" }));
     expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+    // De Modelos, volta para a Jornada aberta.
+    await user.click(screen.getByRole("button", { name: "Voltar à Jornada" }));
+    expect(await screen.findByRole("tab", { name: "Chat" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("aviso some quando o motor está pronto", async () => {
     const fetchMock = stubFetch({ engine: () => jsonResponse(engineStatus({ provider: "local", installed: true, state: "ready", active_model: "m.gguf" })) });
-    await renderConnected();
+    await renderInJourney();
     await waitForEngineStatus(fetchMock);
-    expect(screen.queryByRole("button", { name: "Ir para a aba Modelos" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ir para Modelos" })).not.toBeInTheDocument();
   });
 
   it.each([
-    ["no_model", "Nenhum modelo de IA escolhido. Abra a aba Modelos e escolha um modelo."],
-    ["engine_not_installed", "O motor de IA ainda não foi baixado. Abra a aba Modelos para baixá-lo."],
-    ["engine_not_ready", "O motor de IA não está pronto. Abra a aba Modelos e carregue um modelo."],
+    ["no_model", "Nenhum modelo de IA escolhido. Abra a tela Modelos e escolha um modelo."],
+    ["engine_not_installed", "O motor de IA ainda não foi baixado. Abra a tela Modelos para baixá-lo."],
+    ["engine_not_ready", "O motor de IA não está pronto. Abra a tela Modelos e carregue um modelo."],
   ])("trata o código %s do SSE com mensagem clara e reconsulta o motor", async (code, message) => {
     let engineCalls = 0;
     const fetchMock = stubFetch({
@@ -263,8 +286,7 @@ describe("App — abas e aviso do motor", () => {
       },
       stream: () => sseResponse([sse("start", { id: "g" }), sse("error", { message: "texto do serviço", code })]),
     });
-    const user = userEvent.setup();
-    await renderConnected();
+    const user = await renderInJourney();
     await waitFor(() => expect(engineCalls).toBeGreaterThan(0));
     const before = engineCalls;
     await user.type(screen.getByLabelText("Mensagem para o Narrador"), "Oi{Enter}");

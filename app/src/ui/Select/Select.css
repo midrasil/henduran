@@ -1,0 +1,37 @@
+.select {
+  position: relative;
+  display: flex;
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.select__control {
+  appearance: none;
+  width: 100%;
+  padding-right: var(--space-5);
+  cursor: pointer;
+}
+
+/* Opções da lista aberta (desenhada pelo sistema) com as cores do jogo. */
+.select__control option {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+/* Seta em degraus de pixel, feita com bordas (sem imagem). */
+.select__arrow {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  width: 0;
+  height: 0;
+  margin-top: -3px;
+  border-top: 8px solid var(--fg);
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  pointer-events: none;
+}
+
+.select__control:disabled + .select__arrow {
+  border-top-color: var(--color-disabled-text);
+}

@@ -159,7 +159,7 @@ Todas as rotas exigem `Authorization: Bearer <token>`; sem ele a resposta é 401
 | `GET /journeys/current` | Jornada aberta: `{"journey": resumo com rules_version, "character": ficha com tracks e derived, "world": {"id", "version", "content"}}`. 404 `nenhuma_jornada_aberta`. |
 | `POST /journeys/{id}/open` | Abre (migra, com backup antes) e devolve o mesmo que `current`; grava `last_journey_id`. 409 `jornada_ja_aberta` (outra aberta), `jornada_bloqueada`, `banco_danificado`, `banco_mais_novo`, `mundo_ausente`...; 404 `jornada_nao_encontrada`; 422 `id_invalido`. |
 | `POST /journeys/close` | `{"closed": id ou null}`. |
-| `DELETE /journeys/{id}?confirm=true` | Exclui a pasta da Jornada (o Mundo fica). Sem `confirm=true`: 400 `confirmacao_necessaria`; aberta: 409 `jornada_aberta`. |
+| `DELETE /journeys/{id}?confirm=true` | Exclui a pasta da Jornada e, **se nenhuma outra Jornada usar o Mundo dela**, também o Mundo → `{"deleted", "world_id", "world_deleted", "world_kept_reason"}`. O Mundo fica quando outra Jornada o usa (`mundo_em_uso`), quando há Jornada ilegível que talvez dependa dele (`uso_indeterminado`) ou quando a remoção falha (`exclusao_falhou`, registrado no log); nesses casos a exclusão da Jornada vale assim mesmo. Jornada ilegível: `world_id` nulo e o Mundo fica. Sem `confirm=true`: 400 `confirmacao_necessaria`; aberta: 409 `jornada_aberta`. |
 | `GET /journeys/{id}/backups` | `{"backups": [{"name", "schema_version", "created", "size_bytes"}]}`, do mais novo ao mais antigo. |
 | `POST /journeys/{id}/restore` | `{"backup": nome}` → `{"restored_from", "preserved_as"}`. 409 `jornada_aberta`; 404 `backup_nao_encontrado`; 422 `backup_invalido`. |
 | `POST /chat/stream` | Corpo `{"messages": [{"role": "user", "content": "..."}]}`. Resposta `text/event-stream`. |
@@ -212,8 +212,8 @@ Os testes usam `HENDURAN_DATA_DIR` temporário, o provedor falso, `tests/fake_ll
 - Sem token do Hugging Face: repositórios restritos ou privados não podem ser baixados.
 - Um download de modelo por vez (sem fila); o estado dos downloads não sobrevive ao fechamento do app, só o `.part`.
 - Sem lista curada nem modelo recomendado: o jogador escolhe.
-- Das regras do Astra, só a criação de personagem da fatia 1 (validação e ficha). Ainda não há testes de dados, uso de Vontade, Fraturas, troca de objetivos, Dia do Mundo, eventos, memória, salvamentos nem ramificações; `day_period` é só texto no resumo. A interface do passo Nova Jornada ainda não existe (a API está pronta para ela).
-- A exclusão de Mundos não tem rota: excluir uma Jornada deixa o Mundo dela na pasta `worlds\`.
+- Das regras do Astra, só a criação de personagem da fatia 1 (validação e ficha). Ainda não há testes de dados, uso de Vontade, Fraturas, troca de objetivos, Dia do Mundo, eventos, memória, salvamentos nem ramificações; `day_period` é só texto no resumo. A interface usa estas rotas no menu inicial, na tela Jornadas, no assistente de Nova Jornada e na Jornada aberta (somente leitura).
+- A exclusão de Mundos não tem rota própria: o Mundo sai junto com a última Jornada que o usa (`henduran/services/journey_deletion.py`).
 - Em aberto no ADR-075: retenção dos backups por Jornada (hoje, os 5 pré-migração), cache do catálogo de Jornadas, anexos grandes (`assets\` é só criada) e `ATTACH` do Mundo com FTS5 e vetores.
 - O anexo do Mundo em leitura cria `world.db-wal`/`-shm` ao lado (vazios) que uma conexão só de leitura não consegue apagar; são inofensivos.
 - A lista de Jornadas não roda `quick_check` (custaria proporcional ao tamanho): detecta arquivo inválido, cabeçalho e resumo ilegíveis; dano em outras páginas aparece ao abrir.

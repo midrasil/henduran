@@ -1,0 +1,81 @@
+.trail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.trail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+.trail__count {
+  color: var(--fg-heading);
+}
+
+.trail__boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 28px;
+}
+
+.trail__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: var(--border-thin) solid var(--fg);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  color: var(--fg);
+  background: var(--input-bg);
+}
+
+/* As marcas são texto (não só cor): "/" superficial, "X" agravada. */
+.trail__box--superficial::after {
+  content: "/";
+}
+
+.trail__box--agravada {
+  color: var(--fg-danger);
+  border-color: var(--fg-danger);
+}
+
+.trail__box--agravada::after {
+  content: "X";
+}
+
+.trail__unknown {
+  color: var(--fg-muted);
+}
+
+.trail__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  color: var(--fg-muted);
+}
+
+.trail__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trail__legend .trail__box {
+  width: 20px;
+  height: 20px;
+  font-size: var(--font-size-xs);
+}

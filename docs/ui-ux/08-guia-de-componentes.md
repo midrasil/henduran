@@ -89,6 +89,11 @@ Todos exportados por `app/src/ui/index.ts`, com testes (Vitest + Testing Library
 | `ChatBubble` | `narrator` (pergaminho), `player`, `system`, `aside` (pontilhado, para `@Aduran`; só na galeria) | cursor de streaming decorativo |
 | `SkyBackdrop` + `PeriodLabel` | 6 períodos | decorativo (`aria-hidden`); o período aparece em texto na barra de status |
 | `PixelIcon` | ícones 8x8 em SVG desenhados por código | sempre `aria-hidden` |
+| `Select` | com opção vazia, erro, desativado | `select` nativo (teclado do sistema); rótulo, dica e erro como no `TextField` |
+| `RadioGroup` | `list` e `cards`; com dica e erro | `fieldset` + `legend`; o nome da opção é só o rótulo e a descrição fica em `aria-describedby`; alvo de 44 px |
+| `FieldGroup` | com dica, erro e ações | `fieldset` + `legend`; dica e erro na descrição do grupo; a legenda pode receber foco |
+| `Stepper` | passo concluído, atual e seguinte | `nav` + `ol`; `aria-current="step"`; estado também em texto; só os passos anteriores são botões |
+| `TrailBoxes` | vazia, superficial (/), agravada (X), legenda | `role="img"` com texto equivalente ("Vida: 6 espaços; 0 superficiais…") |
 
 ### 4.1 Céu de dia e noite
 
@@ -110,7 +115,7 @@ Todos exportados por `app/src/ui/index.ts`, com testes (Vitest + Testing Library
 ## 7. O que falta
 
 - Ornamentos de canto, faixas e brasões (precisam de arte ou 9-slice próprio).
-- Componentes ainda não feitos: Tooltip, IconButton, Select, Checkbox/Radio estilizados (hoje nativos com `accent-color`), Toast, Drawer do Narrador Geral, Slot de inventário.
+- Componentes ainda não feitos: Tooltip, IconButton, Checkbox estilizado (hoje nativo com `accent-color`, como os botões de opção do `RadioGroup`), Toast, Drawer do Narrador Geral, Slot de inventário.
 - Controle de escala de texto nas configurações do jogo (hoje só na galeria).
 - Teste com leitor de tela (NVDA/Narrador) e medição em DPI 125%, 150% e 200%.
 - Reflow a 320 px de largura (SC 1.4.10) não foi medido; a janela mínima atual é 480 px.
