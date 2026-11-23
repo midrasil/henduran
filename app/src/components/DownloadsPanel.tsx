@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { formatBytes } from "../api/engine";
 import { ACTIVE_DOWNLOAD_STATES, DOWNLOAD_STATE_LABEL, type DownloadItem } from "../api/hub";
+import { Button, ListCard, Panel, ProgressBar } from "../ui";
 
 export interface DownloadsPanelProps {
   downloads: DownloadItem[];
@@ -75,95 +76,80 @@ export function DownloadsPanel({ downloads, error, onCancel, onRetry, onForget }
   };
 
   return (
-    <section className="panel" aria-labelledby={`${ids}-title`}>
-      <h3 id={`${ids}-title`}>Downloads</h3>
+    <Panel title="Downloads">
       <p className="visually-hidden" aria-live="polite" data-testid="downloads-live">
         {live}
       </p>
-      {error ? <p className="panel__error">Não foi possível consultar os downloads: {error}</p> : null}
+      {error ? <p className="text-danger">Não foi possível consultar os downloads: {error}</p> : null}
       {downloads.length === 0 ? (
         <p className="hint">Nenhum download. Busque um modelo acima e escolha um arquivo.</p>
       ) : (
-        <ul className="model-list" aria-label="Lista de downloads">
+        <ul className="card-list" aria-label="Lista de downloads">
           {downloads.map((item) => {
             const nameId = `${ids}-${item.id}`;
             const activeNow = ACTIVE_DOWNLOAD_STATES.has(item.state);
             const canRetry = item.state === "error" || item.state === "cancelled" || item.state === "interrupted";
             const percent = Math.round(item.progress * 100);
             return (
-              <li key={item.id} className="model download-item">
-                <p className="model__name" id={nameId}>
-                  {item.name}
-                </p>
-                <p className="model__meta">
-                  {item.repo}
-                  {item.parts > 1 ? ` · ${item.parts} partes` : ""}
-                </p>
+              <ListCard
+                key={item.id}
+                title={item.name}
+                titleId={nameId}
+                meta={
+                  <>
+                    {item.repo}
+                    {item.parts > 1 ? ` · ${item.parts} partes` : ""}
+                  </>
+                }
+                actions={
+                  <>
+                    {activeNow ? (
+                      <Button aria-describedby={nameId} disabled={busy === item.id} onClick={() => void run(item.id, onCancel)}>
+                        Cancelar
+                      </Button>
+                    ) : null}
+                    {canRetry ? (
+                      <Button
+                        variant="primary"
+                        aria-describedby={nameId}
+                        disabled={busy === item.id}
+                        onClick={() => void run(item.id, onRetry)}
+                      >
+                        Tentar de novo
+                      </Button>
+                    ) : null}
+                    {!activeNow ? (
+                      <Button aria-describedby={nameId} disabled={busy === item.id} onClick={() => void run(item.id, onForget)}>
+                        Limpar
+                      </Button>
+                    ) : null}
+                  </>
+                }
+              >
                 <p className={`download-state download-state--${item.state}`}>
                   {DOWNLOAD_STATE_LABEL[item.state]}
                   {item.state === "downloading" && item.total_bytes > 0 ? ` · ${percent}%` : ""}
                   {activeNow && item.speed_bps > 0 ? ` · ${speedLabel(item.speed_bps)}` : ""}
                 </p>
                 {item.total_bytes > 0 && item.state !== "done" ? (
-                  <progress
-                    className="progress"
-                    aria-labelledby={nameId}
-                    aria-valuetext={`${percent}%`}
-                    max={1}
-                    value={item.progress}
-                  />
+                  <ProgressBar labelledBy={nameId} valueText={`${percent}%`} value={item.progress} />
                 ) : null}
-                {bytesLabel(item) ? <p className="model__meta">{bytesLabel(item)}</p> : null}
+                {bytesLabel(item) ? <p className="list-card__meta">{bytesLabel(item)}</p> : null}
                 {item.state === "done" ? (
-                  <p className={item.verified ? "fit fit--gpu" : "warning"}>
+                  <p className={item.verified ? "text-ok" : "callout callout--warn"}>
                     {item.verified
                       ? "Integridade conferida pelo SHA-256 publicado. O modelo já aparece em Modelos locais."
                       : (item.warning ?? "Concluído sem verificação de integridade.")}
                   </p>
                 ) : null}
                 {item.error ? (
-                  <p className="panel__error">{item.error.message}</p>
+                  <p className="text-danger">{item.error.message}</p>
                 ) : item.state === "interrupted" ? (
-                  <p className="panel__error">
+                  <p className="text-danger">
                     Download interrompido (o app foi fechado). Use Tentar de novo para continuar de onde parou.
                   </p>
                 ) : null}
-                <div className="actions">
-                  {activeNow ? (
-                    <button
-                      type="button"
-                      className="button button--secondary"
-                      aria-describedby={nameId}
-                      disabled={busy === item.id}
-                      onClick={() => void run(item.id, onCancel)}
-                    >
-                      Cancelar
-                    </button>
-                  ) : null}
-                  {canRetry ? (
-                    <button
-                      type="button"
-                      className="button button--primary"
-                      aria-describedby={nameId}
-                      disabled={busy === item.id}
-                      onClick={() => void run(item.id, onRetry)}
-                    >
-                      Tentar de novo
-                    </button>
-                  ) : null}
-                  {!activeNow ? (
-                    <button
-                      type="button"
-                      className="button button--secondary"
-                      aria-describedby={nameId}
-                      disabled={busy === item.id}
-                      onClick={() => void run(item.id, onForget)}
-                    >
-                      Limpar
-                    </button>
-                  ) : null}
-                </div>
-              </li>
+              </ListCard>
             );
           })}
         </ul>
@@ -174,10 +160,10 @@ export function DownloadsPanel({ downloads, error, onCancel, onRetry, onForget }
         </p>
       ) : null}
       {actionError ? (
-        <p className="panel__error" role="alert">
+        <p className="callout callout--danger" role="alert">
           Erro: {actionError}
         </p>
       ) : null}
-    </section>
+    </Panel>
   );
 }

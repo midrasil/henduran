@@ -1,0 +1,165 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--target-primary);
+  min-width: var(--target-primary);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn--sm {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px var(--space-1);
+  font-size: var(--font-size-xs);
+}
+
+/* Variantes */
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  --frame-inner: var(--color-accent);
+  --frame-hi: var(--color-primary-bevel);
+  --frame-lo: var(--color-primary-active);
+}
+
+.btn--primary:hover:not(:disabled),
+.btn--primary[data-force="hover"] {
+  background: var(--color-primary-hover);
+}
+
+.btn--secondary {
+  background: var(--color-secondary);
+  color: var(--color-text);
+  --frame-inner: var(--color-frame);
+  --frame-hi: var(--color-secondary-hover);
+  --frame-lo: var(--color-outline);
+}
+
+.btn--secondary:hover:not(:disabled),
+.btn--secondary[data-force="hover"] {
+  background: var(--color-secondary-hover);
+  --frame-inner: var(--color-accent);
+}
+
+.btn--danger {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+  --frame-inner: var(--color-frame);
+  --frame-hi: var(--color-danger-hover);
+  --frame-lo: var(--color-outline);
+}
+
+.btn--danger:hover:not(:disabled),
+.btn--danger[data-force="hover"] {
+  background: var(--color-danger-hover);
+  --frame-inner: var(--color-accent);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.btn--ghost:hover:not(:disabled),
+.btn--ghost[data-force="hover"] {
+  color: var(--fg);
+  background: var(--color-secondary);
+}
+
+.surface-parchment .btn--ghost:hover:not(:disabled),
+.surface-parchment .btn--ghost[data-force="hover"] {
+  background: var(--color-parchment-deep);
+}
+
+/* Ativo: desce 2 px e perde a sombra, como uma tecla apertada. */
+.btn:active:not(:disabled),
+.btn[data-force="active"] {
+  transform: translateY(var(--bevel));
+  --frame-drop: transparent;
+  --frame-hi: transparent;
+}
+
+.btn--primary:active:not(:disabled),
+.btn--primary[data-force="active"] {
+  background: var(--color-primary-active);
+}
+
+/* O anel de foco passa por fora da moldura (4 px). */
+.btn.px-frame:focus-visible,
+.btn[data-force="focus"] {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 6px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  --frame-inner: var(--color-disabled-frame);
+  --frame-hi: transparent;
+  --frame-lo: transparent;
+  --frame-drop: transparent;
+}
+
+.btn--ghost:disabled {
+  background: transparent;
+  text-decoration: none;
+}
+
+.btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Indicador de carregamento: três blocos que acendem em degraus. */
+.btn__spinner {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.btn__spinner span {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  animation: btn-blink 900ms steps(1, end) infinite;
+}
+
+.btn__spinner span:nth-child(2) {
+  animation-delay: 300ms;
+}
+
+.btn__spinner span:nth-child(3) {
+  animation-delay: 600ms;
+}
+
+@keyframes btn-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.btn__label {
+  overflow-wrap: anywhere;
+}
+
+@media (forced-colors: active) {
+  .btn {
+    border: 2px solid ButtonText;
+  }
+}

@@ -32,7 +32,7 @@ O comando sobe o Vite em `http://localhost:5173`, compila o shell e abre a janel
 2. inicia `python -m henduran --port 0` com o Python de `backend/.venv/Scripts/python.exe` (ou o indicado em `HENDURAN_PYTHON`), passando o token em `HENDURAN_TOKEN`;
 3. lê a linha `{"event":"ready","port":N}` do stdout e expõe porta e token ao frontend pelo comando `get_backend_info`.
 
-O indicador no topo mostra "Iniciando serviço…", "Conectado" ou "Erro: …" (consulta `/health`).
+O indicador na barra de status (embaixo) mostra "Iniciando serviço…", "Conectado" ou "Erro: …" (consulta `/health`).
 
 Variáveis úteis (o shell repassa o ambiente ao serviço): `HENDURAN_PROVIDER=fake` usa o Narrador falso; `HENDURAN_DATA_DIR` troca a pasta de dados (padrão `%LOCALAPPDATA%\Henduran`).
 
@@ -42,7 +42,7 @@ Variáveis úteis (o shell repassa o ambiente ao serviço): `HENDURAN_PROVIDER=f
 - **Motor de IA:** estado e versão. Sem motor, "Baixar o motor de IA" (variante Vulkan, padrão, ou CPU) mostra arquivo, versão e tamanho e pede confirmação; se o GitHub não publicar o SHA-256, exibe um aviso e exige marcar "Entendo o risco…". O progresso aparece durante o download.
 - **Modelos locais:** lista os `.gguf` da pasta de modelos com tamanho, quantização e compatibilidade ("Cabe na sua placa", "Vai rodar no processador, mais lento", "Pesado demais para este PC"). "Usar este modelo" seleciona e carrega; o estado passa por "Carregando o modelo…" até "Pronto", ou mostra o erro com o final do log do motor.
 - Sem nenhum `.gguf`: mostra o caminho da pasta com o botão **Copiar caminho** e indica a busca abaixo.
-- **Remover** (só modelos da pasta do app) pede confirmação dizendo que apaga o arquivo do disco; se for o modelo ativo, o motor para. Modelos de pastas extras não têm Remover.
+- **Remover** (só modelos da pasta do app) pede confirmação num diálogo modal dizendo que apaga o arquivo do disco; se for o modelo ativo, o motor para. Modelos de pastas extras não têm Remover.
 - **Buscar modelos no Hugging Face:** campo de busca (Enter ou **Buscar**); resultados com `autor/nome`, downloads, curtidas e licença ("não informada" se faltar). Repositórios restritos aparecem com o aviso "Exige login no Hugging Face; ainda não suportado".
 - **Detalhe do repositório:** licença em destaque e um item por arquivo (modelos divididos contam como um), com quantização, tamanho e o mesmo rótulo de compatibilidade dos modelos locais. **Baixar** mostra o tamanho e o espaço livre e pede confirmação; avisa se não houver SHA-256 publicado e bloqueia se faltar espaço. Arquivos já baixados aparecem como "Já baixado".
 - **Downloads:** nome, barra de progresso, bytes, velocidade e estado, com **Cancelar**, **Tentar de novo** (continua de onde parou, também depois de fechar o app) e **Limpar** (apaga o que foi baixado de um download não concluído). Ao concluir e conferir o SHA-256, o modelo aparece sozinho em Modelos locais. Mudanças de estado são anunciadas por uma região `aria-live` discreta, sem anunciar cada porcento.
@@ -62,11 +62,30 @@ Get-CimInstance Win32_Process -Filter "Name='python.exe'" | Where-Object { $_.Co
 Get-Process llama-server -ErrorAction SilentlyContinue
 ```
 
+## Interface (pixel art em CSS, ADR-069)
+
+```
+src/
+  styles/      tokens.css (paleta, bordas, espaçamento, --text-scale), fonts.css, base.css
+               (superfícies, foco, moldura .px-frame), shell.css, screens.css, index.css
+  ui/          biblioteca de componentes: Button, Panel, Tabs, ProgressBar, ListCard,
+               TextField/TextArea, Badge, Dialog, StatusIndicator, ChatBubble, SkyBackdrop,
+               PixelIcon (exportados por ui/index.ts, cada um com CSS e testes)
+  assets/fonts Pixelify Sans e Crimson Pro (woff2 locais, SIL OFL 1.1, licença em OFL.txt)
+  gallery/     galeria de componentes (só desenvolvimento)
+```
+
+Sem tileset nem imagens de terceiros: molduras por `box-shadow` sem desfoque, ícones e céu desenhados por código. A CSP (`style-src 'self'`) proíbe atributo `style` no HTML; valores dinâmicos vão por classe ou `element.style.setProperty`. Tokens, fontes e regras de uso: `docs/ui-ux/08-guia-de-componentes.md`.
+
+**Galeria:** com `npm run dev` rodando, abra `http://localhost:5173/gallery.html` num navegador. Mostra cores com a razão de contraste, tipografia, todos os componentes e estados, o céu nos 6 períodos, movimento reduzido e escala de texto. `?secao=<id>` mostra uma seção só. A galeria não entra no build (`vite build` usa apenas `index.html`).
+
+O período do dia no céu e na barra de status é estado do mundo; sem Jornada, o app usa `entardecer`.
+
 ## Testes
 
 ```powershell
 cd app
-npm run test          # Vitest: parser SSE, cliente de streaming, chat, abas, tela Modelos, busca, downloads e pastas
+npm run test          # Vitest: SSE, streaming, chat, abas, Modelos, busca, downloads, pastas, componentes de ui/ e contraste dos tokens
 npm run build         # checagem de tipos (tsc) + build do frontend
 cd src-tauri
 cargo test            # testes do shell (token, linha ready, espera)
@@ -82,6 +101,6 @@ cargo check
 ## Limitações atuais
 
 - Sem token do Hugging Face (restritos não baixam), sem lista curada de modelos e um download por vez; sem regras do Astra, persistência, mundo ou personagem.
-- Estilo mínimo e neutro em `src/styles/`; o visual pixel art (ADR-069) ainda não foi aplicado.
+- Visual pixel art em CSS (ADR-069) sem ornamentos de canto nem ilustrações; leitor de tela e DPI fracionário ainda não foram testados.
 - **Somente modo de desenvolvimento.** O empacotamento do serviço Python (sidecar, PyInstaller etc.) está **fora do escopo e em aberto** no projeto; por isso o bundle do Tauri está desativado (`bundle.active: false`). O caminho padrão do Python é resolvido a partir da pasta do projeto no momento da compilação, então o executável só funciona nesta cópia do repositório.
 - Ícone provisório e neutro, gerado para o build.

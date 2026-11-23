@@ -1,0 +1,33 @@
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--target-min);
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+  color: var(--fg);
+}
+
+.status-indicator--ok .status-indicator__icon {
+  color: var(--fg-ok);
+}
+
+.status-indicator--busy .status-indicator__icon {
+  color: var(--fg-warn);
+  animation: status-busy 1.2s steps(2, end) infinite;
+}
+
+.status-indicator--error {
+  color: var(--fg-danger);
+}
+
+.status-indicator--idle .status-indicator__icon {
+  color: var(--fg-muted);
+}
+
+@keyframes status-busy {
+  50% {
+    opacity: 0.4;
+  }
+}

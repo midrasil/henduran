@@ -1,0 +1,44 @@
+.progress {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  padding: var(--border-thin);
+  background: var(--color-progress-track);
+  border: var(--border-thin) solid var(--color-frame);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  width: calc(var(--progress, 0) * 100%);
+  /* segmentos de 8 px com 2 px de vão: aparência de barra de jogo, sem degradê suave */
+  background: repeating-linear-gradient(
+    90deg,
+    var(--progress-color) 0 6px,
+    transparent 6px 8px
+  );
+  transition: width var(--duration-fast) steps(2, end);
+}
+
+.progress--gold {
+  --progress-color: var(--color-progress-fill);
+}
+
+.progress--purple {
+  --progress-color: var(--color-primary-bevel);
+}
+
+.progress--indeterminate .progress__fill {
+  width: 25%;
+  animation: progress-walk 1.6s steps(8, end) infinite;
+}
+
+@keyframes progress-walk {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}

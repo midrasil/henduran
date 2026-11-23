@@ -1,0 +1,188 @@
+/*
+ * Base: reset, superfícies contextuais, foco, moldura em pixel e utilitários.
+ * Só consome tokens (tokens.css).
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/*
+ * Superfícies contextuais: componentes usam --fg-* e --focus-ring, e a superfície
+ * em volta decide os valores. Escuro é o padrão; pergaminho troca tudo.
+ */
+:root,
+.surface-dark {
+  --fg: var(--color-text);
+  --fg-muted: var(--color-text-muted);
+  --fg-heading: var(--color-accent);
+  --fg-danger: var(--color-danger-text);
+  --fg-ok: var(--color-success-text);
+  --fg-warn: var(--color-warn-text);
+  --focus-ring: var(--color-focus);
+  --input-bg: var(--color-input-bg);
+  --input-border: var(--color-input-border);
+  --link: var(--color-accent-light);
+}
+
+.surface-parchment {
+  --fg: var(--color-text-on-parchment);
+  --fg-muted: var(--color-text-on-parchment-muted);
+  --fg-heading: var(--color-text-on-parchment);
+  --fg-danger: var(--color-danger-text-on-parchment);
+  --fg-ok: var(--color-success-text-on-parchment);
+  --fg-warn: var(--color-warn-text-on-parchment);
+  --focus-ring: var(--color-focus-on-parchment);
+  --input-bg: var(--color-input-bg-on-parchment);
+  --input-border: var(--color-input-border-on-parchment);
+  --link: var(--color-text-on-parchment);
+  color: var(--fg);
+}
+
+.surface-dark {
+  color: var(--fg);
+}
+
+:root {
+  font-family: var(--font-serif);
+  font-size: 100%;
+  line-height: var(--line-height-body);
+  color: var(--fg);
+  background: var(--color-bg);
+  color-scheme: dark;
+  -webkit-font-smoothing: auto;
+}
+
+body {
+  font-size: var(--font-size-md);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  line-height: var(--line-height-tight);
+  color: var(--fg-heading);
+}
+
+p {
+  margin: 0;
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Foco sempre visível, com contraste sobre a superfície em volta (ADR-068). */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/*
+ * Moldura em pixel: bordas por box-shadow deslocado (sem desfoque), o que deixa
+ * os cantos "em degrau". Duas camadas: interna (--frame-inner) e externa
+ * (--frame-outer), mais o bisel interno e uma sombra dura embaixo. Ocupa 4 px
+ * fora da caixa (e a sombra, mais 4): vizinhos precisam de 8 px de espaço.
+ */
+/* Padrões com especificidade zero: as variantes dos componentes os sobrescrevem em qualquer ordem. */
+:where(.px-frame) {
+  --frame-inner: var(--color-frame);
+  --frame-outer: var(--color-outline);
+  --frame-hi: transparent;
+  --frame-lo: transparent;
+  --frame-drop: var(--color-shadow);
+}
+
+.px-frame {
+  --fw: var(--border-thin);
+  --fw-n: calc(var(--border-thin) * -1);
+  --fw2: calc(var(--border-thin) * 2);
+  --fw2-n: calc(var(--border-thin) * -2);
+  --drop: calc(var(--border-thin) * 2 + var(--shadow-drop));
+  box-shadow:
+    0 var(--fw-n) 0 0 var(--frame-inner),
+    0 var(--fw) 0 0 var(--frame-inner),
+    var(--fw-n) 0 0 0 var(--frame-inner),
+    var(--fw) 0 0 0 var(--frame-inner),
+    0 var(--fw2-n) 0 0 var(--frame-outer),
+    0 var(--fw2) 0 0 var(--frame-outer),
+    var(--fw2-n) 0 0 0 var(--frame-outer),
+    var(--fw2) 0 0 0 var(--frame-outer),
+    var(--fw-n) var(--fw-n) 0 0 var(--frame-outer),
+    var(--fw) var(--fw-n) 0 0 var(--frame-outer),
+    var(--fw-n) var(--fw) 0 0 var(--frame-outer),
+    var(--fw) var(--fw) 0 0 var(--frame-outer),
+    0 var(--drop) 0 0 var(--frame-drop),
+    inset 0 var(--bevel) 0 0 var(--frame-hi),
+    inset 0 calc(var(--bevel) * -1) 0 0 var(--frame-lo);
+}
+
+/* Utilitários */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pixel-icon {
+  display: inline-block;
+  flex: none;
+  shape-rendering: crispEdges;
+  vertical-align: middle;
+}
+
+/*
+ * Movimento reduzido: preferência do sistema ou o alternador da galeria
+ * (classe no <html>). Animações e transições ficam imediatas.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.motion-reduced *,
+.motion-reduced *::before,
+.motion-reduced *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

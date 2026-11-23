@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 
 import type { BackendInfo } from "../api/backend";
 import { addFolder, fetchFolders, removeFolder, type ModelFolder } from "../api/engine";
+import { Button, Panel, TextField } from "../ui";
 
 export interface ModelFoldersProps {
   info: BackendInfo;
@@ -70,8 +71,7 @@ export function ModelFolders({ info, onChange }: ModelFoldersProps) {
   };
 
   return (
-    <section className="panel" aria-labelledby={`${ids}-title`}>
-      <h3 id={`${ids}-title`}>Pastas de modelos</h3>
+    <Panel title="Pastas de modelos">
       <p className="hint">
         Se você já tem modelos .gguf em outra pasta (por exemplo, a do LM Studio), adicione-a aqui. O Henduran só lê
         essa pasta: não copia, não move e não apaga os arquivos dela.
@@ -83,53 +83,49 @@ export function ModelFolders({ info, onChange }: ModelFoldersProps) {
           {folders.map((folder) => (
             <li key={folder.path} className="folder">
               <code className="path">{folder.path}</code>
-              <span className="model__meta">
+              <span className="list-card__meta">
                 {folder.kind === "app" ? " · pasta do Henduran (downloads vão para cá)" : " · pasta extra"}
                 {folder.exists ? "" : " · não encontrada"}
               </span>
               {folder.kind === "extra" ? (
-                <button
-                  type="button"
-                  className="button button--secondary"
+                <Button
+                  size="sm"
                   aria-label={`Tirar da lista a pasta ${folder.path}`}
                   disabled={busy}
                   onClick={() => void remove(folder.path)}
                 >
                   Tirar da lista
-                </button>
+                </Button>
               ) : null}
             </li>
           ))}
         </ul>
       )}
       <form className="search" onSubmit={(e) => void add(e)}>
-        <label htmlFor={`${ids}-path`} className="search__label">
-          Caminho completo da pasta
-        </label>
-        <div className="search__row">
-          <input
-            id={`${ids}-path`}
-            className="search__input"
-            type="text"
-            value={path}
-            maxLength={1024}
-            spellCheck={false}
-            placeholder="Por exemplo: D:\Modelos"
-            onChange={(event) => setPath(event.target.value)}
-          />
-          <button type="submit" className="button button--primary" disabled={busy}>
-            Adicionar pasta
-          </button>
-        </div>
+        <TextField
+          id={`${ids}-path`}
+          label="Caminho completo da pasta"
+          type="text"
+          value={path}
+          maxLength={1024}
+          spellCheck={false}
+          placeholder="Por exemplo: D:\Modelos"
+          onChange={(event) => setPath(event.target.value)}
+          action={
+            <Button type="submit" variant="primary" disabled={busy}>
+              Adicionar pasta
+            </Button>
+          }
+        />
       </form>
       <p className="hint" aria-live="polite">
         {notice}
       </p>
       {error ? (
-        <p className="panel__error" role="alert">
+        <p className="callout callout--danger" role="alert">
           Erro: {error}
         </p>
       ) : null}
-    </section>
+    </Panel>
   );
 }

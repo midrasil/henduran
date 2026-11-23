@@ -1,0 +1,126 @@
+/* Shell do app: barra superior (marca e abas), faixa do céu, área principal e barra de status. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--color-bg);
+}
+
+.app-bar {
+  position: relative;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  /* linha dourada e contorno escuro embaixo, sem desfoque */
+  box-shadow:
+    0 2px 0 0 var(--color-frame),
+    0 4px 0 0 var(--color-outline);
+}
+
+.app-bar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-2xl);
+  color: var(--color-accent);
+}
+
+.app-bar__mark {
+  color: var(--color-accent);
+}
+
+.app-bar__nav {
+  display: flex;
+}
+
+.app__sky {
+  flex: none;
+  height: var(--sky-band-height);
+  border-bottom: var(--border-thin) solid var(--color-outline);
+}
+
+.app__main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.app__panel {
+  /* contém elementos absolutos (por exemplo, .visually-hidden) dentro da rolagem do painel */
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 1200px;
+  display: flex;
+}
+
+.app__panel[hidden] {
+  display: none;
+}
+
+/* Rolagem com folga para a moldura em pixel (que fica fora da caixa). */
+.app__panel--scroll {
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-1) var(--space-3);
+}
+
+.app__waiting {
+  padding: var(--space-2);
+}
+
+.status-bar {
+  position: relative;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-height: 40px;
+  margin-top: var(--space-2);
+  padding: 4px var(--space-2);
+  background: var(--color-surface);
+  box-shadow:
+    0 -2px 0 0 var(--color-frame),
+    0 -4px 0 0 var(--color-outline);
+}
+
+.status-bar__item {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+/* Janelas baixas: céu menor, para o chat continuar com espaço. */
+@media (max-height: 720px) {
+  .app {
+    --sky-band-height: 56px;
+  }
+}
+
+@media (max-height: 560px) {
+  .app {
+    --sky-band-height: 24px;
+  }
+
+  .app-bar__brand {
+    font-size: var(--font-size-xl);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-bar {
+    justify-content: center;
+  }
+}

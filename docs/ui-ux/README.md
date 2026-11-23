@@ -16,6 +16,8 @@ Especificação de pré-produção para transformar o pacote comercial Franuka e
 4. [Wireframes](04-wireframes.md)
 5. [Fluxos e interações](05-fluxos-e-interacoes.md)
 6. [Guia de implementação](06-guia-implementacao.md)
+7. [Ambiente de dia e noite](07-ambiente-dia-noite.md)
+8. [Guia de componentes (pixel art em CSS, ADR-069)](08-guia-de-componentes.md) — tokens, fontes e componentes em uso; substitui `02-design-system.md` para os tokens.
 
 Recursos auxiliares locais: [catálogo visual](catalogo-franuka.local.html) e [manifesto completo](franuka-manifest.json). Regenere ambos com `./scripts/ui-ux/inspect-franuka.ps1` a partir da raiz.
 

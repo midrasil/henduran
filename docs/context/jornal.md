@@ -138,3 +138,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões propostas no ADR-074 (aguardando aprovação): PRAGMAs, migrações só para frente, backup antes de migrar, política provisória de corrupção.
 - Pendente: um banco por Jornada ou único; política de corrupção e durabilidade com dados de jogo; Ctrl+C real no Windows não testado.
 - Arquivos: `backend/henduran/db/`, `backend/henduran/settings.py`, `backend/tests/test_db.py`, `docs/main/decisoes/ADR-074-fundacao-sqlite-migracoes-backup.md`.
+
+## 2026-11-23 — `base-ui-pixel-art`
+
+- Rota: conversa com o planejador → Dev → Entrega. Feita em paralelo com `persistencia-sqlite`.
+- Resultado: base de UI em pixel art em CSS com tokens próprios (ADR-069). Tokens com paleta amostrada dos esboços, fontes locais Pixelify Sans e Crimson Pro (SIL OFL, com licença junto), 11 componentes em `app/src/ui/`, `SkyBackdrop` com 6 períodos desenhado em código, shell com faixa de céu e barra de status, galeria só em desenvolvimento e as telas Chat e Modelos reescritas, com a confirmação de remover em `Dialog`. Guia em `docs/ui-ux/08-guia-de-componentes.md`.
+- Validações: 167 testes do frontend (53 anteriores e 114 novos) passaram, conferidos pelo planejador, e o build de produção não leva a galeria. Um teste confere o contraste AA dos 51 pares de cores. O planejador examinou 3 das cerca de 20 capturas de tela do dev (Chat em streaming, Modelos e a galeria do céu). Não verificados: leitor de tela, DPI de 125% a 200%, reflow a 320 px.
+- Decisões: fontes copiadas para o repositório, sem pacote npm; `aria-live` da conversa desligado, com região à parte anunciando início e fim da resposta; céu como faixa no topo (96, 56 ou 24 px conforme a altura da janela).
+- Feedback do responsável: ainda não está na cara esperada, mas é aceitável por ser MVP. Gaps no backlog.
+- Arquivos: `app/src/styles/`, `app/src/ui/`, `app/src/assets/fonts/`, `app/gallery.html`, `docs/ui-ux/08-guia-de-componentes.md`.

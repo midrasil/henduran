@@ -1,0 +1,65 @@
+.dialog-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+/* Fundo escurecido, sólido e sem desfoque. */
+.dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(14 9 17 / 82%);
+}
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: calc(100% - var(--space-4));
+  overflow: auto;
+  background: var(--color-surface);
+  --frame-inner: var(--color-accent);
+  --frame-hi: var(--color-surface-raised);
+  --frame-lo: var(--color-outline);
+}
+
+.dialog--danger {
+  --frame-inner: var(--color-danger-text);
+}
+
+.dialog:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 6px;
+}
+
+.dialog__titlebar {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-title-bar);
+  border-bottom: var(--border-thin) solid var(--color-frame);
+}
+
+.dialog__title {
+  font-size: var(--font-size-lg);
+  color: var(--color-accent);
+  overflow-wrap: anywhere;
+}
+
+.dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-3);
+}

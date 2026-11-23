@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 
 import type { BackendInfo } from "../api/backend";
-import { FIT_LABEL, formatBytes } from "../api/engine";
+import { formatBytes } from "../api/engine";
 import {
   fetchRepoFiles,
   formatCount,
@@ -13,6 +13,8 @@ import {
   type HubRepo,
   type HubResult,
 } from "../api/hub";
+import { Badge, Button, ListCard, Panel, TextField } from "../ui";
+import { FitBadge } from "./FitBadge";
 
 export interface HubSearchProps {
   info: BackendInfo;
@@ -118,27 +120,23 @@ export function HubSearch({ info, onDownloadStarted, refreshToken = 0 }: HubSear
   };
 
   return (
-    <section className="panel" aria-labelledby={`${ids}-title`}>
-      <h3 id={`${ids}-title`}>Buscar modelos no Hugging Face</h3>
+    <Panel title="Buscar modelos no Hugging Face">
       <form className="search" role="search" onSubmit={(e) => void runSearch(e)}>
-        <label htmlFor={`${ids}-q`} className="search__label">
-          Nome do modelo
-        </label>
-        <div className="search__row">
-          <input
-            id={`${ids}-q`}
-            className="search__input"
-            type="search"
-            value={query}
-            maxLength={100}
-            placeholder="Por exemplo: Qwen2.5 0.5B Instruct"
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <button type="submit" className="button button--primary" disabled={search.kind === "loading"}>
-            Buscar
-          </button>
-        </div>
-        <p className="hint">Só repositórios públicos com arquivos .gguf, ordenados por downloads.</p>
+        <TextField
+          id={`${ids}-q`}
+          label="Nome do modelo"
+          type="search"
+          value={query}
+          maxLength={100}
+          placeholder="Por exemplo: Qwen2.5 0.5B Instruct"
+          hint="Só repositórios públicos com arquivos .gguf, ordenados por downloads."
+          onChange={(event) => setQuery(event.target.value)}
+          action={
+            <Button type="submit" variant="primary" loading={search.kind === "loading"}>
+              Buscar
+            </Button>
+          }
+        />
       </form>
 
       <div aria-live="polite" className="search__status" data-testid="search-status">
@@ -151,7 +149,7 @@ export function HubSearch({ info, onDownloadStarted, refreshToken = 0 }: HubSear
             : ""}
       </div>
       {search.kind === "error" ? (
-        <p className="panel__error" role="alert">
+        <p className="callout callout--danger" role="alert">
           Não foi possível buscar: {search.message}
         </p>
       ) : null}
@@ -173,32 +171,37 @@ export function HubSearch({ info, onDownloadStarted, refreshToken = 0 }: HubSear
           onDownload={(r, f) => void download(r, f)}
         />
       ) : search.kind === "done" && search.results.length > 0 ? (
-        <ul className="model-list" aria-label="Resultados da busca">
+        <ul className="card-list" aria-label="Resultados da busca">
           {search.results.map((r) => {
             const metaId = `${ids}-rm-${r.id}`;
             return (
-              <li key={r.id} className="model">
-                <button
-                  type="button"
-                  id={`${ids}-r-${r.id}`}
-                  className="result__button"
-                  aria-describedby={metaId}
-                  onClick={() => openRepo(r.id)}
-                >
-                  {r.id}
-                </button>
-                <p className="model__meta" id={metaId}>
+              <ListCard
+                key={r.id}
+                title={
+                  <Button
+                    variant="ghost"
+                    id={`${ids}-r-${r.id}`}
+                    className="result__button"
+                    aria-describedby={metaId}
+                    onClick={() => openRepo(r.id)}
+                  >
+                    {r.id}
+                  </Button>
+                }
+                tags={r.restricted ? <Badge tone="warn">Restrito</Badge> : null}
+              >
+                <p className="list-card__meta" id={metaId}>
                   {formatCount(r.downloads)} downloads · {formatCount(r.likes)} curtidas · licença{" "}
                   {licenseLabel(r.license)}
                   {r.restricted ? " · restrito" : ""}
                 </p>
-                {r.restricted ? <p className="warning">{RESTRICTED_TEXT}</p> : null}
-              </li>
+                {r.restricted ? <p className="callout callout--warn">{RESTRICTED_TEXT}</p> : null}
+              </ListCard>
             );
           })}
         </ul>
       ) : null}
-    </section>
+    </Panel>
   );
 }
 
@@ -231,16 +234,14 @@ function RepoDetail({
   return (
     <div className="repo" aria-labelledby={`${ids}-repo`} role="region">
       <div className="actions">
-        <button type="button" className="button button--secondary" onClick={onBack}>
-          Voltar aos resultados
-        </button>
+        <Button onClick={onBack}>Voltar aos resultados</Button>
       </div>
       <h4 id={`${ids}-repo`} className="repo__title" tabIndex={-1} ref={headingRef}>
         {title}
       </h4>
       {state.kind === "loading" ? <p>Carregando os arquivos…</p> : null}
       {state.kind === "error" ? (
-        <p className="panel__error" role="alert">
+        <p className="callout callout--danger" role="alert">
           Não foi possível abrir o repositório: {state.message}
         </p>
       ) : null}
@@ -251,33 +252,52 @@ function RepoDetail({
           </p>
           <p className="hint">Confira a licença antes de usar o modelo.</p>
           {state.repo.restricted ? (
-            <p className="warning" role="alert">
+            <p className="callout callout--warn" role="alert">
               Repositório restrito. {RESTRICTED_TEXT}
             </p>
           ) : null}
           {state.repo.files.length === 0 ? (
             <p>Este repositório não tem arquivos .gguf que o Henduran possa baixar.</p>
           ) : (
-            <ul className="model-list" aria-label={`Arquivos de ${state.repo.id}`}>
+            <ul className="card-list" aria-label={`Arquivos de ${state.repo.id}`}>
               {state.repo.files.map((file) => {
                 const nameId = `${ids}-f-${file.file}`;
                 const asking = confirm === file.file;
                 const free = state.repo.free_bytes;
                 const noRoom = free !== null && file.size_bytes > free;
                 return (
-                  <li key={file.file} className="model">
-                    <p className="model__name" id={nameId}>
-                      {file.name}
-                      {file.installed ? <span className="badge">Já baixado</span> : null}
-                    </p>
-                    <p className="model__meta">
-                      {file.quant ?? "quantização desconhecida"} · {formatBytes(file.size_bytes)}
-                      {file.parts.length > 1 ? ` · ${file.parts.length} partes` : ""}
-                    </p>
-                    <p className={`fit fit--${file.fit}`}>{FIT_LABEL[file.fit]}</p>
-                    {!file.complete ? <p className="panel__error">Faltam partes deste modelo no repositório.</p> : null}
+                  <ListCard
+                    key={file.file}
+                    title={file.name}
+                    titleId={nameId}
+                    tags={
+                      <>
+                        {file.installed ? <Badge tone="accent">Já baixado</Badge> : null}
+                        <FitBadge fit={file.fit} />
+                      </>
+                    }
+                    meta={
+                      <>
+                        {file.quant ?? "quantização desconhecida"} · {formatBytes(file.size_bytes)}
+                        {file.parts.length > 1 ? ` · ${file.parts.length} partes` : ""}
+                      </>
+                    }
+                    actions={
+                      asking ? null : (
+                        <Button
+                          variant="primary"
+                          aria-describedby={nameId}
+                          disabled={state.repo.restricted || !file.complete || file.installed}
+                          onClick={() => onAsk(file.file)}
+                        >
+                          Baixar
+                        </Button>
+                      )
+                    }
+                  >
+                    {!file.complete ? <p className="text-danger">Faltam partes deste modelo no repositório.</p> : null}
                     {asking ? (
-                      <div className="confirm" role="group" aria-labelledby={`${nameId}-ask`}>
+                      <div className="confirm surface-parchment px-frame" role="group" aria-labelledby={`${nameId}-ask`}>
                         <p id={`${nameId}-ask`} className="confirm__title">
                           Baixar {file.name} ({formatBytes(file.size_bytes)}) de huggingface.co?
                         </p>
@@ -285,55 +305,40 @@ function RepoDetail({
                           Espaço livre na pasta de modelos: {free === null ? "desconhecido" : formatBytes(free)}.
                         </p>
                         {noRoom ? (
-                          <p className="warning" role="alert">
+                          <p className="callout callout--danger" role="alert">
                             Não há espaço livre suficiente para este arquivo.
                           </p>
                         ) : null}
                         {file.verifiable ? (
                           <p>A integridade será conferida pelo SHA-256 publicado.</p>
                         ) : (
-                          <p className="warning">
+                          <p className="callout callout--warn">
                             O Hugging Face não publicou o SHA-256 deste arquivo; a integridade não poderá ser
                             verificada.
                           </p>
                         )}
                         <div className="actions">
-                          <button
-                            type="button"
-                            className="button button--primary"
-                            disabled={starting || noRoom}
+                          <Button
+                            variant="primary"
+                            loading={starting}
+                            disabled={noRoom}
                             onClick={() => onDownload(state.repo, file)}
                           >
                             Confirmar download
-                          </button>
-                          <button
-                            type="button"
-                            className="button button--secondary"
-                            disabled={starting}
-                            onClick={onCancelAsk}
-                          >
+                          </Button>
+                          <Button disabled={starting} onClick={onCancelAsk}>
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="button button--primary"
-                        aria-describedby={nameId}
-                        disabled={state.repo.restricted || !file.complete || file.installed}
-                        onClick={() => onAsk(file.file)}
-                      >
-                        Baixar
-                      </button>
-                    )}
-                  </li>
+                    ) : null}
+                  </ListCard>
                 );
               })}
             </ul>
           )}
           {actionError ? (
-            <p className="panel__error" role="alert">
+            <p className="callout callout--danger" role="alert">
               Erro: {actionError}
             </p>
           ) : null}

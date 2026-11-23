@@ -1,0 +1,239 @@
+/* Estilos só da galeria de desenvolvimento. */
+
+.g-page {
+  min-height: 100%;
+}
+
+.g-header {
+  justify-content: space-between;
+}
+
+.g-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+.g-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.g-select select {
+  min-height: var(--target-min);
+  padding: 0 var(--space-1);
+  background: var(--color-input-bg);
+  border: var(--border-thin) solid var(--color-input-border);
+}
+
+.g-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3) 0;
+  list-style: none;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+.g-nav a {
+  color: var(--link);
+}
+
+.g-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-3);
+}
+
+.g-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.g-section__title {
+  font-size: var(--font-size-xl);
+  border-bottom: var(--border-thin) solid var(--color-frame);
+  padding-bottom: var(--space-1);
+}
+
+.g-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.g-row__label {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--fg-muted);
+}
+
+.g-row__items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px;
+}
+
+.g-parchment-strip {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-parchment);
+}
+
+.g-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.g-swatch {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+}
+
+.g-swatch__chip {
+  width: 32px;
+  height: 32px;
+  background: var(--swatch);
+  border: var(--border-thin) solid var(--color-outline);
+}
+
+.g-swatch__hex {
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
+.g-table {
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.g-table caption {
+  padding: var(--space-1) 0;
+  text-align: left;
+  font-family: var(--font-pixel);
+}
+
+.g-table th,
+.g-table td {
+  padding: 4px var(--space-1);
+  border: var(--border-thin) solid var(--color-surface-raised);
+  text-align: left;
+}
+
+.g-pair {
+  display: inline-block;
+  padding: 4px var(--space-1);
+  color: var(--pair-fg);
+  background: var(--pair-bg);
+  border: var(--border-thin) solid var(--color-outline);
+}
+
+.g-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.g-type__pixel {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-md);
+}
+
+.g-type__pixel--xl {
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+}
+
+.g-type__pixel--2xl {
+  font-size: var(--font-size-2xl);
+  color: var(--color-accent);
+}
+
+.g-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.g-three {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.g-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.g-tabpanel {
+  padding: var(--space-1) var(--space-2);
+}
+
+.g-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-accent);
+}
+
+.g-chat {
+  max-height: none;
+}
+
+.g-sky-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-2);
+}
+
+.g-sky-tile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.g-sky-tile__sky {
+  height: 136px;
+  border: var(--border-thin) solid var(--color-frame-dark);
+}
+
+.g-sky-tile figcaption {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+.g-sky-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.g-sky-big {
+  height: 200px;
+  border: var(--border-thin) solid var(--color-frame-dark);
+}

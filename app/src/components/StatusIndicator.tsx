@@ -1,4 +1,5 @@
 import type { BackendStatus } from "../hooks/useBackend";
+import { StatusIndicator as UiStatusIndicator, type StatusTone } from "../ui";
 
 export function statusLabel(status: BackendStatus): string {
   switch (status.kind) {
@@ -11,12 +12,13 @@ export function statusLabel(status: BackendStatus): string {
   }
 }
 
+const TONE: Record<BackendStatus["kind"], StatusTone> = {
+  starting: "busy",
+  connected: "ok",
+  error: "error",
+};
+
 /** Indicador do estado do serviço local. O texto não depende só da cor. */
 export function StatusIndicator({ status }: { status: BackendStatus }) {
-  return (
-    <p className={`status status--${status.kind}`} role="status">
-      <span className="status__dot" aria-hidden="true" />
-      {statusLabel(status)}
-    </p>
-  );
+  return <UiStatusIndicator tone={TONE[status.kind]} label={statusLabel(status)} role="status" />;
 }
