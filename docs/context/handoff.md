@@ -8,7 +8,7 @@ Atualizado em 2026-11-23 após a tarefa `narrador-cena-inicial` (backend).
 - Resultado: migração `journey/0003_scenes_messages.sql` (`start_place_id`, `scenes`, `messages`); período inicial **sorteado** na criação; pacote `backend/henduran/narrative/` (períodos, tons, contexto do Aduran e do Narrador da Cena com as 30 mensagens recentes e os resumos das 5 últimas Cenas, validação estrita da proposta e do resumo com até 2 novas tentativas); `services/narration.py`; rotas `GET /journeys/current/messages`, `POST /journeys/current/opening` (SSE, evento `scene` antes dos tokens), `POST /journeys/current/messages` (SSE), `POST /journeys/current/scene/close`; uma geração por Jornada (`geracao_em_andamento`); `snapshot()` traz `mode` e `scene`. A Cena e a abertura são gravadas juntas só no fim da narração. Mensagem antes da abertura: 409 `abertura_pendente`. `FakeNarratorProvider.complete` com JSON configurável.
 - Testes: backend 565 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 70 dos arquivos novos e alterados); frontend 222 de 222 depois de subir o limite do `NewJourneyWizard.test.tsx` para 20 s (estourava 5 s nesta máquina). Roteiro manual com `HENDURAN_PROVIDER=fake` e curl executado pelo dev.
 - **Não testado com modelo local real**: depende da interface.
-- Branch: `feat/narrador-cena-inicial` (PR aberto contra `main`).
+- Branch: `feat/narrador-cena-inicial`, PR [#22](https://github.com/midrasil/henduran/pull/22) aberto contra `main`.
 
 ## Decisões vigentes
 
