@@ -1,18 +1,18 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após as tarefas `persistencia-sqlite` e `base-ui-pixel-art`.
+Atualizado em 2026-11-23 após a tarefa `adr-banco-por-jornada`.
 
 ## Estado
 
-- Tarefas: fundação de persistência SQLite do app (ADR-050, ADR-074 proposto) e base de UI pixel art (ADR-069). Foram feitas em paralelo, em PRs separados; o da UI está empilhado sobre o da SQLite.
-- Resultado: `backend/` com 298 testes (1 pulado) passando. Banco do app com migrações, backup antes de migrar e tratamento de banco corrompido; o `settings.json` provisório passou para o banco com importação única. A API não mudou, salvo o campo `database` em `/health`. Teste real do dev: importação do legado, persistência após reiniciar. Só modo dev: o empacotamento do Python segue em aberto.
-- Base de UI: tokens com paleta extraída dos esboços, fontes Pixelify Sans e Crimson Pro (OFL), componentes em `app/src/ui/`, `SkyBackdrop` com 6 períodos, galeria só em desenvolvimento e as telas Chat e Modelos reescritas. 167 testes do frontend passam, com contraste AA verificado por teste. O responsável avaliou: ainda não está na cara esperada, mas é aceitável para o MVP.
-- Branches: `feat/persistencia-sqlite` (PR aberto contra `main`) e `feat/base-ui-pixel-art` (PR aberto contra a branch da SQLite; depois que a SQLite for mesclada, o PR da UI passa para a `main`).
+- Tarefa: decisão do armazenamento dos dados de jogo (ADR-075).
+- Resultado: ADR-075 **aprovado**: banco do app (como hoje), **um banco por Jornada** (com todas as ramificações dentro) e **um banco por Mundo**, só leitura para a Jornada. Nenhum código novo. A persistência SQLite (PR #15) e a base de UI pixel art (PR #16) já estão na `main`: backend com 298 testes (1 pulado) e frontend com 167 testes.
+- Branch: `docs/adr-banco-por-jornada` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
 - **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows. Scaffolding exige instrução explícita.
 - **UI (ADR-069):** pixel art em CSS com tokens próprios; ADR-068 para resolução e acessibilidade; ambiente de dia e noite em código (`docs/ui-ux/07-ambiente-dia-noite.md`).
+- **Armazenamento (ADR-075):** banco do app (`henduran.db`), `journeys\<id>\journey.db` com todas as ramificações dentro (passado comum por referência), `worlds\<id>\world.db` só leitura para a Jornada e anexado em leitura; o sistema de arquivos é o catálogo (`journey_meta` em cada Jornada); `synchronous=FULL` nos bancos de jogo; nunca recriar um banco de Jornada em silêncio; o Mundo gerado do MVP também fica num `world.db`.
 - **IA local (ADR-070 a 072):** `llama-server` + GGUF, local primeiro e API paga depois; `NarratorProvider`; HTTP com SSE.
 - **Caliope:** uso autorizado pelo autor; ordem de importação `llm.py`, `runtime.py` + `hardware.py`, `modelhub.py`; todas as skills entram.
 - **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em três fatias: (1) chat, ficha, testes, Vontade, Convicções e Descanso; (2) equipamento, Carga e Progressão; (3) combate sem mapa e NPCs por orçamento sem Capacidades.
@@ -32,7 +32,8 @@ Atualizado em 2026-11-23 após as tarefas `persistencia-sqlite` e `base-ui-pixel
 
 ## Pendências relevantes
 
-- **Decidir um banco por Jornada ou um banco único** para os dados de jogo (ADR-050, ADR-058, ADR-074); revisar a política de corrupção e a durabilidade (`synchronous`) quando houver dados de jogo. Aprovar o ADR-074.
+- **Aprovar o ADR-074** (fundação SQLite), que segue como proposta. Implementar a infraestrutura do ADR-075: motor de migrações com vários conjuntos, `journey_meta`, abertura e bloqueio de uma Jornada por vez, anexo do Mundo em leitura e backups por Jornada.
+- Em aberto no ADR-075: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e o anexo do Mundo com FTS5 e vetores.
 - **Visual abaixo dos esboços** (feedback do responsável): faltam ornamentos de canto, mais riqueza nas áreas de conversa e de listas, tooltip, ícones, controle de escala de texto no jogo; verificar DPI de 125% a 200%, reflow a 320 px e leitor de tela. O céu cobre só uma faixa no topo; as cores dos períodos estão em `sky.ts`, fora dos tokens.
 - **Aba Modelos no nível do Caliope** (feedback do responsável): abas separadas, escolha de pasta pelo Windows, notas de qualidade por quantização, sugestões de busca, ocultar modelos, tela inicial sem modelo e ajustes de contexto e camadas da GPU. Detalhes no backlog.
 - Decisões da Tarefa B em aberto: remover modelo de pasta extra é sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez, sem fila.
@@ -50,4 +51,4 @@ Atualizado em 2026-11-23 após as tarefas `persistencia-sqlite` e `base-ui-pixel
 
 ## Próximo passo recomendado
 
-⭐ Menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art, depois de decidir o banco por Jornada. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.
+⭐ Infraestrutura dos bancos por Jornada e por Mundo (ADR-075), e então menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.

@@ -147,3 +147,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões: fontes copiadas para o repositório, sem pacote npm; `aria-live` da conversa desligado, com região à parte anunciando início e fim da resposta; céu como faixa no topo (96, 56 ou 24 px conforme a altura da janela).
 - Feedback do responsável: ainda não está na cara esperada, mas é aceitável por ser MVP. Gaps no backlog.
 - Arquivos: `app/src/styles/`, `app/src/ui/`, `app/src/assets/fonts/`, `app/gallery.html`, `docs/ui-ux/08-guia-de-componentes.md`.
+
+## 2026-11-23 — `adr-banco-por-jornada`
+
+- Rota: conversa com o planejador → orquestrador escreve → Entrega.
+- Resultado: ADR-075 aprovado. Banco do app, um banco por Jornada (com todas as ramificações dentro) e um banco por Mundo, só leitura para a Jornada e anexado em leitura. O ponto em aberto do ADR-074 (banco por Jornada ou único) foi marcado como resolvido, e a durabilidade e a política de corrupção dos bancos de jogo ficaram definidas.
+- Decisão do responsável: aprovou a proposta com o banco do Mundo separado já no MVP, em vez de gravar o mundo gerado dentro do banco da Jornada e migrá-lo depois.
+- Porquê: backup, exportação, exclusão e migração por Jornada viram operações sobre um arquivo (ADR-044 e 047); a corrupção fica restrita a uma Jornada; as ramificações dentro do mesmo arquivo permitem ler o passado comum por referência (ADR-059) e conferir dependências ao excluir (ADR-043); o Mundo só leitura mantém a atomicidade do ADR-049 sem transação entre bancos.
+- Pendente: infraestrutura dos bancos (vários conjuntos de migrações, `journey_meta`, bloqueio, anexo do Mundo, backups por Jornada); aprovar o ADR-074; retenção dos backups, cache do catálogo, anexos grandes e `ATTACH` com FTS5 e vetores.
+- Arquivos: `docs/main/decisoes/ADR-075-banco-por-jornada-e-por-mundo.md`, `docs/main/decisoes/ADR-074-fundacao-sqlite-migracoes-backup.md`, `docs/backlog.md`.
