@@ -59,9 +59,9 @@ class RunningServer:
 
 
 @contextmanager
-def run_server(provider: NarratorProvider) -> Iterator[RunningServer]:
+def run_server(provider: NarratorProvider, **app_kwargs) -> Iterator[RunningServer]:
     sock = bind_socket(0)
-    app = create_app(provider, TOKEN)
+    app = create_app(provider, TOKEN, **app_kwargs)
     server = uvicorn.Server(uvicorn.Config(app, log_level="warning", lifespan="off"))
     thread = threading.Thread(
         target=lambda: asyncio.run(server.serve(sockets=[sock])), daemon=True

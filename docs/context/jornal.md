@@ -108,3 +108,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrências: uma asserção do teste de desconexão foi corrigida (a geração parava por `CancelledError` antes de o evento ser marcado); o shell cria o processo suspenso para associá-lo ao Job Object sem corrida.
 - Riscos: `target/` e `node_modules/` na pasta do OneDrive; `aria-live` no log inteiro.
 - Arquivos: `backend/`, `app/`, `.gitignore`.
+
+## 2026-11-22 — `modelo-local-motor`
+
+- Rota: conversa com o planejador → Dev → Entrega.
+- Resultado: Narrador real e local (Tarefa A). Importados e adaptados `llm.py`, `runtime.py` e `hardware.py` do Caliope (commit `1cab9e0`) em `backend/henduran/ai/`, mais `LocalLlamaProvider`, rotas `/hardware`, `/models` e `/engine/*`, e as abas Chat e Modelos no app. Registro em `docs/main/importacoes-caliope.md`.
+- Validações: 143 testes do backend e 42 do frontend passaram, conferidos pelo planejador. O dev relatou teste real com o Qwen2.5-0.5B-Instruct (491 MB) na RX 5700 e motor Vulkan b12638 (37 MB, SHA-256 conferido): streaming, Cancelar, parada do motor, e nenhum processo órfão após fechar a janela e após `taskkill /F`. Aparência visual e leitor de tela não verificados.
+- Decisões: sem modelo padrão fixo (o jogador escolhe); variante Vulkan por padrão, com CPU como alternativa; motor só baixado por ação explícita, com digest verificado ou segundo consentimento; modelos e motor em `%LOCALAPPDATA%\Henduran`.
+- Achados: o `/releases/latest` do llama.cpp não serve (devolve um marcador); os builds reais são releases `b<número>`. O `/health` do `llama-server` é público mesmo com chave.
+- Pendente: Tarefa B (download de modelos de dentro do app); limiares do `fit` e variante por hardware; licença do `llama-server`; `settings.json` provisório até o SQLite.
+- Arquivos: `backend/henduran/ai/`, `backend/henduran/providers/local.py`, `backend/henduran/api/app.py`, `app/src/components/ModelsView.tsx`, `docs/main/importacoes-caliope.md`.

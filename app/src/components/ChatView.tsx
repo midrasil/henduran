@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 
 import type { ChatEntry } from "../hooks/useChat";
 
@@ -9,6 +9,8 @@ export interface ChatViewProps {
   disabled: boolean;
   onSend: (text: string) => void;
   onCancel: () => void;
+  /** Aviso exibido acima da conversa (por exemplo, motor de IA não pronto). */
+  notice?: ReactNode;
 }
 
 const SPEAKER: Record<ChatEntry["role"], string> = {
@@ -16,7 +18,7 @@ const SPEAKER: Record<ChatEntry["role"], string> = {
   assistant: "Narrador",
 };
 
-export function ChatView({ entries, streaming, error, disabled, onSend, onCancel }: ChatViewProps) {
+export function ChatView({ entries, streaming, error, disabled, onSend, onCancel, notice }: ChatViewProps) {
   const [draft, setDraft] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -49,6 +51,7 @@ export function ChatView({ entries, streaming, error, disabled, onSend, onCancel
 
   return (
     <section className="chat" aria-label="Chat com o Narrador">
+      {notice}
       <div
         ref={logRef}
         className="chat__log"

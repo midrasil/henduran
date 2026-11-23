@@ -21,9 +21,30 @@ export interface StreamResult {
 
 /** Erro informado pelo próprio serviço num evento `error`. */
 export class StreamError extends Error {
-  constructor(message: string) {
+  /** Código do evento `error` (`no_model`, `engine_not_installed`, `engine_not_ready`, ...). */
+  readonly code: string | undefined;
+
+  constructor(message: string, code?: string) {
     super(message);
     this.name = "StreamError";
+    this.code = code;
+  }
+}
+
+/** Códigos que indicam que falta preparar o motor ou o modelo na aba Modelos. */
+export const ENGINE_ERROR_CODES = new Set(["no_model", "engine_not_installed", "engine_not_ready"]);
+
+/** Mensagem clara para cada código de erro do chat. */
+export function chatErrorMessage(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case "no_model":
+      return "Nenhum modelo de IA escolhido. Abra a aba Modelos e escolha um modelo.";
+    case "engine_not_installed":
+      return "O motor de IA ainda não foi baixado. Abra a aba Modelos para baixá-lo.";
+    case "engine_not_ready":
+      return "O motor de IA não está pronto. Abra a aba Modelos e carregue um modelo.";
+    default:
+      return fallback;
   }
 }
 
@@ -94,6 +115,7 @@ export async function streamChat(
       case "error":
         throw new StreamError(
           typeof data.message === "string" ? data.message : "Erro desconhecido do serviço.",
+          typeof data.code === "string" ? data.code : undefined,
         );
       default:
         return null;

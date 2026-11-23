@@ -13,12 +13,35 @@ export interface HealthResponse {
 
 export class BackendError extends Error {
   readonly status: number | undefined;
+  /** Código estável do erro, quando o serviço informa (`{"detail": {"code", "message"}}`). */
+  readonly code: string | undefined;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: string) {
     super(message);
     this.name = "BackendError";
     this.status = status;
+    this.code = code;
   }
+}
+
+/** Converte uma resposta de erro do serviço em `BackendError`, com código e mensagem se houver. */
+export async function errorFromResponse(response: Response): Promise<BackendError> {
+  let message = `o serviço respondeu ${response.status}`;
+  let code: string | undefined;
+  try {
+    const body: unknown = await response.json();
+    const detail = (body as { detail?: unknown } | null)?.detail;
+    if (detail && typeof detail === "object") {
+      const d = detail as { code?: unknown; message?: unknown };
+      if (typeof d.code === "string") code = d.code;
+      if (typeof d.message === "string") message = d.message;
+    } else if (typeof detail === "string") {
+      message = detail;
+    }
+  } catch {
+    // corpo vazio ou não JSON: fica a mensagem genérica
+  }
+  return new BackendError(message, response.status, code);
 }
 
 export function baseUrl(info: BackendInfo): string {

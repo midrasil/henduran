@@ -1,7 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { BackendInfo } from "../api/backend";
-import { cancelChat, isAbortError, streamChat, type ChatMessagePayload } from "../api/chatStream";
+import {
+  cancelChat,
+  chatErrorMessage,
+  ENGINE_ERROR_CODES,
+  isAbortError,
+  streamChat,
+  StreamError,
+  type ChatMessagePayload,
+} from "../api/chatStream";
+
+export interface UseChatOptions {
+  /** Chamado quando o chat falha porque o motor ou o modelo não estão prontos. */
+  onEngineProblem?: (code: string) => void;
+}
 
 export interface ChatEntry {
   id: number;
@@ -20,10 +33,13 @@ function describe(error: unknown): string {
 }
 
 /** Estado do chat e operações de envio e cancelamento. */
-export function useChat(info: BackendInfo | null) {
+export function useChat(info: BackendInfo | null, { onEngineProblem }: UseChatOptions = {}) {
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const engineProblemRef = useRef(onEngineProblem);
+  engineProblemRef.current = onEngineProblem;
 
   const nextId = useRef(1);
   const entriesRef = useRef<ChatEntry[]>([]);
@@ -72,6 +88,7 @@ export function useChat(info: BackendInfo | null) {
       generationRef.current = null;
       cancelledRef.current = false;
       setError(null);
+      setErrorCode(null);
       setStreaming(true);
 
       try {
@@ -96,7 +113,10 @@ export function useChat(info: BackendInfo | null) {
           patchEntry(assistantId, (entry) => ({ ...entry, interrupted: true }));
         } else {
           patchEntry(assistantId, (entry) => ({ ...entry, failed: true }));
-          setError(describe(err));
+          const code = err instanceof StreamError ? err.code : undefined;
+          setError(chatErrorMessage(code, describe(err)));
+          setErrorCode(code ?? null);
+          if (code && ENGINE_ERROR_CODES.has(code)) engineProblemRef.current?.(code);
         }
       } finally {
         abortRef.current = null;
@@ -119,5 +139,5 @@ export function useChat(info: BackendInfo | null) {
     controller.abort();
   }, [info]);
 
-  return { entries, streaming, error, send, cancel };
+  return { entries, streaming, error, errorCode, send, cancel };
 }
