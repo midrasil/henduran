@@ -1,17 +1,14 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `chat-da-jornada` (entrega 3a: tela da Jornada).
+Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
 
 ## Estado
 
-- Tarefa: nova tela da Jornada, desenhada por protótipo navegável (6 rodadas) e implementada em duas partes (backend e frontend).
-- Resultado:
-  - **Documentos:** `docs/ui-ux/09-tela-da-jornada.md` (aprovado), `docs/ui-ux/10-prototipagem.md` (toda tela nova passa por protótipo aprovado; regra 8 do `AGENTS.md`), protótipo em `docs/ui-ux/prototipos/tela-da-jornada.html`, ADR-076 itens 12 a 18.
-  - **Backend (migração journey 0004):** título e arco das Cenas, lugares da Jornada e lugar atual, data no calendário do Mundo (sorteada na criação), proposta de Cena pelo Aduran com a marcação `[[propor_cena]]` (pendente, aceitar, pedir outra, recusar), Aduran durante a Cena (canal Fora de Cena, fora do contexto da Cena), regenerar e continuar, renomear Cena, Log (`events`), arcos, leitura de Cena, lugares com caminho, retrato (original em `assets\`, até 20 MB, PNG/JPEG/WebP pelos bytes) e campos opcionais da descrição. `HENDURAN_FAKE_PROPOSE=1` faz o provedor falso propor Cenas.
-  - **Frontend:** tela sem abas, com barra superior com céu do período e data, coluna de Arcos recolhível, centro em pergaminho (Cena) ou margem do cronista (Aduran e Log), cartão de proposta, ações das mensagens no hover, campo que cresce, ficha com retrato e trilhas em ícones, ficha completa em abas, recorte do retrato, Mundo e lugares no ⚙, abas em telas estreitas; campos opcionais no assistente; galeria atualizada. Removidos `JourneyTabs`, `ChatView` e `useChat`. CSP com `blob:` em `img-src` para o retrato.
-- Testes: backend 590 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 79 dos arquivos novos e alterados); frontend 275 de 275 e typecheck sem erros (o planejador rodou 3 vezes seguidas). O dev testou o fluxo inteiro no app real com o provedor falso (capturas no scratchpad da sessão).
-- **Não testado com modelo local real** (marcação de proposta, instruções novas do Aduran).
-- Branch: `feat/chat-da-jornada`, PR [#23](https://github.com/midrasil/henduran/pull/23) aberto contra `main`.
+- Tarefa: protótipo do redesenho do menu inicial, primeira das telas existentes a passar pelo processo de `docs/ui-ux/10-prototipagem.md`.
+- Resultado: **aprovado na primeira rodada**. Documento `docs/ui-ux/11-menu-inicial.md` e protótipo `docs/ui-ux/prototipos/menu-inicial.html`: título e botões no eixo central, cartão "Última Jornada" à direita sem deslocar o eixo, Modelos fora dos botões (indicador clicável no rodapé), paisagem pixel art em tela cheia com castelos dos dois lados e animação por período (nuvens, estrelas, pássaros, vaga-lumes), cantos dourados e estandartes. **Ainda não implementado**: o app continua com o menu anterior.
+- Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23).
+- Decisão do responsável: **por enquanto só prototipar e documentar** as telas existentes, uma por vez; a implementação vem depois.
+- Branch: `docs/prototipo-menu` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -64,4 +61,4 @@ Atualizado em 2026-11-23 após a tarefa `chat-da-jornada` (entrega 3a: tela da J
 
 ## Próximo passo recomendado
 
-⭐ Testar a tela nova com um modelo local real e ajustar as instruções do Aduran e do Narrador conforme o comportamento. Depois: o backend expor o estado das trilhas e o máximo de Fraturas, `assets\` nos backups, e a Reserva de Dados com confirmação (ADR-006). Em paralelo: ADR de passagem de tempo e prototipar a tela Modelos (`docs/ui-ux/10-prototipagem.md`).
+⭐ Prototipar a próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), depois **Jornadas** e **Modelos** (no nível do Caliope), seguindo `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
