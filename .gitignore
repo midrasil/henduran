@@ -30,3 +30,7 @@ app/dist/
 coverage/
 graphify-out/
 assets/tilesets/ui/franuka/
+# Motor de IA e downloads (ficam em %LOCALAPPDATA%\Henduran; nunca no Git)
+llama-*-bin-win-*.zip
+engine.new/
+llama-server.exe

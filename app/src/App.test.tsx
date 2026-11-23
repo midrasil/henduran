@@ -17,15 +17,38 @@ const healthOk = { status: "ok", provider: { name: "fake", ready: true } };
 
 type Route = (url: string, init: RequestInit) => Response | Promise<Response>;
 
-function stubFetch(routes: { stream?: Route; cancel?: Route; health?: Route }) {
+const engineStatus = (patch: Record<string, unknown> = {}) => ({
+  state: "stopped",
+  message: "",
+  progress: 0,
+  installed: false,
+  version: null,
+  variant: null,
+  verified: null,
+  active_model: null,
+  active_model_name: null,
+  log: "",
+  provider: "fake",
+  ...patch,
+});
+
+function stubFetch(routes: { stream?: Route; cancel?: Route; health?: Route; engine?: Route; other?: Route }) {
   const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
     if (url.endsWith("/health")) return routes.health ? routes.health(url, init) : jsonResponse(healthOk);
+    if (url.endsWith("/engine/status")) return routes.engine ? routes.engine(url, init) : jsonResponse(engineStatus());
+    if (routes.other && !url.endsWith("/chat/stream") && !url.includes("/cancel")) return routes.other(url, init);
     if (url.endsWith("/chat/stream") && routes.stream) return routes.stream(url, init);
     if (url.includes("/cancel") && routes.cancel) return routes.cancel(url, init);
     throw new Error(`rota inesperada: ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+/** Espera a consulta a /engine/status ser respondida e a tela se atualizar. */
+async function waitForEngineStatus(fetchMock: ReturnType<typeof stubFetch>) {
+  await waitFor(() => expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith("/engine/status"))).toBe(true));
+  await new Promise((resolve) => setTimeout(resolve, 20));
 }
 
 async function renderConnected() {
@@ -164,5 +187,86 @@ describe("App", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Erro: Falha ao gerar a resposta do Narrador.");
     expect(screen.getByText("Resposta não concluída.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument();
+  });
+});
+
+describe("App — abas e aviso do motor", () => {
+  it("tem abas Chat e Modelos navegáveis pelo teclado", async () => {
+    stubFetch({
+      other: (url) => {
+        if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
+        if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\dados\\models", active: null });
+        throw new Error(`rota inesperada: ${url}`);
+      },
+    });
+    const user = userEvent.setup();
+    await renderConnected();
+    const chatTab = screen.getByRole("tab", { name: "Chat" });
+    expect(chatTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Chat" })).toBeVisible();
+
+    chatTab.focus();
+    await user.keyboard("{ArrowRight}");
+    const modelsTab = screen.getByRole("tab", { name: "Modelos" });
+    expect(modelsTab).toHaveAttribute("aria-selected", "true");
+    expect(modelsTab).toHaveFocus();
+    expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+
+    await user.keyboard("{Home}");
+    expect(chatTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("não mostra aviso com o provedor falso", async () => {
+    const fetchMock = stubFetch({});
+    await renderConnected();
+    await waitForEngineStatus(fetchMock);
+    expect(screen.queryByText(/aba Modelos/)).not.toBeInTheDocument();
+  });
+
+  it("mostra aviso com atalho para Modelos quando o motor local não está pronto", async () => {
+    stubFetch({
+      engine: () => jsonResponse(engineStatus({ provider: "local", installed: false })),
+      other: (url) => {
+        if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
+        if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\m", active: null });
+        throw new Error(`rota inesperada: ${url}`);
+      },
+    });
+    const user = userEvent.setup();
+    await renderConnected();
+    expect(await screen.findByText("O motor de IA ainda não foi baixado. Baixe-o na aba Modelos.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Ir para a aba Modelos" }));
+    expect(screen.getByRole("tab", { name: "Modelos" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+  });
+
+  it("aviso some quando o motor está pronto", async () => {
+    const fetchMock = stubFetch({ engine: () => jsonResponse(engineStatus({ provider: "local", installed: true, state: "ready", active_model: "m.gguf" })) });
+    await renderConnected();
+    await waitForEngineStatus(fetchMock);
+    expect(screen.queryByRole("button", { name: "Ir para a aba Modelos" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["no_model", "Nenhum modelo de IA escolhido. Abra a aba Modelos e escolha um modelo."],
+    ["engine_not_installed", "O motor de IA ainda não foi baixado. Abra a aba Modelos para baixá-lo."],
+    ["engine_not_ready", "O motor de IA não está pronto. Abra a aba Modelos e carregue um modelo."],
+  ])("trata o código %s do SSE com mensagem clara e reconsulta o motor", async (code, message) => {
+    let engineCalls = 0;
+    const fetchMock = stubFetch({
+      engine: () => {
+        engineCalls++;
+        return jsonResponse(engineStatus({ provider: "local", installed: true, active_model: "m.gguf" }));
+      },
+      stream: () => sseResponse([sse("start", { id: "g" }), sse("error", { message: "texto do serviço", code })]),
+    });
+    const user = userEvent.setup();
+    await renderConnected();
+    await waitFor(() => expect(engineCalls).toBeGreaterThan(0));
+    const before = engineCalls;
+    await user.type(screen.getByLabelText("Mensagem para o Narrador"), "Oi{Enter}");
+    expect(await screen.findByRole("alert")).toHaveTextContent(`Erro: ${message}`);
+    await waitFor(() => expect(engineCalls).toBeGreaterThan(before));
+    expect(fetchMock).toHaveBeenCalled();
   });
 });

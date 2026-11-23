@@ -2,14 +2,18 @@
 
 - Escuta somente em ``127.0.0.1`` (ADR-072).
 - Exige o token de acesso em ``HENDURAN_TOKEN``; sem ele, recusa iniciar.
+- ``HENDURAN_PROVIDER=fake|local`` escolhe o provedor do Narrador (padrão ``local``).
+- ``HENDURAN_DATA_DIR`` troca a pasta de dados (padrão ``%LOCALAPPDATA%\\Henduran``).
 - Quando o servidor está pronto, imprime no stdout uma linha JSON
   ``{"event": "ready", "port": N}``, lida pelo shell Tauri.
+- Ao sair (inclusive por ``KeyboardInterrupt``), para o motor de IA.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import atexit
 import json
 import os
 import socket
@@ -17,12 +21,20 @@ import sys
 
 import uvicorn
 
+from henduran.ai.engine import EngineManager
 from henduran.api.app import create_app
+from henduran.paths import DataPaths
+from henduran.providers.base import NarratorProvider
 from henduran.providers.fake import FakeNarratorProvider
+from henduran.providers.local import LocalLlamaProvider
+from henduran.settings import SettingsStore
 
 HOST = "127.0.0.1"
 TOKEN_ENV = "HENDURAN_TOKEN"
+PROVIDER_ENV = "HENDURAN_PROVIDER"
+PROVIDERS = ("fake", "local")
 EXIT_MISSING_TOKEN = 2
+EXIT_BAD_PROVIDER = 3
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -51,19 +63,31 @@ def bind_socket(port: int) -> socket.socket:
     return sock
 
 
-async def serve(sock: socket.socket, token: str) -> None:
-    app = create_app(FakeNarratorProvider(), token)
+def build_components(provider_name: str) -> tuple[NarratorProvider, EngineManager]:
+    paths = DataPaths.from_env().ensure()
+    settings = SettingsStore(paths.settings_file)
+    engine = EngineManager(paths, settings)
+    provider: NarratorProvider
+    provider = FakeNarratorProvider() if provider_name == "fake" else LocalLlamaProvider(engine)
+    return provider, engine
+
+
+async def serve(sock: socket.socket, token: str, provider: NarratorProvider, engine: EngineManager) -> None:
+    app = create_app(provider, token, engine=engine)
     config = uvicorn.Config(app, log_level="warning", access_log=False, lifespan="off")
     server = uvicorn.Server(config)
     task = asyncio.create_task(server.serve(sockets=[sock]))
-    while not server.started:
-        if task.done():
-            await task  # propaga a falha de inicialização
-            return
-        await asyncio.sleep(0.01)
-    port = sock.getsockname()[1]
-    print(json.dumps({"event": "ready", "port": port}), flush=True)
-    await task
+    try:
+        while not server.started:
+            if task.done():
+                await task  # propaga a falha de inicialização
+                return
+            await asyncio.sleep(0.01)
+        port = sock.getsockname()[1]
+        print(json.dumps({"event": "ready", "port": port}), flush=True)
+        await task
+    finally:
+        await engine.stop()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,12 +99,23 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return EXIT_MISSING_TOKEN
+    provider_name = os.environ.get(PROVIDER_ENV, "local").strip().lower() or "local"
+    if provider_name not in PROVIDERS:
+        print(
+            f"henduran: {PROVIDER_ENV} deve ser um de {', '.join(PROVIDERS)}; recebido {provider_name!r}.",
+            file=sys.stderr,
+        )
+        return EXIT_BAD_PROVIDER
+    provider, engine = build_components(provider_name)
+    # Recuo: se o laço não chegar ao finally (saída abrupta do interpretador), ainda para o motor.
+    atexit.register(engine.stop_now)
     sock = bind_socket(args.port)
     try:
-        asyncio.run(serve(sock, token))
+        asyncio.run(serve(sock, token, provider, engine))
     except KeyboardInterrupt:
         pass
     finally:
+        engine.stop_now()
         sock.close()
     return 0
 
