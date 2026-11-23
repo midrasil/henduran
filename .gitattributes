@@ -1,1 +1,5 @@
 graphify-out/graph.json merge=graphify
+
+# Migrações SQL: sempre LF no disco e no Git, em todas as máquinas (o SHA-256
+# das migrações aplicadas é conferido; ver backend/henduran/db/migrations.py).
+*.sql text eol=lf

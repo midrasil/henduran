@@ -1,12 +1,13 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `adr-banco-por-jornada`.
+Atualizado em 2026-11-23 após a tarefa `bancos-jornada-mundo`.
 
 ## Estado
 
-- Tarefa: decisão do armazenamento dos dados de jogo (ADR-075).
-- Resultado: ADR-075 **aprovado**: banco do app (como hoje), **um banco por Jornada** (com todas as ramificações dentro) e **um banco por Mundo**, só leitura para a Jornada. Nenhum código novo. A persistência SQLite (PR #15) e a base de UI pixel art (PR #16) já estão na `main`: backend com 298 testes (1 pulado) e frontend com 167 testes.
-- Branch: `docs/adr-banco-por-jornada` (PR aberto contra `main`).
+- Tarefa: infraestrutura dos bancos por Jornada e por Mundo (ADR-075), passo 1 do caminho para o menu inicial e a criação de personagem.
+- Resultado: `backend/` com 373 testes (1 pulado) passando. Migrações por conjunto (`app`, `journey`, `world`), ids em UUID estrito, `WorldStore` e `JourneyStore` (criar, listar, abrir, excluir, restaurar backup), uma Jornada aberta por vez com bloqueio do sistema operacional, Mundo anexado só em leitura, `synchronous=FULL` nos bancos de jogo e dano sem recriação silenciosa. API só de leitura: `GET /journeys` e `GET /worlds`. **Sem esquema de jogo ainda.** Teste real do dev: duas Jornadas, uma corrompida de propósito e restaurada, bloqueio liberado após `taskkill /F`.
+- ADR-074 aprovado; a persistência SQLite (PR #15), a base de UI (PR #16) e o ADR-075 (PR #17) já estão na `main`.
+- Branch: `feat/bancos-jornada-mundo` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -21,7 +22,7 @@ Atualizado em 2026-11-23 após a tarefa `adr-banco-por-jornada`.
 
 ## Código existente
 
-- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações, backup), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
+- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações por conjunto, backup), `storage/` (`WorldStore`, `JourneyStore`, bloqueio, leitura sem migrar), `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
 - `app/src/`: abas **Chat** e **Modelos** (hardware, baixar o motor, lista de `.gguf`, usar modelo), aviso de motor no Chat, busca e downloads de modelos, tudo com a base de UI pixel art. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
@@ -32,7 +33,8 @@ Atualizado em 2026-11-23 após a tarefa `adr-banco-por-jornada`.
 
 ## Pendências relevantes
 
-- **Aprovar o ADR-074** (fundação SQLite), que segue como proposta. Implementar a infraestrutura do ADR-075: motor de migrações com vários conjuntos, `journey_meta`, abertura e bloqueio de uma Jornada por vez, anexo do Mundo em leitura e backups por Jornada.
+- Rotas de criar, abrir, excluir e restaurar Jornada e Mundo: ficam para quando as telas pedirem (hoje só `GET /journeys` e `GET /worlds`). O esquema de jogo (estado, eventos, memória, salvamentos, ramificações) ainda não existe.
+- Pendências da infraestrutura: a lista não roda `quick_check` (dano em outras páginas só aparece ao abrir); `delete_journey` pode deixar a pasta parcialmente apagada se um arquivo estiver preso; corrida teórica entre `world_in_use` e a exclusão do Mundo.
 - Em aberto no ADR-075: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e o anexo do Mundo com FTS5 e vetores.
 - **Visual abaixo dos esboços** (feedback do responsável): faltam ornamentos de canto, mais riqueza nas áreas de conversa e de listas, tooltip, ícones, controle de escala de texto no jogo; verificar DPI de 125% a 200%, reflow a 320 px e leitor de tela. O céu cobre só uma faixa no topo; as cores dos períodos estão em `sky.ts`, fora dos tokens.
 - **Aba Modelos no nível do Caliope** (feedback do responsável): abas separadas, escolha de pasta pelo Windows, notas de qualidade por quantização, sugestões de busca, ocultar modelos, tela inicial sem modelo e ajustes de contexto e camadas da GPU. Detalhes no backlog.
@@ -51,4 +53,4 @@ Atualizado em 2026-11-23 após a tarefa `adr-banco-por-jornada`.
 
 ## Próximo passo recomendado
 
-⭐ Infraestrutura dos bancos por Jornada e por Mundo (ADR-075), e então menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.
+⭐ Passo 2: menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI pixel art e a infraestrutura dos bancos. Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.

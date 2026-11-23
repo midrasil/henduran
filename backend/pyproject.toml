@@ -24,7 +24,7 @@ dev = [
 include = ["henduran*"]
 
 [tool.setuptools.package-data]
-"henduran.db" = ["migrations/*.sql"]
+"henduran.db" = ["migrations/*/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

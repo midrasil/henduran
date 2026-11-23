@@ -110,7 +110,7 @@ def test_importa_settings_json_valido_e_renomeia(store, tmp_path):
     data = {"active_model": "x/y.gguf", "context_size": 8192, "engine_variant": "cpu", "model_folders": ["D:\\LM Studio"]}
     legacy.write_text(json.dumps(data), encoding="utf-8")
     s = store()
-    assert s.all() == data
+    assert s.all() == {**DEFAULTS, **data}
     assert rows(s) == data
     assert not legacy.exists()
     assert json.loads((tmp_path / "settings.json.migrado").read_text(encoding="utf-8")) == data

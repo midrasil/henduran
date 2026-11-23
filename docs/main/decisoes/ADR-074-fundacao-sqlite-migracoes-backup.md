@@ -1,6 +1,6 @@
 # ADR-074 — Fundação SQLite do app: migrações, backup e banco corrompido
 
-- **Estado:** Proposta (implementada na branch `feat/persistencia-sqlite`; aguarda aprovação do responsável)
+- **Estado:** Aprovada em 2026-11-23 pelo responsável (já implementada e mesclada)
 - **Data:** 2026-11-23
 - **Complementa:** ADR-050 (SQLite como banco local principal), ADR-007 e ADR-009
 - **Origem:** Execução do passo de persistência do `ESCOPO-MVP.md`

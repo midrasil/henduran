@@ -7,7 +7,10 @@ Guarda apenas:
 - ``engine_variant``: variante do motor baixado (``vulkan`` ou ``cpu``);
 - ``model_folders``: pastas extras onde o jogador já tem modelos (por exemplo a
   do LM Studio), varridas junto com a pasta do app. Caminhos absolutos; o app
-  nunca copia nem move arquivos dessas pastas.
+  nunca copia nem move arquivos dessas pastas;
+- ``last_journey_id``: UUID da última Jornada jogada (ou ``None``), usado por
+  "Continuar" e pelo céu do menu (ADR-075). O banco do app não guarda catálogo
+  de Jornadas; a Jornada em si mora em ``journeys/<id>/journey.db``.
 
 Cada preferência é uma linha (``key``, ``value`` em JSON, ``updated_at``). Valor
 inválido no banco é ignorado com aviso (vale o padrão). As leituras saem de uma
@@ -31,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from henduran.db.connection import Database, utc_now_iso
+from henduran.paths import InvalidIdError, validate_id
 
 log = logging.getLogger("henduran.settings")
 
@@ -40,7 +44,10 @@ DEFAULTS: dict[str, Any] = {
     "context_size": 4096,
     "engine_variant": "vulkan",
     "model_folders": [],
+    "last_journey_id": None,
 }
+# Chaves que podem vir do settings.json antigo (anterior ao banco).
+LEGACY_KEYS = ("active_model", "context_size", "engine_variant", "model_folders")
 MAX_MODEL_FOLDERS = 20
 CONTEXT_MIN = 512
 CONTEXT_MAX = 131072
@@ -72,6 +79,13 @@ def _validate(key: str, value: Any) -> Any:
                 raise ValueError("model_folders deve conter caminhos em texto")
             out.append(item)
         return out
+    if key == "last_journey_id":
+        if value is None:
+            return None
+        try:
+            return validate_id(value)
+        except InvalidIdError as exc:
+            raise ValueError("last_journey_id deve ser um UUID ou nulo") from exc
     raise KeyError(f"preferência desconhecida: {key}")
 
 
@@ -136,7 +150,7 @@ class SettingsStore:
             return
         valid: dict[str, Any] = {}
         for key, value in raw.items():
-            if key not in DEFAULTS:
+            if key not in LEGACY_KEYS:
                 log.warning("preferência desconhecida %r no settings.json legado; descartada", key)
                 continue
             try:

@@ -156,3 +156,14 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Porquê: backup, exportação, exclusão e migração por Jornada viram operações sobre um arquivo (ADR-044 e 047); a corrupção fica restrita a uma Jornada; as ramificações dentro do mesmo arquivo permitem ler o passado comum por referência (ADR-059) e conferir dependências ao excluir (ADR-043); o Mundo só leitura mantém a atomicidade do ADR-049 sem transação entre bancos.
 - Pendente: infraestrutura dos bancos (vários conjuntos de migrações, `journey_meta`, bloqueio, anexo do Mundo, backups por Jornada); aprovar o ADR-074; retenção dos backups, cache do catálogo, anexos grandes e `ATTACH` com FTS5 e vetores.
 - Arquivos: `docs/main/decisoes/ADR-075-banco-por-jornada-e-por-mundo.md`, `docs/main/decisoes/ADR-074-fundacao-sqlite-migracoes-backup.md`, `docs/backlog.md`.
+
+## 2026-11-23 — `bancos-jornada-mundo`
+
+- Rota: conversa com o planejador → Dev → Entrega.
+- Resultado: infraestrutura de armazenamento do ADR-075. Migrações por conjunto (`app`, `journey`, `world`) com backup antes de migrar por banco; ids em UUID estrito com proteção contra travessia; `WorldStore` e `JourneyStore`; uma Jornada aberta por vez com bloqueio do sistema operacional (`msvcrt.locking`, `O_NOINHERIT`); Mundo anexado só em leitura (`mode=ro`); `synchronous=FULL` nos bancos de jogo; dano sem recriação silenciosa, com restauração explícita de backup; `GET /journeys` e `GET /worlds`. ADR-074 aprovado nesta entrega.
+- Validações: 373 testes passaram (298 anteriores e 75 novos), conferidos pelo planejador. O dev relatou teste real com pasta de dados com acento: duas Jornadas, uma corrompida de propósito (a lista mostrou `danificada` sem afetar a outra), restauração, e bloqueio liberado após `taskkill /F`. A lista de 50 Jornadas levou 212 ms.
+- Correção do dev ao plano: a cópia de trabalho do `0001_initial.sql` está em CRLF por causa do `core.autocrlf`, e o código antigo gravou o checksum da versão CRLF. O checksum oficial passou a ser o normalizado (LF), mantendo aceito o valor antigo, e um `.gitattributes` mantém os `.sql` em LF.
+- Achado: não existia `henduran.db` real no computador do responsável, o que indica que o app ainda não tinha sido aberto depois da persistência SQLite; a compatibilidade foi testada com uma cópia do `settings.json`.
+- Decisões do dev: `confirm` com padrão `False`; nomes com limite de 200 caracteres; `delete_world` recusa se houver Jornada ilegível; `open_journey` não grava `last_journey_id` sozinho; anexo do Mundo por `ATTACH ... mode=ro` (a escrita falha), deixando `-wal` e `-shm` vazios inofensivos.
+- Pendente: rotas de criar, abrir, excluir e restaurar; esquema de jogo; retenção dos backups por Jornada; cache do catálogo; anexos grandes; `ATTACH` com FTS5 e vetores.
+- Arquivos: `backend/henduran/storage/`, `backend/henduran/db/`, `backend/henduran/paths.py`, `backend/tests/test_storage.py`, `.gitattributes`.

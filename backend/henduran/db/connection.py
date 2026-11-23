@@ -1,13 +1,23 @@
-"""Conexão com o banco SQLite do app (ADR-050).
+"""Conexão com um banco SQLite do Henduran (ADR-050 e ADR-075).
 
-Este é o **banco do app** (preferências e metadados). Se o jogo terá um banco por
-Jornada ou um banco único continua em aberto; nada aqui presume uma das opções.
+A mesma classe serve ao **banco do app** (preferências e metadados) e aos bancos
+de jogo (um por Jornada e um por Mundo, ADR-075), com estas diferenças:
+
+- ``synchronous``: ``NORMAL`` no banco do app; ``FULL`` nos bancos de Jornada e de
+  Mundo (uma gravação confirmada sobrevive a uma queda de energia).
+- ``recover_corrupt``: só o banco do app é recriado quando está corrompido; nos
+  bancos de jogo (``recover_corrupt=False``) a corrupção vira
+  ``DatabaseError("banco_danificado")`` e **nada** é renomeado, apagado ou recriado.
+- ``create``: com ``False``, um arquivo ausente vira ``DatabaseError("banco_ausente")``
+  em vez de um banco novo.
+- :meth:`Database.attach` anexa outro banco (o Mundo, em modo leitura) em **todas**
+  as conexões: a do escritor e as do conjunto de leitura, inclusive as criadas depois.
 
 PRAGMAs aplicados na abertura (escolhas desta fundação, revisáveis):
 
 - ``journal_mode=WAL``: leitores não bloqueiam o escritor e vice-versa; uma
   queda no meio de uma gravação não corrompe o arquivo principal.
-- ``synchronous=NORMAL``: em WAL, preserva a integridade do banco em queda de
+- ``synchronous=NORMAL`` (padrão, banco do app): em WAL, preserva a integridade do banco em queda de
   energia; no pior caso perde as últimas transações confirmadas antes do
   *checkpoint*. É a combinação recomendada pelo SQLite para WAL e evita um
   ``fsync`` por transação. Se algum dado futuro exigir durabilidade máxima,
@@ -26,7 +36,7 @@ Banco corrompido: um arquivo existente é conferido primeiro por uma conexão
 **só de leitura** (uma conexão de escrita fechada sobre um arquivo inválido faz
 o SQLite apagar o ``-wal``). Se o arquivo não abrir como SQLite (``SQLITE_NOTADB``)
 ou ``PRAGMA quick_check`` não responder ``ok`` (ou der ``SQLITE_CORRUPT``), nada
-é apagado. Outros erros (bloqueio, permissão) não contam como corrupção: viram
+é apagado (sem ``recover_corrupt``, para aí com ``banco_danificado``). Outros erros (bloqueio, permissão) não contam como corrupção: viram
 ``DatabaseError("banco_inacessivel")`` sem mexer no arquivo. Na corrupção, as
 conexões são fechadas, o arquivo (com
 ``-wal`` e ``-shm``) é **renomeado** para ``<nome>.corrompido-<AAAAMMDD-HHMMSS>``
@@ -39,6 +49,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import sqlite3
 import threading
 from collections.abc import Callable, Iterable, Iterator
@@ -55,6 +66,9 @@ CORRUPT_SUFFIX = ".corrompido-"
 SIDE_FILES = ("-wal", "-shm")
 # SQLITE_CORRUPT e SQLITE_NOTADB: só esses códigos contam como banco corrompido.
 CORRUPTION_CODES = (11, 26)
+SYNCHRONOUS_MODES = ("NORMAL", "FULL")
+_ALIAS_RE = re.compile(r"^[a-z][a-z0-9_]{0,30}$")
+_RESERVED_ALIASES = ("main", "temp")
 
 T = TypeVar("T")
 
@@ -74,6 +88,23 @@ def timestamp(now: datetime | None = None) -> str:
 
 def utc_now_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def is_corruption(exc: BaseException) -> bool:
+    """``True`` se o erro do SQLite é ``SQLITE_CORRUPT`` ou ``SQLITE_NOTADB``."""
+    return ((getattr(exc, "sqlite_errorcode", None) or 0) & 0xFF) in CORRUPTION_CODES
+
+
+def readonly_uri(path: Path) -> str:
+    """URI ``file:...?mode=ro`` de um arquivo (caminhos com espaços e acentos são codificados)."""
+    return f"{Path(path).resolve().as_uri()}?mode=ro"
+
+
+def connect_readonly(path: Path) -> sqlite3.Connection:
+    """Conexão **só de leitura** a um arquivo existente (não cria o banco, não apaga ``-wal``)."""
+    conn = sqlite3.connect(readonly_uri(path), uri=True, timeout=BUSY_TIMEOUT_MS / 1000)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 class Transaction:
@@ -97,10 +128,22 @@ class Transaction:
 
 
 class Database:
-    """Banco SQLite do app. Seguro entre threads; ver o docstring do módulo."""
+    """Banco SQLite (do app, de uma Jornada ou de um Mundo). Seguro entre threads; ver o docstring do módulo."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        synchronous: str = "NORMAL",
+        recover_corrupt: bool = True,
+        create: bool = True,
+    ) -> None:
+        mode = str(synchronous).upper()
+        if mode not in SYNCHRONOUS_MODES:
+            raise ValueError(f"synchronous deve ser um de {SYNCHRONOUS_MODES}")
         self.path = Path(path)
+        self.synchronous = mode
+        self.recover_corrupt = recover_corrupt
         self.recovered = False
         self.recovered_from: Path | None = None
         self._lock = threading.RLock()
@@ -110,13 +153,21 @@ class Database:
         self._all_readers: list[sqlite3.Connection] = []
         self._readers_lock = threading.Lock()
         self._closed = False
+        # Bancos anexados: alias -> URI. Cada conexão guarda o que já anexou.
+        self._attachments: dict[str, str] = {}
+        self._attach_lock = threading.Lock()
+        self._attached: dict[int, set[str]] = {}
+        if not create and not self.path.is_file():
+            raise DatabaseError("banco_ausente", f"O arquivo do banco não existe: {self.path.name}")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._writer = self._open_checked()
+        self._attached[id(self._writer)] = set()
 
     # ---------------------------------------------------------------- abertura
     def _connect(self, *, readonly: bool = False) -> sqlite3.Connection:
         conn = sqlite3.connect(
             str(self.path),
+            uri=True,  # permite ATTACH com URI (file:...?mode=ro); um caminho comum continua valendo
             isolation_level=None,  # transações explícitas (BEGIN IMMEDIATE)
             check_same_thread=False,  # o acesso é serializado aqui
             timeout=BUSY_TIMEOUT_MS / 1000,
@@ -136,7 +187,7 @@ class Database:
         mode = conn.execute("PRAGMA journal_mode = WAL").fetchone()[0]
         if str(mode).lower() != "wal":
             raise DatabaseError("wal_indisponivel", f"O banco não aceitou o modo WAL (ficou em {mode}).")
-        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.execute(f"PRAGMA synchronous = {self.synchronous}")
 
     @staticmethod
     def _quick_check(conn: sqlite3.Connection) -> str | None:
@@ -160,9 +211,9 @@ class Database:
         apagar o ``-wal`` ao lado; a de leitura não toca em nada.
         """
         try:
-            conn = sqlite3.connect(f"{self.path.resolve().as_uri()}?mode=ro", uri=True, timeout=BUSY_TIMEOUT_MS / 1000)
+            conn = connect_readonly(self.path)
         except sqlite3.DatabaseError as exc:
-            if ((getattr(exc, "sqlite_errorcode", None) or 0) & 0xFF) in CORRUPTION_CODES:
+            if is_corruption(exc):
                 return str(exc)
             raise DatabaseError("banco_inacessivel", f"Não foi possível abrir o banco de dados: {exc}") from exc
         try:
@@ -173,7 +224,8 @@ class Database:
     def _open_checked(self) -> sqlite3.Connection:
         if self.path.is_dir():
             raise DatabaseError("banco_inacessivel", f"O caminho do banco é uma pasta: {self.path.name}")
-        probed = self.path.is_file() and self.path.stat().st_size > 0
+        # Sem recuperação (bancos de jogo), todo arquivo existente é conferido, mesmo vazio.
+        probed = self.path.is_file() and (self.path.stat().st_size > 0 or not self.recover_corrupt)
         problem = self._probe() if probed else None
         if problem is None:
             try:
@@ -190,6 +242,9 @@ class Database:
                 conn.close()
                 raise
             conn.close()
+        if not self.recover_corrupt:
+            log.error("banco %s danificado (%s); nada foi alterado", self.path.name, problem)
+            raise DatabaseError("banco_danificado", f"O banco {self.path.name} está danificado: {problem}")
         self._quarantine(problem)
         conn = self._connect()
         self._configure_writer(conn)
@@ -283,6 +338,12 @@ class Database:
             conn = self._connect(readonly=True)
             with self._readers_lock:
                 self._all_readers.append(conn)
+                self._attached[id(conn)] = set()
+        try:
+            self._sync_attachments(conn)  # anexos novos chegam aqui, antes do uso
+        except BaseException:
+            self._discard_reader(conn)
+            raise
         try:
             yield conn
         finally:
@@ -293,7 +354,20 @@ class Database:
                     self._readers.append(conn)
                 else:
                     self._all_readers.remove(conn)
+                    self._attached.pop(id(conn), None)
                     conn.close()
+
+    def _discard_reader(self, conn: sqlite3.Connection) -> None:
+        with self._readers_lock:
+            if conn in self._readers:
+                self._readers.remove(conn)
+            if conn in self._all_readers:
+                self._all_readers.remove(conn)
+            self._attached.pop(id(conn), None)
+        try:
+            conn.close()
+        except sqlite3.Error:
+            pass
 
     def query_all(self, sql: str, params: Iterable[Any] | dict[str, Any] = ()) -> list[sqlite3.Row]:
         with self._reader() as conn:
@@ -302,6 +376,55 @@ class Database:
     def query_one(self, sql: str, params: Iterable[Any] | dict[str, Any] = ()) -> sqlite3.Row | None:
         with self._reader() as conn:
             return conn.execute(sql, params).fetchone()
+
+    # ---------------------------------------------------------------- anexos
+    def attach(self, path: Path, alias: str, *, read_only: bool = True) -> None:
+        """Anexa outro banco sob ``alias`` em todas as conexões (as atuais e as futuras).
+
+        Com ``read_only`` (padrão), o anexo usa a URI ``file:...?mode=ro``: qualquer
+        escrita por ``alias.tabela`` falha com "attempt to write a readonly database",
+        inclusive na conexão do escritor. O arquivo precisa existir. Cada conexão de
+        leitura recebe o anexo na thread que a usa, antes do próximo uso (nunca
+        enquanto outra thread a usa).
+        """
+        if not isinstance(alias, str) or not _ALIAS_RE.match(alias) or alias in _RESERVED_ALIASES:
+            raise ValueError("alias de banco anexado inválido")
+        target = Path(path)
+        if not target.is_file():
+            raise DatabaseError("banco_ausente", f"O banco a anexar não existe: {target.name}")
+        uri = readonly_uri(target) if read_only else target.resolve().as_uri()
+        with self._lock:
+            self._check_open()
+            if self._depth:
+                raise DatabaseError("anexo_em_transacao", "Não é possível anexar um banco dentro de uma transação.")
+            if alias in self._attachments:
+                raise DatabaseError("alias_em_uso", f"Já existe um banco anexado como {alias}.")
+            with self._attach_lock:
+                self._attachments[alias] = uri
+            try:
+                self._sync_attachments(self._writer)
+            except BaseException:
+                with self._attach_lock:
+                    del self._attachments[alias]
+                raise
+
+    def attached(self) -> dict[str, str]:
+        """Alias -> URI dos bancos anexados."""
+        with self._attach_lock:
+            return dict(self._attachments)
+
+    def _sync_attachments(self, conn: sqlite3.Connection) -> None:
+        done = self._attached.setdefault(id(conn), set())
+        with self._attach_lock:
+            wanted = list(self._attachments.items())
+        for alias, uri in wanted:
+            if alias in done:
+                continue
+            try:
+                conn.execute(f"ATTACH DATABASE ? AS {alias}", (uri,))
+            except sqlite3.Error as exc:
+                raise DatabaseError("anexo_falhou", f"Não foi possível anexar o banco {alias}: {exc}") from exc
+            done.add(alias)
 
     # ---------------------------------------------------------- diagnóstico
     def pragma(self, name: str) -> Any:
@@ -343,8 +466,9 @@ class Database:
                     conn.close()
                 except sqlite3.Error:
                     pass
+            self._attached.clear()
             try:
-                self._writer.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                self._writer.execute("PRAGMA main.wal_checkpoint(TRUNCATE)")  # só o banco principal
             except sqlite3.Error as exc:
                 log.warning("checkpoint do WAL falhou ao fechar: %s", exc)
             self._writer.close()

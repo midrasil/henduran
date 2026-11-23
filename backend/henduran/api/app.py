@@ -1,4 +1,5 @@
-"""Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos, Hugging Face e motor (ADR-072).
+"""Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos, Hugging Face, motor (ADR-072)
+e as listas de Jornadas e Mundos (ADR-075, somente leitura).
 
 Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no ADR-072):
 
@@ -32,6 +33,7 @@ from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubErro
 from henduran.db.connection import Database
 from henduran.db.migrations import schema_version
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
+from henduran.storage import JourneyStore, WorldStore
 
 logger = logging.getLogger("henduran.api")
 
@@ -73,6 +75,7 @@ ERROR_STATUS = {
     "pasta_desconhecida": 404,
     "download_desconhecido": 404,
     "engine_unavailable": 503,
+    "storage_unavailable": 503,
 }
 
 
@@ -122,12 +125,15 @@ def create_app(
     hardware_scan: Callable[[], dict] | None = None,
     hub: ModelHub | None = None,
     database: Database | None = None,
+    journeys: JourneyStore | None = None,
+    worlds: WorldStore | None = None,
 ) -> FastAPI:
     """Cria a aplicação. ``token`` é o segredo por execução exigido em todas as rotas.
 
     ``engine`` habilita as rotas de modelos e motor; ``hub`` habilita as do Hugging
     Face, a remoção de modelos e as pastas extras. Sem eles, respondem 503.
-    ``database`` acrescenta o campo ``database`` em ``/health``.
+    ``database`` acrescenta o campo ``database`` em ``/health``. ``journeys`` e
+    ``worlds`` habilitam ``GET /journeys`` e ``GET /worlds`` (sem eles, 503).
     """
     if not token:
         raise ValueError("token de acesso obrigatório")
@@ -146,6 +152,8 @@ def create_app(
     app.state.engine = engine
     app.state.hub = hub
     app.state.database = database
+    app.state.journeys = journeys
+    app.state.worlds = worlds
     scan = hardware_scan or hw.scan
     hardware_cache: dict[str, dict] = {}
 
@@ -416,5 +424,23 @@ def create_app(
     async def engine_stop() -> dict:
         eng = need_engine()
         return await eng.stop()
+
+    # ------------------------------------------------- Jornadas e Mundos (leitura)
+    @app.get("/journeys", dependencies=auth)
+    async def list_journeys() -> dict:
+        if journeys is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Jornadas não está ativo.", 503)
+        items = await asyncio.to_thread(journeys.list_journeys)
+        return {
+            "journeys": [item.to_dict() for item in items],
+            "last_journey_id": journeys.last_journey_id,
+        }
+
+    @app.get("/worlds", dependencies=auth)
+    async def list_worlds() -> dict:
+        if worlds is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
+        items = await asyncio.to_thread(worlds.list_worlds)
+        return {"worlds": [item.to_dict() for item in items]}
 
     return app
