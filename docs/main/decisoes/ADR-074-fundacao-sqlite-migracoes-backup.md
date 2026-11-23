@@ -30,7 +30,7 @@ O ADR-050 escolheu o SQLite e deixou em aberto o esquema, as migrações, as tra
 
 ## Em aberto
 
-- **Um banco por Jornada ou um banco único** para os dados de jogo (ADR-050, ADR-058 e ADR-059). Recomendação a avaliar: um por Jornada, pela simplicidade de backup, ramificação e isolamento de continuidades.
-- **Política de corrupção e durabilidade** quando houver dados de jogo (por exemplo, `synchronous=FULL` nas gravações canônicas e restauração a partir do backup).
+- ~~Um banco por Jornada ou um banco único~~: **resolvido pelo ADR-075** (um banco por Jornada e um por Mundo, além do banco do app).
+- ~~Política de corrupção e durabilidade com dados de jogo~~: **definida para os bancos de jogo no ADR-075** (`synchronous=FULL` e nunca recriar um banco de Jornada em silêncio). Para o banco do app vale o que está aqui.
 - Transações canônicas de estado e eventos (ADR-049) e anexos fora do banco.
 - Custo do `quick_check` a cada início com bancos grandes.

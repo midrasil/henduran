@@ -14,7 +14,10 @@
 - [ ] infra: decidir a política de remover modelo de pasta extra (hoje sempre recusado), pedir confirmação quando o SHA-256 não estiver publicado e permitir fila de downloads — origem: Tarefa B
 - [ ] infra: validar os limiares do `fit`, a escolha da variante do motor por hardware e o comportamento sem GPU; confirmar a licença do `llama-server` antes de distribuir — origem: Tarefa A e ADR-070
 - [x] infra: fundação de persistência SQLite (migrações, backup, corrupção) e migração do `settings.json` — feito em 2026-11-23; ADR-074 proposto
-- [ ] ⭐ decisão: um banco por Jornada ou um banco único para os dados de jogo, e revisão da política de corrupção e da durabilidade com dados de jogo (ADR-050, ADR-058, ADR-074) — origem: persistência SQLite
+- [x] decisão: um banco por Jornada e um por Mundo (ADR-075, aprovado em 2026-11-23); durabilidade `FULL` e política de corrupção definidas para os bancos de jogo
+- [ ] ⭐ infra: infraestrutura dos bancos por Jornada e por Mundo — motor de migrações com vários conjuntos (`app`, `journey`, `world`), `journey_meta`, abertura e bloqueio de uma Jornada por vez, anexo do Mundo em leitura, backups por Jornada; sem esquema de jogo ainda — origem: ADR-075
+- [ ] docs: aprovar o ADR-074 (fundação SQLite), ainda como proposta — origem: revisão da persistência
+- [ ] decisão: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e `ATTACH` do Mundo com FTS5 e vetores — origem: ADR-075 (em aberto)
 - [ ] legal: registrar por escrito a autorização do autor do Caliope e pedir que ele adicione uma `LICENSE`; perguntar a origem do acervo de 520 skills e preservar licenças e atribuições — origem: auditoria do Caliope
 
 - [ ] ⭐ docs: propagar o ADR-069 (UI em CSS sem tileset) em GDD IX, P-18 e D-033, ADR-020 e `docs/ui-ux/` (02-design-system e demais), marcando o catálogo Franuka como referência não normativa; fazer em conjunto com a propagação do ADR-068 abaixo — origem: ADR-069
