@@ -1,0 +1,29 @@
+[package]
+name = "henduran"
+version = "0.0.1"
+description = "Henduran — RPG solo com Narrador IA (shell desktop)"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[[bin]]
+name = "henduran"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+getrandom = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_JobObjects",
+  "Win32_System_Threading",
+] }

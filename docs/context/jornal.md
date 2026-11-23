@@ -98,3 +98,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrência: o PR dos rascunhos foi mesclado antes da aprovação, então a movimentação foi levada para uma branch nova sobre a `main`.
 - Pendências mantidas como PENDENTE nos textos: faixa de Dificuldade, critérios de "progresso significativo" e "defender" uma Convicção, política de avanço de tempo, definição de Amanhecer, testes de equilíbrio dos tetos por Dia.
 - Arquivos: `rules/`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/backlog.md`.
+
+## 2026-11-22 — `esqueleto-mvp`
+
+- Rota: conversa com o planejador → Dev → Entrega.
+- Resultado: primeiro código do projeto. `backend/` (FastAPI, `NarratorProvider`, provedor falso, SSE, cancelamento, token por execução, só loopback) e `app/` (React + TypeScript, chat mínimo com streaming e cancelar; shell Tauri 2 que inicia e encerra o Python com Job Object do Windows).
+- Validações: 24 testes do backend e 25 do frontend passaram, conferidos pelo planejador; o dev relatou `cargo check`, `clippy`, `cargo test` e builds de debug e release passando e a janela real exercitada, inclusive sem processo órfão após fechar e após `taskkill /F`. Aparência visual e leitor de tela não verificados.
+- Decisões: Tauri 2.12 estável (o 3.x está em alpha); formato do evento `done` provisório; Python só em modo dev, empacotamento em aberto.
+- Ocorrências: uma asserção do teste de desconexão foi corrigida (a geração parava por `CancelledError` antes de o evento ser marcado); o shell cria o processo suspenso para associá-lo ao Job Object sem corrida.
+- Riscos: `target/` e `node_modules/` na pasta do OneDrive; `aria-live` no log inteiro.
+- Arquivos: `backend/`, `app/`, `.gitignore`.
