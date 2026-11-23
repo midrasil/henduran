@@ -217,3 +217,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Pendente (backlog): `assets\` nos backups; backend expor estado das trilhas e máximo de Fraturas; entrega 3b (`@Aduran`); ADR de passagem de tempo; prototipar Modelos, Mundo e Configurações.
 - Arquivos: `docs/ui-ux/09-tela-da-jornada.md`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/main/decisoes/ADR-076-cena-inicial-e-ciclo-de-cena-no-mvp.md`, `AGENTS.md`, `backend/henduran/db/migrations/journey/0004_journey_screen.sql`, `backend/henduran/narrative/`, `backend/henduran/services/narration.py`, `backend/henduran/services/portrait.py`, `backend/henduran/storage/`, `backend/henduran/api/app.py`, `app/src/screens/journey/`, `app/src/api/journeyScreen.ts`, `app/src/hooks/useJourneySession.ts`, `app/src/ui/` (PixelArt, Track, Portrait, Composer).
 - Entrega: PR [#23](https://github.com/midrasil/henduran/pull/23) aberto contra `main`.
+
+## 2026-11-23 — `prototipo-menu`
+
+- Rota: conversa com o planejador → protótipo → Entrega. Só documentação.
+- Contexto: o PR #23 (tela da Jornada) foi mergeado; o responsável decidiu revisar a UI/UX das telas existentes uma por vez, com protótipos, começando pelo menu inicial, e por enquanto **só prototipar e documentar**.
+- Pedido do responsável: título e simetria, botões centralizados com a última Jornada à direita, Modelos fora dos botões (só pelo indicador do rodapé), decorações nas bordas e animação no fundo em pixel art.
+- Resultado: aprovado na primeira rodada. Paisagem em tela cheia com o céu de `sky.ts`, castelos simétricos com janelas acesas, animação por período a cerca de 10 quadros por segundo e parada com *reduced motion*; cantos dourados, estandartes, rosa dos ventos dos dois lados do título; cartão com retrato, data do calendário e Cena em andamento; indicador do serviço e do modelo no rodapé abrindo Modelos.
+- Pendência para a implementação: o resumo da Jornada (`GET /journeys`) precisa trazer retrato, data no calendário do Mundo e título da Cena em andamento. Configurações e Créditos entram quando existirem.
+- Arquivos: `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/context/handoff.md`.
+- Entrega: PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.

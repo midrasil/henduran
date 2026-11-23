@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Protótipo aprovado em 2026-11-23 (docs/ui-ux/11-menu-inicial.md). Só visual, dados de exemplo; não é código do app. -->
+<title>Menu Inicial</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: paisagem viva em tela cheia; título e botões no eixo central; cartão da última Jornada à direita
+   sem tirar os botões do centro; rodapé com versão e o indicador do serviço e do modelo (leva a Modelos).
+   Tokens de app/src/styles/tokens.css (ADR-069). */
+:root {
+  color-scheme: dark;
+  --ink-950:#0e0911; --ink-900:#170f1a; --ink-800:#221a26; --ink-700:#2e2233; --ink-600:#432e4a; --ink-400:#8d7a93;
+  --purple-800:#45186a; --purple-600:#5a2380; --purple-500:#6e3197; --purple-300:#9a62c4;
+  --gold-700:#7a4e12; --gold-600:#a8701c; --gold-400:#f0c050; --gold-200:#f8d878;
+  --parch-100:#f8e4c8; --parch-200:#f5dbbb; --parch-300:#e8c69c; --parch-500:#a77d52;
+  --brown-900:#2a1b14; --brown-700:#5c4230; --ivory-100:#f4e8d4; --ivory-400:#c8b8ac;
+  --red-800:#8a1c12; --red-400:#e8604c; --green-300:#7fd88a; --amber-300:#f5b04a; --cyan-300:#6ee7ff;
+  --font-pixel: "Pixelify Sans", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Crimson Pro", Georgia, "Times New Roman", serif;
+  --shadow: 4px 4px 0 var(--ink-950);
+  --pixel-circle: polygon(30% 0,70% 0,70% 5%,80% 5%,80% 10%,90% 10%,90% 20%,95% 20%,95% 30%,100% 30%,100% 70%,95% 70%,95% 80%,90% 80%,90% 90%,80% 90%,80% 95%,70% 95%,70% 100%,30% 100%,30% 95%,20% 95%,20% 90%,10% 90%,10% 80%,5% 80%,5% 70%,0 70%,0 30%,5% 30%,5% 20%,10% 20%,10% 10%,20% 10%,20% 5%,30% 5%);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ink-950); color: var(--ivory-100); font-family: var(--font-pixel); overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--cyan-300); outline-offset: 3px; }
+svg.px { shape-rendering: crispEdges; display: block; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.scene { position: fixed; inset: 0; }
+#sky { position: absolute; left: 0; top: 0; image-rendering: pixelated; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 55%, rgba(14,9,17,.55) 100%); }
+
+/* moldura da tela: cantos dourados em pixel */
+.corner { position: absolute; width: 56px; height: 56px; pointer-events: none; z-index: 3; }
+.corner svg { width: 100%; height: 100%; }
+.corner.tl { left: 12px; top: 12px; } .corner.tr { right: 12px; top: 12px; transform: scaleX(-1); }
+.corner.bl { left: 12px; bottom: 60px; transform: scaleY(-1); } .corner.br { right: 12px; bottom: 60px; transform: scale(-1); }
+
+/* estandartes pendurados nas laterais (simetria) */
+.banner { position: absolute; top: 0; width: 72px; z-index: 2; pointer-events: none; }
+.banner.l { left: max(48px, 6vw); } .banner.r { right: max(48px, 6vw); }
+.banner svg { width: 72px; height: auto; }
+.banner .sway { transform-origin: top center; animation: sway 6s ease-in-out infinite; }
+.banner.r .sway { animation-delay: -3s; }
+@keyframes sway { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+
+/* ------------------------------------------------------------- eixo central */
+.stage { position: relative; z-index: 4; height: calc(100% - 48px); display: grid; grid-template-rows: auto 1fr; justify-items: center; padding-top: clamp(32px, 9vh, 96px); }
+.title { text-align: center; display: grid; justify-items: center; gap: 6px; }
+.logo { display: flex; align-items: center; gap: 18px; }
+.logo h1 { margin: 0; font-family: var(--font-serif); font-weight: 700; font-size: clamp(3.2rem, 7vw, 5.6rem); line-height: 1; letter-spacing: .01em;
+  color: var(--gold-200); text-shadow: 0 3px 0 var(--gold-700), 0 6px 0 var(--ink-950), 4px 8px 0 rgba(0,0,0,.45); }
+.logo .mark { width: clamp(44px, 5vw, 64px); }
+.logo .mark svg { width: 100%; height: auto; }
+.logo .mark.spin svg { animation: glint 5s steps(1) infinite; }
+@keyframes glint { 0%, 88% { filter: none; } 90%, 94% { filter: brightness(1.6) drop-shadow(0 0 4px #f8d878); } }
+.rule { display: flex; align-items: center; gap: 10px; color: var(--gold-400); }
+.rule i { display: block; height: 3px; width: clamp(80px, 14vw, 180px); background: repeating-linear-gradient(90deg, var(--gold-400) 0 6px, transparent 6px 10px); }
+.rule svg { width: 14px; height: 14px; }
+.subtitle { margin: 0; font-family: var(--font-serif); font-style: italic; font-size: clamp(1.05rem, 1.6vw, 1.3rem); color: var(--parch-100); text-shadow: 2px 2px 0 var(--ink-950); }
+
+.main { position: relative; align-self: center; width: 320px; margin-top: -4vh; }
+.buttons { display: grid; gap: 12px; }
+.mbtn { position: relative; display: grid; grid-template-columns: 32px 1fr 32px; align-items: center; gap: 10px; min-height: 56px; padding: 8px 14px;
+  background: linear-gradient(var(--ink-700), var(--ink-800)); border: 3px solid var(--gold-600); color: var(--ivory-100);
+  font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; text-align: center;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.08), inset 0 -3px 0 rgba(0,0,0,.35), 4px 4px 0 var(--ink-950); transition: transform 80ms steps(2); }
+.mbtn svg { width: 24px; height: 24px; color: var(--gold-200); }
+.mbtn:hover { border-color: var(--gold-200); background: linear-gradient(var(--ink-600), var(--ink-700)); transform: translateY(-2px); }
+.mbtn:hover::before, .mbtn:focus-visible::before, .mbtn:hover::after, .mbtn:focus-visible::after { content: ""; position: absolute; top: 50%; width: 10px; height: 10px; margin-top: -5px; background: var(--gold-200); clip-path: polygon(50% 0,100% 50%,50% 100%,0 50%); }
+.mbtn:hover::before, .mbtn:focus-visible::before { left: -20px; } .mbtn:hover::after, .mbtn:focus-visible::after { right: -20px; }
+.mbtn:active { transform: translateY(1px); }
+.mbtn.primary { background: linear-gradient(var(--purple-500), var(--purple-800)); border-color: var(--gold-400); font-size: 1.4rem; min-height: 64px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.18), inset 0 -3px 0 rgba(0,0,0,.35), 0 0 0 3px var(--ink-950), 6px 6px 0 3px var(--ink-950); }
+.mbtn.primary:hover { background: linear-gradient(#7d3aab, var(--purple-600)); }
+.mbtn[disabled] { opacity: .5; cursor: not-allowed; transform: none; }
+.mbtn[disabled]::before, .mbtn[disabled]::after { display: none; }
+.mbtn .sub { grid-column: 1 / -1; font-family: var(--font-pixel); font-size: 12px; font-weight: 400; color: var(--gold-200); margin-top: -4px; }
+
+/* cartão da última Jornada: preso à direita da coluna, sem deslocar o eixo */
+.card { position: absolute; left: calc(100% + 56px); top: 50%; transform: translateY(-50%); width: 340px; background: var(--parch-200); color: var(--brown-900);
+  border: 4px solid var(--gold-600); box-shadow: 0 0 0 3px var(--ink-950), 6px 6px 0 3px var(--ink-950); }
+.card::before, .card::after { content: ""; position: absolute; width: 10px; height: 10px; background: var(--gold-200); box-shadow: 0 0 0 2px var(--ink-950); top: -7px; left: -7px; }
+.card::after { left: auto; right: -7px; }
+.card h2 { margin: 0; padding: 8px 14px; display: flex; align-items: center; gap: 8px; background: var(--ink-800); color: var(--gold-200); font-size: .875rem; letter-spacing: .12em; text-transform: uppercase; border-bottom: 3px solid var(--gold-600); }
+.card h2 svg { width: 16px; height: 16px; }
+.card .body { padding: 14px; display: grid; grid-template-columns: 88px 1fr; gap: 14px; align-items: center; }
+.portrait { position: relative; width: 88px; height: 88px; }
+.portrait .ring { position: absolute; inset: 0; clip-path: var(--pixel-circle); background: var(--gold-200); }
+.portrait .ring2 { position: absolute; inset: 4px; clip-path: var(--pixel-circle); background: var(--gold-700); }
+.portrait .pic { position: absolute; inset: 8px; clip-path: var(--pixel-circle); background: var(--purple-800); display: grid; place-items: center; overflow: hidden; }
+.portrait .pic b { font-family: var(--font-serif); font-size: 1.9rem; color: var(--gold-200); }
+.portrait .pic canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+.jn { font-family: var(--font-serif); font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
+.facts { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 3px; font-size: .875rem; color: var(--brown-700); }
+.facts li { display: flex; gap: 6px; align-items: center; }
+.facts svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--red-800); }
+.card .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 14px; border-top: 2px dashed var(--parch-500); font-size: .8rem; color: var(--brown-700); }
+.card .foot button { background: none; border: 0; color: var(--red-800); text-decoration: underline; text-underline-offset: 3px; font-size: .8rem; padding: 4px 0; }
+.card.empty .body { display: block; font-family: var(--font-serif); font-size: 1.05rem; }
+.card .warn { margin: 0 14px 12px; padding: 6px 10px; border: 2px solid var(--brown-700); background: rgba(245,176,74,.25); font-size: .8rem; }
+
+/* rodapé */
+.foot-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; height: 48px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--ink-950); border-top: 4px solid var(--gold-600); box-shadow: inset 0 2px 0 var(--gold-200); font-size: .875rem; }
+.foot-bar .ver { color: var(--ivory-400); display: flex; gap: 8px; align-items: center; }
+.foot-bar .ver svg { width: 16px; height: 16px; }
+.foot-bar .mid svg { width: 18px; height: 18px; }
+.status { justify-self: end; display: flex; align-items: center; gap: 10px; background: var(--ink-800); border: 2px solid var(--ink-600); padding: 4px 12px; min-height: 36px; }
+.status:hover { border-color: var(--gold-400); }
+.status .led { width: 10px; height: 10px; box-shadow: 0 0 0 2px var(--ink-950); }
+.status[data-s="ok"] .led { background: var(--green-300); }
+.status[data-s="warn"] .led { background: var(--amber-300); animation: blink 1.2s steps(1) infinite; }
+.status[data-s="off"] .led { background: var(--red-400); }
+@keyframes blink { 50% { opacity: .3; } }
+.status small { color: var(--ivory-400); }
+.status .go { color: var(--gold-200); }
+
+/* controles do protótipo */
+.proto { position: fixed; z-index: 20; left: 16px; bottom: 60px; }
+.proto > button { background: repeating-linear-gradient(135deg, #000 0 8px, #15121a 8px 16px); border: 2px dashed var(--ink-400); color: var(--gold-200); padding: 6px 10px; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; }
+.proto .box { margin-bottom: 8px; background: var(--ink-950); border: 2px dashed var(--ink-400); padding: 10px; display: grid; gap: 8px; font-size: .8rem; color: var(--ivory-400); max-width: min(520px, calc(100vw - 32px)); }
+.proto .box > span { display: grid; gap: 4px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 2px solid var(--ink-600); }
+.seg button { background: transparent; border: 0; padding: 4px 10px; color: var(--ivory-400); }
+.seg button[aria-pressed="true"] { background: var(--purple-600); color: var(--ivory-100); }
+.toast { position: fixed; z-index: 30; left: 50%; bottom: 64px; transform: translateX(-50%); background: var(--ink-950); border: 2px solid var(--gold-400); padding: 8px 14px; font-size: .875rem; }
+
+@media (max-width: 1180px) {
+  .main { margin-top: 0; }
+  .card { position: static; transform: none; width: 100%; margin-top: 24px; }
+  .stage { overflow: auto; padding-bottom: 24px; }
+  .banner { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .banner .sway, .logo .mark.spin svg, .status .led { animation: none !important; } .mbtn { transition: none; } }
+</style>
+
+<div class="scene" aria-hidden="true"><canvas id="sky"></canvas><div class="vignette"></div></div>
+<div class="corner tl" id="c1"></div><div class="corner tr" id="c2"></div><div class="corner bl" id="c3"></div><div class="corner br" id="c4"></div>
+<div class="banner l" id="b1"></div><div class="banner r" id="b2"></div>
+
+<div class="stage">
+  <header class="title">
+    <div class="logo"><span class="mark spin" id="m1"></span><h1>Henduran</h1><span class="mark spin" id="m2" style="transform:scaleX(-1)"></span></div>
+    <div class="rule"><i></i><span id="d1"></span><i></i></div>
+    <p class="subtitle">Jornada solo de fantasia com Narrador IA</p>
+  </header>
+  <div class="main">
+    <nav class="buttons" aria-label="Menu inicial" id="buttons"></nav>
+    <section class="card" id="card" aria-label="Última Jornada"></section>
+  </div>
+</div>
+
+<footer class="foot-bar">
+  <span class="ver" id="ver"></span>
+  <span class="mid" id="mid" aria-hidden="true"></span>
+  <button class="status" id="status" data-s="ok"></button>
+</footer>
+
+<div class="proto">
+  <div class="box" id="protobox" hidden>
+    <span>Período <span class="seg" data-k="period"></span></span>
+    <span>Situação <span class="seg" data-k="sit"><button data-v="com">Com Jornada</button><button data-v="retrato">Com retrato</button><button data-v="sem">Primeira vez</button><button data-v="dano">Jornada danificada</button></span></span>
+    <span>Serviço e modelo <span class="seg" data-k="svc"><button data-v="ok">Pronto</button><button data-v="sem">Sem modelo</button><button data-v="ini">Iniciando</button></span></span>
+    <span>Animação <span class="seg" data-k="anim"><button data-v="on">Ligada</button><button data-v="off">Desligada</button></span></span>
+    <span>Dados de exemplo; nada é gravado.</span>
+  </div>
+  <button id="protobtn" aria-expanded="false">Protótipo ▴</button>
+</div>
+
+<script>
+/* ------------------------------------------------------------ ícones em pixel */
+function px(rows, pal) { let r = ""; rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) { const c = row[x]; if (c !== "." && pal[c]) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[c]}"/>`; } }); return `<svg class="px" viewBox="0 0 ${rows[0].length} ${rows.length}" aria-hidden="true">${r}</svg>`; }
+const L = (rows) => px(rows, { "#": "currentColor" });
+const IC = {
+  star: L(["...#....", "...#....", "..###...", "########", "..###...", ".##.##..", ".#...#..", "........"]),
+  sword: L([".......#", "......##", ".....##.", "#...##..", ".#.##...", "..##....", ".#.#....", "#...#..."]),
+  book: L(["........", "###..###", "#..##..#", "#..##..#", "#..##..#", "#..##..#", "########", "........"]),
+  door: L(["######..", "#....#..", "#....#.#", "#..#.###", "#...###.", "#..#.#..", "#....#..", "######.."]),
+  person: L(["..##....", ".####...", ".####...", "..##....", ".####...", "######..", "######..", "........"]),
+  pin: L(["..####..", ".#....#.", ".#.##.#.", ".#....#.", "..#..#..", "..#..#..", "...##...", "...##..."]),
+  clock: L(["..####..", ".#....#.", "#...#..#", "#...#..#", "#..##..#", "#......#", ".#....#.", "..####.."]),
+  scroll: L([".######.", "#......#", ".#.####.", ".#......", ".#.####.", ".#......", "#......#", ".######."]),
+  dia: px(["...#...", "..#.#..", ".#...#.", "#..#..#", ".#...#.", "..#.#..", "...#..."], { "#": "#f0c050" }),
+};
+const MARK = px([
+  "......#......", "......#......", ".....###.....", "..#..###..#..", "...#.###.#...", "....#####....", "#############", "....#####....", "...#.###.#...", "..#..###..#..", ".....###.....", "......#......", "......#......"],
+  { "#": "#f8d878" });
+const CORNER = px(["##########", "#GGGGGGGG#", "#G########", "#G#.......", "#G#.......", "#G#.......", "#G#.......", "#G#.......", "#G#.......", "###......."].map((r) => r.replace(/G/g, "g")), { "#": "#a8701c", g: "#f8d878" });
+function bannerSVG(color, dark) {
+  const rows = ["##############", "#GGGGGGGGGGGG#", "#CCCCCCCCCCCC#", "#CCCCCCCCCCCC#", "#CCCCCYYCCCCC#", "#CCCCYYYYCCCC#", "#CCCYYYYYYCCC#", "#CCCCYYYYCCCC#", "#CCCCCYYCCCCC#", "#CCCCCCCCCCCC#", "#CCCCCCCCCCCC#", "#DCCCCCCCCCCD#", "#DCCCCCCCCCCD#", "#DDCCCCCCCCDD#", "#.DDCCCCCCDD.#", "#..DDCCCCDD..#", "#...DDCCDD...#", "#....DDDD....#", "#.....##.....#"];
+  const fixed = rows.map((r) => r.replace(/^#|#$/g, (m, i) => (i === 0 ? "." : ".")));
+  const rod = "TTTTTTTTTTTTTT";
+  return `<div class="sway">${px([rod, ...fixed.map((r) => "." + r.slice(1, -1) + ".")], { T: "#5c4230", G: "#f8d878", C: color, D: dark, Y: "#f0c050", "#": "#0e0911" })}</div>`;
+}
+const PERIOD_ICONS = {
+  madrugada: px(["..........", "......s...", "..MM......", ".MMs......", ".MM.....s.", ".MM.......", ".MMm......", "..MMMm....", "s..MMM....", ".........."], { M: "#b9bfdc", m: "#8f93c0", s: "#8f93c0" }),
+  amanhecer: px(["..........", "....p.....", "..........", "...SSSS...", "..SYYYYS..", ".SYYYYYYS.", "HHHHHHHHHH", ".pppppppp.", "..........", ".........."], { S: "#ffc768", Y: "#fff0b8", H: "#a8486f", p: "#de6f6c" }),
+  manha: px(["....r.....", ".r......r.", "...SSSS...", "..SYYYYS..", "r.SYYYYS.r", "..SYYYYS..", "...SSSS...", ".r......r.", "....r.....", ".........."], { S: "#fff09a", Y: "#ffffff", r: "#d8ecff" }),
+  tarde: px(["..........", "...SSSS...", "..SYYYYS..", ".SYYYYYYS.", ".SYYYYYYS.", "..SYYYYS..", "...SSSS...", "cc......cc", "cccc..cccc", ".........."], { S: "#ffd878", Y: "#fff4c4", c: "#f0e6d0" }),
+  entardecer: px(["....s.....", "..........", "..SSSSSS..", ".SOOOOOOS.", "SOYYYYYYOS", "HHHHHHHHHH", ".hhhhhhhh.", "..hhhhhh..", "..........", ".........."], { S: "#ec8a5c", O: "#ffb858", Y: "#ffe7a0", H: "#93407a", h: "#62307a", s: "#d8c4e8" }),
+  noite: px(["..s.......", ".......s..", "....MMM...", "...MMWM...", "...MM.....", "...MM.....", "...MMWM..s", "....MMM...", "s.........", "......s..."], { M: "#e4dfc0", W: "#fbf7e2", s: "#f2ecd4" }),
+};
+const PERIODS = ["madrugada", "amanhecer", "manha", "tarde", "entardecer", "noite"];
+const PLABEL = { madrugada: "Madrugada", amanhecer: "Amanhecer", manha: "Manhã", tarde: "Tarde", entardecer: "Entardecer", noite: "Noite" };
+
+/* ------------------------------------------------- céu: mesmo desenho do sky.ts, com camadas animadas */
+const SCENES = {
+  madrugada: { bands: ["#0b0b24", "#11143a", "#191d4a", "#232a5c", "#2e3468"], body: { kind: "moon", x: 0.16, y: 0.3, r: 0.07, color: "#b9bfdc", core: "#dfe2f4" }, stars: 1.2, starColor: "#8f93c0", far: "#1b1c3e", mid: "#141532", near: "#0c0b1e", light: "#e8c070" },
+  amanhecer: { bands: ["#3a2a5c", "#6a3768", "#a8486f", "#de6f6c", "#f39b70", "#f8c07a"], body: { kind: "sun", x: 0.26, y: 0.6, r: 0.08, color: "#ffc768", core: "#fff0b8", halo: "#ffdf98" }, stars: 0.3, starColor: "#e0c0dc", clouds: "#f6b48a", far: "#5c3458", mid: "#432644", near: "#2a1a2e", light: "#ffd890" },
+  manha: { bands: ["#2f6cc4", "#3f80d4", "#5797e0", "#73aeea", "#93c6f2"], body: { kind: "sun", x: 0.22, y: 0.2, r: 0.065, color: "#fff09a", core: "#ffffff", halo: "#d8ecff" }, stars: 0, starColor: "#ffffff", clouds: "#f2f8ff", far: "#5a83a8", mid: "#3f6a58", near: "#2c5a3a", birds: true },
+  tarde: { bands: ["#2c5aa6", "#3f6fb6", "#5886c2", "#7a9ec8", "#b7b59a"], body: { kind: "sun", x: 0.76, y: 0.18, r: 0.07, color: "#ffd878", core: "#fff4c4", halo: "#f4e2a8" }, stars: 0, starColor: "#ffffff", clouds: "#f0e6d0", far: "#5e6d94", mid: "#465a44", near: "#33492f", birds: true },
+  entardecer: { bands: ["#24173f", "#3d2160", "#62307a", "#93407a", "#c85c6a", "#ec8a5c", "#f8b868"], body: { kind: "sun", x: 0.72, y: 0.58, r: 0.1, color: "#ffb858", core: "#ffe7a0", halo: "#ffcf7c" }, stars: 0.25, starColor: "#d8c4e8", clouds: "#e98a74", far: "#4a2852", mid: "#331b3c", near: "#1f1227", light: "#ffcf70", flies: true },
+  noite: { bands: ["#0a0819", "#110d26", "#191332", "#221a40", "#2c214e"], body: { kind: "moon", x: 0.7, y: 0.18, r: 0.07, color: "#e4dfc0", core: "#fbf7e2" }, stars: 2.2, starColor: "#f2ecd4", far: "#1c1636", mid: "#140f28", near: "#0b0815", light: "#f0c050", flies: true },
+};
+function seeded(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function disc(c, cx, cy, r, col) { c.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const half = Math.floor(Math.sqrt(r * r + r * 0.8 - dy * dy)); if (Number.isNaN(half)) continue; c.fillRect(cx - half, cy + dy, half * 2 + 1, 1); } }
+function ridge(w, h, seed, base, amp) { const r = seeded(seed); const p1 = r() * Math.PI * 2, p2 = r() * Math.PI * 2, k1 = 2.2 + r(), k2 = 6 + r() * 3; const out = []; for (let x = 0; x < w; x++) { const t = x / Math.max(1, w); const v = Math.sin(t * k1 * Math.PI + p1) * 0.65 + Math.sin(t * k2 * Math.PI + p2) * 0.35; out.push(Math.round(h - base - amp * (v * 0.5 + 0.5))); } return out; }
+
+const PIX = 4; let W = 0, H = 0, base = null, stars = [], clouds = [], flies = [], birds = [], tick = 0;
+const S = { period: "entardecer", sit: "com", svc: "ok", anim: "on" };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduced) S.anim = "off";
+
+function buildBase() {
+  const cv = document.getElementById("sky"); W = Math.ceil(innerWidth / PIX); H = Math.ceil(innerHeight / PIX);
+  cv.width = W; cv.height = H; cv.style.width = W * PIX + "px"; cv.style.height = H * PIX + "px";
+  const sc = SCENES[S.period]; base = document.createElement("canvas"); base.width = W; base.height = H; const g = base.getContext("2d");
+  const bandH = Math.ceil(H * 0.72 / sc.bands.length);
+  sc.bands.forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * bandH, W, i === sc.bands.length - 1 ? H : bandH); if (i) { g.fillStyle = sc.bands[i - 1]; for (let x = i % 2; x < W; x += 2) g.fillRect(x, i * bandH, 1, 1); } });
+  const r = seeded(1729); stars = []; const n = Math.round(W * H * 0.0012 * sc.stars); for (let i = 0; i < n; i++) stars.push({ x: Math.floor(r() * W), y: Math.floor(r() * H * 0.55), big: r() < 0.1, ph: r() * 6.28 });
+  const b = sc.body, rr = Math.max(3, Math.round(H * b.r)), cx = Math.round(W * b.x), cy = Math.round(H * b.y);
+  if (b.halo) { g.fillStyle = b.halo; const hr = rr + 3; for (let dy = -hr; dy <= hr; dy++) for (let dx = -hr; dx <= hr; dx++) { const d = dx * dx + dy * dy; if (d > rr * rr + rr && d <= hr * hr + hr && (dx + dy) % 2 === 0) g.fillRect(cx + dx, cy + dy, 1, 1); } }
+  if (b.kind === "sun") { disc(g, cx, cy, rr, b.color); disc(g, cx, cy, Math.max(1, rr - 2), b.core); }
+  else { const bx = cx + Math.ceil(rr * 0.7), by = cy - Math.ceil(rr * 0.3); const inside = (x, y, ox, oy, q) => (x - ox) ** 2 + (y - oy) ** 2 <= q * q + q * 0.8;
+    for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) { if (!inside(x, y, cx, cy, rr) || inside(x, y, bx, by, rr)) continue; g.fillStyle = inside(x, y, cx - 1, cy, rr - 2) && !inside(x, y, bx - 1, by, rr + 1) ? b.core : b.color; g.fillRect(x, y, 1, 1); } }
+  // relevo distante, colinas do meio e primeiro plano
+  const far = ridge(W, H, 11, Math.round(H * 0.26), Math.round(H * 0.2)); g.fillStyle = sc.far; far.forEach((t, x) => g.fillRect(x, t, 1, H - t));
+  const mid = ridge(W, H, 17, Math.round(H * 0.16), Math.round(H * 0.12)); g.fillStyle = sc.mid; mid.forEach((t, x) => g.fillRect(x, t, 1, H - t));
+  // castelos em silhueta nos dois lados (simetria), com janelas acesas à noite
+  castle(g, Math.round(W * 0.14), mid[Math.round(W * 0.14)], sc, 1); castle(g, Math.round(W * 0.86), mid[Math.round(W * 0.86)], sc, -1);
+  const near = ridge(W, H, 23, Math.round(H * 0.03), Math.round(H * 0.09)); g.fillStyle = sc.near; near.forEach((t, x) => g.fillRect(x, t, 1, H - t));
+  const rt = seeded(41); for (let x = 2; x < W - 2; x += 3 + Math.floor(rt() * 5)) { if (rt() < 0.3) continue; const top = near[x]; const h = 4 + Math.floor(rt() * H * 0.06); for (let i = 0; i < h; i++) { const half = Math.floor((i * 2) / h + 0.5); g.fillRect(x - half, top - h + i, half * 2 + 1, 1); } }
+  // nuvens, vaga-lumes e pássaros (camadas animadas)
+  const rc = seeded(97 + W); clouds = []; if (sc.clouds) for (let i = 0; i < Math.max(3, Math.round(W / 50)); i++) clouds.push({ x: rc() * W, y: Math.floor(H * (0.08 + rc() * 0.3)), w: 10 + Math.floor(rc() * 16), v: 0.04 + rc() * 0.06 });
+  const rf = seeded(7); flies = []; if (sc.flies) for (let i = 0; i < 26; i++) flies.push({ x: rf() * W, y: H * (0.7 + rf() * 0.25), ph: rf() * 6.28, sp: 0.02 + rf() * 0.03 });
+  const rb = seeded(3); birds = []; if (sc.birds) for (let i = 0; i < 4; i++) birds.push({ x: rb() * W, y: H * (0.15 + rb() * 0.2), v: 0.12 + rb() * 0.08, ph: rb() * 2 });
+}
+function castle(g, cx, groundY, sc, dir) {
+  g.fillStyle = sc.mid; const w = Math.max(18, Math.round(W * 0.05)), h = Math.max(14, Math.round(H * 0.08));
+  g.fillRect(cx - w / 2, groundY - h, w, h + 2);
+  for (let x = cx - w / 2; x < cx + w / 2; x += 3) g.fillRect(x, groundY - h - 2, 2, 2);
+  const tx = cx + dir * (w / 2 - 3); g.fillRect(tx - 3, groundY - h - 10, 7, 10); for (let x = tx - 3; x < tx + 4; x += 3) g.fillRect(x, groundY - h - 12, 2, 2);
+  g.fillRect(tx, groundY - h - 16, 1, 4); g.fillStyle = "#8a1c12"; g.fillRect(tx + 1 * dir, groundY - h - 16, 3 * dir, 2);
+  if (sc.light) { g.fillStyle = sc.light; const r = seeded(cx); for (let i = 0; i < 5; i++) g.fillRect(Math.round(cx - w / 2 + 3 + r() * (w - 6)), Math.round(groundY - h + 3 + r() * (h - 6)), 1, 1); g.fillRect(tx, groundY - h - 6, 1, 1); }
+}
+function frame() {
+  const cv = document.getElementById("sky"); const g = cv.getContext("2d"); const sc = SCENES[S.period];
+  g.drawImage(base, 0, 0);
+  for (const s of stars) { const on = S.anim === "off" || Math.sin(tick * 0.05 + s.ph) > -0.6; if (!on) continue; g.fillStyle = sc.starColor; g.fillRect(s.x, s.y, 1, 1); if (s.big) { g.fillRect(s.x - 1, s.y, 3, 1); g.fillRect(s.x, s.y - 1, 1, 3); } }
+  if (sc.clouds) { g.fillStyle = sc.clouds; for (const c of clouds) { const x = Math.round(S.anim === "on" ? (c.x + tick * c.v) % (W + 40) - 20 : c.x); g.fillRect(x, c.y, c.w, 1); g.fillRect(x - 3, c.y + 1, c.w + 7, 1); g.fillRect(x + 3, c.y - 1, Math.max(2, c.w - 8), 1); } }
+  for (const b of birds) { const x = Math.round(S.anim === "on" ? (b.x + tick * b.v) % (W + 20) - 10 : b.x), y = Math.round(b.y + (S.anim === "on" ? Math.sin(tick * 0.05 + b.ph) * 2 : 0)); const up = S.anim === "on" && Math.floor(tick / 6 + b.ph) % 2; g.fillStyle = "#1e2a44"; g.fillRect(x, y, 1, 1); g.fillRect(x - 1, y - (up ? 1 : 0), 1, 1); g.fillRect(x + 1, y - (up ? 1 : 0), 1, 1); g.fillRect(x - 2, y - (up ? 2 : 0), 1, 1); g.fillRect(x + 2, y - (up ? 2 : 0), 1, 1); }
+  for (const f of flies) { const k = S.anim === "on" ? tick * f.sp : 0; const x = Math.round(f.x + Math.sin(k + f.ph) * 6), y = Math.round(f.y + Math.cos(k * 1.3 + f.ph) * 3); const glow = S.anim === "off" || Math.sin(tick * 0.08 + f.ph * 3) > 0; if (!glow) continue; g.fillStyle = "#f8f0a0"; g.fillRect(x, y, 1, 1); }
+  tick++;
+}
+let last = 0; function loop(t) { if (S.anim === "on" && t - last > 90) { last = t; frame(); } requestAnimationFrame(loop); }
+
+/* --------------------------------------------------------------- interface */
+const $ = (s) => document.querySelector(s);
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+function portrait(withPic) {
+  if (!withPic) return `<b aria-hidden="true">IV</b>`;
+  return `<canvas id="pp" width="16" height="16"></canvas>`;
+}
+function drawFace() { const c = $("#pp"); if (!c) return; const g = c.getContext("2d"); const p = ["................", "................", ".....######.....", "....########....", "...##SSSSSS##...", "...#SSSSSSSS#...", "...SSESSSSESS...", "...SSSSSSSSSS...", "...SSSSNNSSSS...", "....SSSSSSSS....", "....SSMMMMSS....", ".....SSSSSS.....", "...CCCSSSSCCC...", "..CCCCCCCCCCCC..", ".CCCCCCCCCCCCCC.", ".CCCCCCCCCCCCCC."]; const pal = { "#": "#3a2418", S: "#e0a878", E: "#2a1b14", N: "#c48860", M: "#9a4a3a", C: "#6b1420" }; g.fillStyle = "#45186a"; g.fillRect(0, 0, 16, 16); p.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } })); }
+function render() {
+  document.querySelectorAll(".proto .seg").forEach((sg) => sg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S[sg.dataset.k]))));
+  const ready = S.svc !== "ini"; const has = S.sit !== "sem"; const ok = has && S.sit !== "dano";
+  $("#buttons").innerHTML = `
+    <button class="mbtn primary" ${ready && ok ? "" : "disabled"} data-a="continuar">${IC.star}<span>Continuar Jornada</span><span></span></button>
+    <button class="mbtn" ${ready ? "" : "disabled"} data-a="nova">${IC.sword}<span>Nova Jornada</span><span></span></button>
+    <button class="mbtn" ${ready ? "" : "disabled"} data-a="jornadas">${IC.book}<span>Jornadas</span><span></span></button>
+    <button class="mbtn" data-a="sair">${IC.door}<span>Sair</span><span></span></button>`;
+  const card = $("#card");
+  if (!ready) { card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2><div class="body">Preparando o serviço local…</div>`; }
+  else if (!has) { card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Sua primeira Jornada</h2><div class="body">Ainda não há nenhuma Jornada. Em <b>Nova Jornada</b>, o jogo sorteia um Mundo, você cria o protagonista e o Narrador começa a história.</div>`; }
+  else {
+    card.className = "card";
+    card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2>
+      <div class="body"><div class="portrait"><span class="ring"></span><span class="ring2"></span><span class="pic">${portrait(S.sit === "retrato")}</span></div>
+        <div><div class="jn">A Garça de Três Penas</div><ul class="facts">
+          <li>${IC.person}<span><span class="sr">Personagem: </span>Ilsa de Vel</span></li>
+          <li>${IC.pin}<span><span class="sr">Lugar: </span>Taverna do Corvo Manco, Aldovar</span></li>
+          <li><span style="width:14px;display:inline-block">${PERIOD_ICONS.noite}</span><span>Noite · 12 de Alvorim, Ano 476</span></li>
+          <li style="font-style:italic">Em Cena: “A carta da garça”</li></ul></div></div>
+      ${S.sit === "dano" ? `<p class="warn">Esta Jornada não abriu: o arquivo está danificado. Abra <b>Jornadas</b> para restaurar um backup.</p>` : ""}
+      <div class="foot"><span>${IC.clock.replace('class="px"', 'class="px" style="width:12px;display:inline-block;vertical-align:-1px"')} Salvo há 2 horas</span><button data-a="jornadas">Ver todas</button></div>`;
+    drawFace();
+  }
+  const st = $("#status"); const map = { ok: ["ok", "Conectado", "Qwen 2.5 7B pronto"], sem: ["off", "Conectado", "nenhum modelo carregado"], ini: ["warn", "Iniciando o serviço", "aguarde"] };
+  const [s, a, b] = map[S.svc]; st.dataset.s = s; st.innerHTML = `<span class="led" aria-hidden="true"></span><span>${a}</span><small>${b}</small><span class="go">Modelos ▸</span>`;
+  st.setAttribute("aria-label", `${a}, ${b}. Abrir Modelos`);
+}
+function setup() {
+  ["#c1", "#c2", "#c3", "#c4"].forEach((s) => ($(s).innerHTML = CORNER));
+  $("#b1").innerHTML = bannerSVG("#6b1420", "#4a0d16"); $("#b2").innerHTML = bannerSVG("#45186a", "#2e1048");
+  $("#m1").innerHTML = MARK; $("#m2").innerHTML = MARK; $("#d1").innerHTML = IC.dia; $("#mid").innerHTML = IC.dia;
+  $("#ver").innerHTML = `${IC.star.replace("currentColor", "#f0c050")}<span>Henduran · Alpha 0.4</span>`;
+  $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v="${p}">${PLABEL[p]}</button>`).join("");
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "protobtn") { const box = $("#protobox"); box.hidden = !box.hidden; b.setAttribute("aria-expanded", String(!box.hidden)); b.textContent = box.hidden ? "Protótipo ▴" : "Protótipo ▾"; return; }
+  const sg = b.closest(".proto .seg"); if (sg) { S[sg.dataset.k] = b.dataset.v; if (sg.dataset.k === "period") { buildBase(); frame(); } if (sg.dataset.k === "anim") frame(); render(); return; }
+  if (b.id === "status") { toast("Abriria a tela Modelos"); return; }
+  const a = b.dataset.a; if (a) toast({ continuar: "Abriria a Jornada", nova: "Abriria o assistente de Nova Jornada", jornadas: "Abriria a lista de Jornadas", sair: "Fecharia o jogo" }[a]);
+});
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { buildBase(); frame(); }, 120); });
+setup(); buildBase(); frame(); render(); requestAnimationFrame(loop);
+</script>

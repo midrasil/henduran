@@ -32,7 +32,7 @@ Ajustes pequenos numa tela já aprovada (um botão, um texto, um espaçamento) n
 | Tela | Documento | Protótipo | Estado |
 |---|---|---|---|
 | Jornada (Cena, Aduran, Log, Arcos, Ficha) | `09-tela-da-jornada.md` | `prototipos/tela-da-jornada.html` | Aprovado em 2026-11-23 |
-| Menu inicial | `ANALISE-ESBOCOS.md` | — | Implementada antes desta regra; protótipo se houver redesenho |
+| Menu inicial (redesenho) | `11-menu-inicial.md` | `prototipos/menu-inicial.html` | Aprovado em 2026-11-23; implementação no backlog |
 | Nova Jornada (assistente) | `ANALISE-ESBOCOS.md` | — | Idem |
 | Jornadas (lista) | — | — | Idem |
 | Modelos (no nível do Caliope) | backlog | — | **A prototipar** antes do redesenho |
