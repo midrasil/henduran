@@ -8,7 +8,7 @@ Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
 - Resultado: **aprovado na primeira rodada**. Documento `docs/ui-ux/11-menu-inicial.md` e protótipo `docs/ui-ux/prototipos/menu-inicial.html`: título e botões no eixo central, cartão "Última Jornada" à direita sem deslocar o eixo, Modelos fora dos botões (indicador clicável no rodapé), paisagem pixel art em tela cheia com castelos dos dois lados e animação por período (nuvens, estrelas, pássaros, vaga-lumes), cantos dourados e estandartes. **Ainda não implementado**: o app continua com o menu anterior.
 - Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23).
 - Decisão do responsável: **por enquanto só prototipar e documentar** as telas existentes, uma por vez; a implementação vem depois.
-- Branch: `docs/prototipo-menu` (PR aberto contra `main`).
+- Branch: `docs/prototipo-menu`, PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.
 
 ## Decisões vigentes
 

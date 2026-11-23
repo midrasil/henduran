@@ -226,3 +226,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: aprovado na primeira rodada. Paisagem em tela cheia com o céu de `sky.ts`, castelos simétricos com janelas acesas, animação por período a cerca de 10 quadros por segundo e parada com *reduced motion*; cantos dourados, estandartes, rosa dos ventos dos dois lados do título; cartão com retrato, data do calendário e Cena em andamento; indicador do serviço e do modelo no rodapé abrindo Modelos.
 - Pendência para a implementação: o resumo da Jornada (`GET /journeys`) precisa trazer retrato, data no calendário do Mundo e título da Cena em andamento. Configurações e Créditos entram quando existirem.
 - Arquivos: `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/context/handoff.md`.
+- Entrega: PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.
