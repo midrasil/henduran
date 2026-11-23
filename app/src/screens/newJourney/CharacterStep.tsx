@@ -3,7 +3,16 @@ import type { CreationRules, DerivedPreview } from "../../api/journeys";
 import { HELP } from "../../lib/copy";
 import { describeCounts, errorsByField, joinList } from "../../lib/format";
 import { Badge, Button, FieldGroup, Panel, PixelIcon, RadioGroup, Select, TextArea, TextField, TrailBoxes } from "../../ui";
-import { attributeCounts, countStatus, distinctDesc, fieldId, overused, type CharacterForm, type CountStatus } from "./model";
+import {
+  attributeCounts,
+  countStatus,
+  distinctDesc,
+  fieldId,
+  overused,
+  type CharacterForm,
+  type CountStatus,
+  type OptionalField,
+} from "./model";
 
 const id = (path: string) => fieldId("c", path);
 
@@ -26,7 +35,7 @@ export interface CharacterStepProps {
 
 /** Seções do resumo de pendências e os campos de cada uma. */
 const SECTIONS: { label: string; match: (field: string) => boolean }[] = [
-  { label: "Identidade", match: (f) => ["name", "concept", "appearance", "history"].includes(f) },
+  { label: "Identidade", match: (f) => ["name", "concept", "appearance", "history", "age", "height", "origin", "personality"].includes(f) },
   { label: "Objetivos", match: (f) => f === "ambition" || f === "desire" },
   { label: "Convicções", match: (f) => f.startsWith("convictions") },
   { label: "Atributos", match: (f) => f.startsWith("attributes") },
@@ -63,7 +72,7 @@ export function CharacterStep({
     return visible && list?.length ? list.join(" ") : undefined;
   };
   const set = (patch: Partial<CharacterForm>) => onChange({ ...form, ...patch });
-  const text = (key: "name" | "concept" | "appearance" | "history" | "ambition" | "desire") => ({
+  const text = (key: "name" | "concept" | "appearance" | "history" | "ambition" | "desire" | OptionalField) => ({
     id: id(key),
     value: form[key],
     error: err(key),
@@ -129,6 +138,14 @@ export function CharacterStep({
           <TextArea label="Aparência" hint={HELP.appearance} rows={3} {...text("appearance")} />
           <TextArea label="História" hint={HELP.history} rows={3} {...text("history")} />
         </div>
+        <FieldGroup legend="Descrição (opcional)" hint={HELP.optionalDescription}>
+          <div className="form-grid form-grid--3">
+            <TextField label="Idade (opcional)" autoComplete="off" maxLength={rules.text_limits.age} {...text("age")} />
+            <TextField label="Altura (opcional)" autoComplete="off" maxLength={rules.text_limits.height} {...text("height")} />
+            <TextField label="Origem (opcional)" autoComplete="off" maxLength={rules.text_limits.origin} {...text("origin")} />
+          </div>
+          <TextArea label="Personalidade (opcional)" rows={2} maxLength={rules.text_limits.personality} {...text("personality")} />
+        </FieldGroup>
       </Panel>
 
       <Panel title="Ambição e Desejo" titleLevel={4}>

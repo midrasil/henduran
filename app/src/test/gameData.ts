@@ -330,7 +330,11 @@ export const RULES: CreationRules = {
     "conviction_text": 300,
     "conviction_pillar": 300,
     "appearance": 4000,
-    "history": 4000
+    "history": 4000,
+    "age": 100,
+    "height": 100,
+    "origin": 200,
+    "personality": 1000
   },
   "fields": [
     "name",
@@ -342,7 +346,11 @@ export const RULES: CreationRules = {
     "convictions",
     "attributes",
     "skill_profile",
-    "skills"
+    "skills",
+    "age",
+    "height",
+    "origin",
+    "personality"
   ]
 };
 

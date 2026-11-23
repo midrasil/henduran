@@ -12,7 +12,7 @@ import logging
 import threading
 from typing import Any
 
-from henduran.services.narration import chat_view
+from henduran.services.narration import chat_view, journey_view
 from henduran.storage.errors import StorageError
 from henduran.storage.journeys import JourneyStore, OpenJourney
 from henduran.storage.worlds import checked_id
@@ -70,7 +70,7 @@ class JourneySession:
         return journey.id
 
     def snapshot(self) -> dict[str, Any] | None:
-        """Resumo, personagem com derivados, conteúdo do Mundo e ``mode``/``scene`` da Jornada aberta (ou ``None``)."""
+        """Resumo, personagem, Mundo, ``mode``/``scene``/``proposal``, ``current_place`` e ``calendar`` (ou ``None``)."""
         with self._lock:
             journey = self._current
             if journey is None or journey.closed:
@@ -85,6 +85,7 @@ class JourneySession:
                     "content": journey.world_content(),
                 },
                 **chat_view(journey),
+                **journey_view(journey),
             }
 
 

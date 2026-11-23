@@ -58,10 +58,11 @@ _BACKUP_NAME_RE = re.compile(r"^journey-v\d+-\d{8}-\d{6}(?:-\d+)?\.db$")
 _DAMAGE_CODES = ("banco_danificado", "banco_ausente", "banco_vazio", "sem_resumo")
 _UNSET: Any = object()
 # Campos do resumo devolvidos por OpenJourney.summary() (rules_version existe a partir da migração 0002;
-# start_place_id, da 0003).
+# start_place_id, da 0003; current_place_id e a data no calendário, da 0004).
 _SUMMARY_KEYS = (
     "id", "name", "character_name", "location", "day_period", "world_id", "world_version",
-    "created_at", "last_saved_at", "rules_version", "start_place_id",
+    "created_at", "last_saved_at", "rules_version", "start_place_id", "current_place_id",
+    "calendar_year", "calendar_month", "calendar_day",
 )
 
 # Uma Jornada aberta por vez neste processo (entre todas as instâncias de JourneyStore).
@@ -222,6 +223,48 @@ class OpenJourney:
 
     def __exit__(self, *exc: object) -> None:
         self.close()
+
+
+def _backfill_from_world(db: Database, world: Any) -> None:
+    """Completa, com o Mundo anexado, o que a migração ``0004`` não tinha como saber.
+
+    - Data: Jornadas sem data recebem o dia 1 do mês 1 do ano do calendário (ADR-076, item 16),
+      e os eventos retroativos sem data recebem a mesma.
+    - Lugar atual: Jornadas anteriores ao ``start_place_id`` recebem o lugar do Mundo com o
+      nome do ``location`` (se houver um).
+    Não faz nada se não faltar nada (nenhuma escrita).
+    """
+    columns = {r["name"] for r in db.query_all("PRAGMA table_info(journey_meta)")}
+    if "calendar_year" not in columns:  # banco ainda sem a 0004 (só em testes de migração)
+        return
+    meta = db.query_one("SELECT calendar_year, current_place_id, start_place_id, location FROM journey_meta")
+    if meta is None or not isinstance(world, dict):
+        return
+    calendar = world.get("calendar") if isinstance(world.get("calendar"), dict) else None
+    year = calendar.get("year") if calendar else None
+    need_date = meta["calendar_year"] is None and isinstance(year, int) and year >= 1 and calendar.get("months")
+    place_id = None
+    if meta["current_place_id"] is None:
+        if meta["start_place_id"]:
+            place_id = meta["start_place_id"]
+        else:
+            place = next((p for p in world.get("places", []) if p.get("name") == meta["location"]), None)
+            place_id = None if place is None else place.get("id")
+    if not need_date and place_id is None:
+        return
+    with db.transaction() as tx:
+        if need_date:
+            tx.execute(
+                "UPDATE journey_meta SET calendar_year = ?, calendar_month = 1, calendar_day = 1 "
+                "WHERE calendar_year IS NULL",
+                (year,),
+            )
+            tx.execute(
+                "UPDATE events SET calendar_year = ?, calendar_month = 1, calendar_day = 1 WHERE calendar_year IS NULL",
+                (year,),
+            )
+        if place_id is not None:
+            tx.execute("UPDATE journey_meta SET current_place_id = ? WHERE current_place_id IS NULL", (place_id,))
 
 
 class JourneyStore:
@@ -475,7 +518,9 @@ class JourneyStore:
             )
             if found is None:
                 raise StorageError("versao_ausente", f"O Mundo não tem a versão {world_version} usada pela Jornada.")
-            return OpenJourney(jid, db, lock, world_id, int(world_version))
+            journey = OpenJourney(jid, db, lock, world_id, int(world_version))
+            _backfill_from_world(db, journey.world_content())
+            return journey
         except BaseException:
             if db is not None:
                 db.close()

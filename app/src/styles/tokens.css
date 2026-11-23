@@ -72,6 +72,24 @@
  * @contrast --color-input-border-on-parchment on --color-parchment min 3
  * @contrast --color-progress-fill on --color-progress-track min 3
  * @contrast --color-accent on --color-secondary min 3
+ *
+ * Tela da Jornada (docs/ui-ux/09-tela-da-jornada.md): rótulos das trilhas,
+ * selo de lugar novo, margem do cronista e texto sobre o céu da barra
+ * @contrast --color-life-text on --color-surface min 4.5
+ * @contrast --color-life-text on --color-bg min 4.5
+ * @contrast --color-will-text on --color-surface min 4.5
+ * @contrast --color-will-text on --color-bg min 4.5
+ * @contrast --color-life-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-life-text-on-parchment on --color-parchment-light min 4.5
+ * @contrast --color-will-text-on-parchment on --color-parchment min 4.5
+ * @contrast --color-will-text-on-parchment on --color-parchment-light min 4.5
+ * @contrast --color-new-place on --color-input-bg min 4.5
+ * @contrast --color-margin-voice on --color-surface min 4.5
+ * @contrast --color-margin-voice on --color-bg min 4.5
+ * @contrast --color-text on --color-sky-scrim min 4.5
+ * @contrast --color-accent-light on --color-sky-scrim min 4.5
+ * @contrast --color-ink-on-parchment-accent on --color-parchment min 4.5
+ * @contrast --color-ink-on-parchment-accent on --color-parchment-deep min 4.5
  */
 
 :root {
@@ -109,6 +127,10 @@
   --px-amber-300: #f5b04a;
   --px-cyan-300: #6ee7ff;
   --px-blue-700: #1f4fa8;
+  --px-blue-800: #1c3f86;
+  --px-blue-300: #8fc0ff;
+  --px-red-400: #ff8a70;
+  --px-purple-200: #c49be3;
 
   /* ------------------------------------------------- cores semânticas */
   --color-bg: var(--px-ink-900);
@@ -176,6 +198,26 @@
   --color-badge-warn-bg: var(--px-amber-300);
   --color-badge-danger-bg: var(--px-red-700);
   --color-badge-info-bg: var(--px-purple-600);
+
+  /* ---------------------------------------------- tela da Jornada (09) */
+  /* Vida é vermelha (coração) e Vontade é azul (chama); os ícones têm paleta própria em PixelArt.tsx. */
+  --color-life-text: var(--px-red-400);
+  --color-will-text: var(--px-blue-300);
+  --color-life-text-on-parchment: var(--px-red-800);
+  --color-will-text-on-parchment: var(--px-blue-800);
+  --color-new-place: var(--px-green-300);
+  /* Margem do cronista (Aduran e Log): roxo claro sobre o escuro. */
+  --color-margin-voice: var(--px-purple-200);
+  --color-margin-rule: var(--px-purple-300);
+  /* Títulos e destaques em pergaminho (capitular, rótulos do Narrador). */
+  --color-ink-on-parchment-accent: var(--px-red-800);
+  /* Fundo translúcido dos controles sobre o céu; o par de contraste usa a cor opaca. */
+  --color-sky-scrim: var(--px-ink-950);
+  /* Barras de rolagem em pixel: douradas no escuro, marrons no pergaminho, roxas na margem. */
+  --scrollbar-track: var(--px-ink-950);
+  --scrollbar-thumb: var(--px-gold-600);
+  --scrollbar-hi: var(--px-gold-200);
+  --scrollbar-lo: var(--px-gold-700);
 
   /* ------------------------------------------------------- tipografia */
   --font-pixel: "Pixelify Sans", "Segoe UI", system-ui, sans-serif;

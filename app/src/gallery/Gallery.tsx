@@ -5,19 +5,25 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import "../screens/journey/JourneyScreen.css";
 import tokensCss from "../styles/tokens.css?raw";
+import { SceneCard } from "../screens/journey/ArcsColumn";
+import { ProposalCard } from "../screens/journey/ProposalCard";
 import {
   Badge,
   Button,
   ChatBubble,
+  Composer,
   Dialog,
   FieldGroup,
   ListCard,
   Panel,
+  PeriodIcon,
   PeriodLabel,
   PERIOD_LABEL,
   PERIODS,
   PixelIcon,
+  Portrait,
   ProgressBar,
   RadioGroup,
   Select,
@@ -28,9 +34,11 @@ import {
   Tabs,
   TextArea,
   TextField,
+  Track,
   TrailBoxes,
   type DayPeriod,
 } from "../ui";
+import type { SceneProposal } from "../api/journeys";
 import { contrastRatio, parseContrastPairs, parseCustomProperties } from "../ui/contrast";
 
 const SECTIONS = [
@@ -49,6 +57,7 @@ const SECTIONS = [
   { id: "chat", title: "Balões de chat" },
   { id: "dialogo", title: "Diálogo" },
   { id: "ceu", title: "Céu (dia e noite)" },
+  { id: "jornada", title: "Tela da Jornada" },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
@@ -656,6 +665,97 @@ function Sky() {
 
 /* --------------------------------------------------------------- página */
 
+/* -------------------------------------------------------- tela da Jornada */
+
+const PROPOSAL: SceneProposal = {
+  id: 1,
+  status: "pendente",
+  title: "Neblina no Porto Velho",
+  place: { kind: "novo", id: null, name: "Becos do Porto Velho", type: "becos", description: "Vielas estreitas atrás da cordoaria." },
+  motive: "Seguir os homens de capa cinzenta quando deixarem o Corvo Manco",
+  participants: ["Dois homens de capa cinzenta"],
+  created_at: null,
+};
+
+const DAMAGE_CASES: { label: string; sup: number; agr: number }[] = [
+  { label: "Nenhum dano", sup: 0, agr: 0 },
+  { label: "Superficial", sup: 2, agr: 0 },
+  { label: "Misto", sup: 2, agr: 1 },
+  { label: "Trilha cheia", sup: 5, agr: 1 },
+  { label: "Toda agravada", sup: 0, agr: 6 },
+];
+
+function JourneyParts() {
+  const [draft, setDraft] = useState("");
+  const noop = () => undefined;
+  return (
+    <Section id="jornada" title="Tela da Jornada">
+      <Row label="Ícones dos períodos (pixel art, 10x10)">
+        {PERIODS.map((p) => (
+          <span key={p} className="g-stack">
+            <PeriodIcon period={p} size={40} />
+            <span>{PERIOD_LABEL[p]}</span>
+          </span>
+        ))}
+      </Row>
+      <div className="g-two">
+        <Panel title="Vida e Vontade: os 5 casos de dano">
+          {DAMAGE_CASES.map((c) => (
+            <div key={c.label} className="g-stack">
+              <p className="hint">{c.label}</p>
+              <Track label="Vida" kind="heart" size={6} superficial={c.sup} agravada={c.agr} />
+              <Track label="Vontade" kind="flame" size={6} superficial={c.sup} agravada={c.agr} />
+            </div>
+          ))}
+        </Panel>
+        <Panel variant="parchment" title="Sobre pergaminho (ficha completa)">
+          <Track label="Vida" kind="heart" size={6} superficial={2} agravada={1} />
+          <Track label="Vontade" kind="flame" size={7} superficial={3} />
+        </Panel>
+      </div>
+      <Row label="Retrato (sem imagem: iniciais)">
+        <Portrait name="Ilsa de Vel" src={null} size="sm" />
+        <Portrait name="Ilsa de Vel" src={null} onClick={noop} />
+        <Portrait name="Bram" src={null} size="lg" />
+      </Row>
+      <Row label="Card de Cena (em andamento, encerrada, mostrada no centro)">
+        <div className="col col--arcs g-arcs">
+          <ol className="arc__scenes">
+            <li>
+              <SceneCard scene={{ id: 1, title: "Os portões de Norilunde", day_period: "manha", place_name: "Norilunde", status: "encerrada" }} current={false} onSelect={noop} />
+            </li>
+            <li>
+              <SceneCard scene={{ id: 2, title: "Costas para o cais", day_period: "entardecer", place_name: "Cais", status: "encerrada" }} current onSelect={noop} />
+            </li>
+            <li>
+              <SceneCard scene={{ id: 3, title: "A carta da garça", day_period: "noite", place_name: "Taverna", status: "aberta" }} current={false} onSelect={noop} />
+            </li>
+          </ol>
+        </div>
+      </Row>
+      <div className="g-two">
+        <div className="stage stage--page surface-parchment g-stage">
+          <div className="stage__composer">
+            <Composer id="g-composer-1" label="Mensagem (pergaminho)" value={draft} onChange={setDraft} onSubmit={() => setDraft("")} placeholder="O que Ilsa faz?" />
+          </div>
+        </div>
+        <div className="stage stage--margin surface-dark surface-margin g-stage">
+          <div className="stage__composer">
+            <Composer id="g-composer-2" label="Mensagem (margem, respondendo)" value="" onChange={noop} onSubmit={noop} streaming onStop={noop} placeholder="Pergunte ao Aduran…" />
+          </div>
+          <div className="stage__composer">
+            <Composer id="g-composer-3" label="Mensagem (desabilitada)" value="" onChange={noop} onSubmit={noop} disabled placeholder="Você poderá escrever depois que o Narrador abrir a Cena." />
+          </div>
+        </div>
+      </div>
+      <Row label="Cartão de proposta de Cena">
+        <ProposalCard proposal={PROPOSAL} onAccept={noop} onReroll={noop} onDecline={noop} />
+        <ProposalCard proposal={{ ...PROPOSAL, id: 2, title: "Outra Cena", place: { kind: "conhecido", id: "l", name: "Norilunde", type: "cidade", description: "" } }} onAccept={noop} onReroll={noop} onDecline={noop} pending="reroll" />
+      </Row>
+    </Section>
+  );
+}
+
 export function Gallery() {
   const [reduced, setReduced] = useState(false);
   const [scale, setScale] = useState("1");
@@ -722,6 +822,7 @@ export function Gallery() {
         <Chat />
         <DialogDemo />
         <Sky />
+        <JourneyParts />
       </main>
     </div>
   );

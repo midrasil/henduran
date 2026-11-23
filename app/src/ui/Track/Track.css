@@ -1,0 +1,111 @@
+/* Trilha em ícones soltos (sem caixa de fundo): coração vermelho (Vida) e chama azul (Vontade). */
+.track {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  --track-label: var(--color-life-text);
+}
+
+.track--flame {
+  --track-label: var(--color-will-text);
+}
+
+.surface-parchment .track,
+.track.track--on-parchment {
+  --track-label: var(--color-life-text-on-parchment);
+}
+
+.surface-parchment .track--flame,
+.track--flame.track--on-parchment {
+  --track-label: var(--color-will-text-on-parchment);
+}
+
+.track__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-pixel);
+}
+
+.track__label {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--track-label);
+}
+
+.track__count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-sm);
+  color: var(--fg);
+}
+
+.track__cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 30px;
+}
+
+.track__cell {
+  display: grid;
+  place-items: end center;
+  height: 30px;
+}
+
+.track__cell .pixel-art {
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+/* Chamas livres tremulam em degraus; sem movimento com prefers-reduced-motion (base.css). */
+.track--flame .track__cell--livre:nth-child(odd) .pixel-art {
+  animation: track-flick 1.6s steps(2) infinite;
+}
+
+@keyframes track-flick {
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track__cell .pixel-art {
+    animation: none !important;
+  }
+}
+
+.motion-reduced .track__cell .pixel-art {
+  animation: none !important;
+}
+
+.track__unknown {
+  color: var(--fg-muted);
+}
+
+.track__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 16px;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--fg-muted);
+}
+
+.track__legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.track__status {
+  padding: 0 6px;
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

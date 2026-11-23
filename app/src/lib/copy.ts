@@ -6,6 +6,7 @@ export const HELP = {
   concept: "Quem é o personagem em poucas palavras: origem, ocupação, personalidade, o que o move.",
   appearance: "Como os outros o veem: traços, roupas, marcas.",
   history: "De onde ele vem e o que viveu até aqui.",
+  optionalDescription: "Idade, altura, origem e personalidade são opcionais e não têm efeito de regra; ajudam o Narrador a descrever o personagem.",
   ambition: "A Ambição é o que o personagem almeja a longo prazo. Por exemplo: vingar o irmão.",
   desire: "O Desejo é o que ele quer alcançar a curto prazo, agora. Por exemplo: concluir o contrato de mercenário atual.",
   conviction:

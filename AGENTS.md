@@ -39,6 +39,7 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 5. Se a tarefa exigir decisão de produto/regra ainda em aberto, **não escolher silenciosamente**: registrar alternativas e pedir aprovação.
 6. Atualizar documentação quando uma decisão aprovada alterar comportamento ou arquitetura.
 7. Preservar assets originais e evitar reestruturações sem necessidade.
+8. **Telas novas ou redesenhos grandes só são implementados a partir de um protótipo navegável aprovado** (`docs/ui-ux/10-prototipagem.md`); o protótipo fica em `docs/ui-ux/prototipos/` e não é copiado para o app.
 
 ## Memória operacional da esteira
 

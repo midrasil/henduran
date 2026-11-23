@@ -1,14 +1,17 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `narrador-cena-inicial` (backend).
+Atualizado em 2026-11-23 após a tarefa `chat-da-jornada` (entrega 3a: tela da Jornada).
 
 ## Estado
 
-- Tarefa: backend do ADR-076 (Narrador com contexto, Cena inicial e ciclo de Cena).
-- Resultado: migração `journey/0003_scenes_messages.sql` (`start_place_id`, `scenes`, `messages`); período inicial **sorteado** na criação; pacote `backend/henduran/narrative/` (períodos, tons, contexto do Aduran e do Narrador da Cena com as 30 mensagens recentes e os resumos das 5 últimas Cenas, validação estrita da proposta e do resumo com até 2 novas tentativas); `services/narration.py`; rotas `GET /journeys/current/messages`, `POST /journeys/current/opening` (SSE, evento `scene` antes dos tokens), `POST /journeys/current/messages` (SSE), `POST /journeys/current/scene/close`; uma geração por Jornada (`geracao_em_andamento`); `snapshot()` traz `mode` e `scene`. A Cena e a abertura são gravadas juntas só no fim da narração. Mensagem antes da abertura: 409 `abertura_pendente`. `FakeNarratorProvider.complete` com JSON configurável.
-- Testes: backend 565 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 70 dos arquivos novos e alterados); frontend 222 de 222 depois de subir o limite do `NewJourneyWizard.test.tsx` para 20 s (estourava 5 s nesta máquina). Roteiro manual com `HENDURAN_PROVIDER=fake` e curl executado pelo dev.
-- **Não testado com modelo local real**: depende da interface.
-- Branch: `feat/narrador-cena-inicial`, PR [#22](https://github.com/midrasil/henduran/pull/22) aberto contra `main`.
+- Tarefa: nova tela da Jornada, desenhada por protótipo navegável (6 rodadas) e implementada em duas partes (backend e frontend).
+- Resultado:
+  - **Documentos:** `docs/ui-ux/09-tela-da-jornada.md` (aprovado), `docs/ui-ux/10-prototipagem.md` (toda tela nova passa por protótipo aprovado; regra 8 do `AGENTS.md`), protótipo em `docs/ui-ux/prototipos/tela-da-jornada.html`, ADR-076 itens 12 a 18.
+  - **Backend (migração journey 0004):** título e arco das Cenas, lugares da Jornada e lugar atual, data no calendário do Mundo (sorteada na criação), proposta de Cena pelo Aduran com a marcação `[[propor_cena]]` (pendente, aceitar, pedir outra, recusar), Aduran durante a Cena (canal Fora de Cena, fora do contexto da Cena), regenerar e continuar, renomear Cena, Log (`events`), arcos, leitura de Cena, lugares com caminho, retrato (original em `assets\`, até 20 MB, PNG/JPEG/WebP pelos bytes) e campos opcionais da descrição. `HENDURAN_FAKE_PROPOSE=1` faz o provedor falso propor Cenas.
+  - **Frontend:** tela sem abas, com barra superior com céu do período e data, coluna de Arcos recolhível, centro em pergaminho (Cena) ou margem do cronista (Aduran e Log), cartão de proposta, ações das mensagens no hover, campo que cresce, ficha com retrato e trilhas em ícones, ficha completa em abas, recorte do retrato, Mundo e lugares no ⚙, abas em telas estreitas; campos opcionais no assistente; galeria atualizada. Removidos `JourneyTabs`, `ChatView` e `useChat`. CSP com `blob:` em `img-src` para o retrato.
+- Testes: backend 590 passaram e 1 pulado (dev, suíte completa; o planejador reexecutou 79 dos arquivos novos e alterados); frontend 275 de 275 e typecheck sem erros (o planejador rodou 3 vezes seguidas). O dev testou o fluxo inteiro no app real com o provedor falso (capturas no scratchpad da sessão).
+- **Não testado com modelo local real** (marcação de proposta, instruções novas do Aduran).
+- Branch: `feat/chat-da-jornada`, PR [#23](https://github.com/midrasil/henduran/pull/23) aberto contra `main`.
 
 ## Decisões vigentes
 
@@ -35,7 +38,9 @@ Atualizado em 2026-11-23 após a tarefa `narrador-cena-inicial` (backend).
 
 ## Pendências relevantes
 
-- **A interface ainda não usa as rotas do Narrador**: o Chat continua solto. Próxima etapa (entrega 3 do ADR-076).
+- Testar com modelo local real: se o Aduran usa a marcação `[[propor_cena]]` só quando a ação pede Cena e se não resolve ações incertas; revisar as instruções em `backend/henduran/narrative/context.py`.
+- A rolagem da coluna da Ficha apareceu fora do topo numa captura do dev, sem reprodução (provável efeito da emulação de largura); ficou só `overflow-anchor: none`. Reavaliar se acontecer no uso real.
+- Backups da Jornada não incluem `assets\` (retrato); o backend não expõe o estado das trilhas nem o máximo de Fraturas (a interface usa `FRACTURE_SLOTS = 2`). Ambos no backlog.
 - Em aberto no ADR-076: formato da proposta de encerramento pelo Narrador no chat, Cena seguida de outra sem passar pelo Aduran, quando trocar mensagens recentes por resumos. Passagem de tempo em períodos vai para ADR próprio (backlog).
 - Pequenos ajustes da interface: a Jornada só guarda o local atual, então a aba Mundo marca "Você está aqui" em vez do lugar inicial (gravar o id do lugar inicial); o máximo de Fraturas não vem no catálogo de regras; o passo 1 fica longo com mundos grandes (seções recolhíveis). Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200% e reflow a 320 px.
 - O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
@@ -59,4 +64,4 @@ Atualizado em 2026-11-23 após a tarefa `narrador-cena-inicial` (backend).
 
 ## Próximo passo recomendado
 
-⭐ Interface do ADR-076 (entrega 3): Chat com o histórico salvo, abertura em *streaming* com "Gerar abertura", digitação e envio desabilitados até a abertura, cabeçalho da Cena e botão de encerrar, painel do Aduran recolhido Fora de Cena, cancelar e regenerar; depois, testar com modelo local real (proposta JSON, fidelidade ao lugar, período e tom, resumo). Em seguida, Reserva de Dados (ADR-006) e o ADR de passagem de tempo.
+⭐ Testar a tela nova com um modelo local real e ajustar as instruções do Aduran e do Narrador conforme o comportamento. Depois: o backend expor o estado das trilhas e o máximo de Fraturas, `assets\` nos backups, e a Reserva de Dados com confirmação (ADR-006). Em paralelo: ADR de passagem de tempo e prototipar a tela Modelos (`docs/ui-ux/10-prototipagem.md`).

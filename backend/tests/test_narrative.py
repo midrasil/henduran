@@ -69,7 +69,7 @@ def test_jornada_so_com_0001_migra_ate_0003(env, monkeypatch):
         journey.update_summary(location="Vila")
     monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", original)
     with journeys.open_journey(jid) as journey:
-        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == 3
+        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == mig_mod.latest_version("journey")
         summary = journey.summary()
         assert summary["start_place_id"] is None and summary["location"] == "Vila"
         assert store.open_scene(journey.db) is None and store.all_messages(journey.db) == []
@@ -84,7 +84,7 @@ def test_banco_novo_tem_cenas_e_mensagens(env):
     with journeys.open_journey(jid) as journey:
         tables = {r["name"] for r in journey.db.query_all("SELECT name FROM sqlite_master WHERE type = 'table'")}
         assert {"scenes", "messages"} <= tables
-        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == 3
+        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == mig_mod.latest_version("journey")
 
 
 def test_restricoes_de_cenas_e_mensagens(env):
@@ -143,6 +143,9 @@ def test_sorteios_tem_peso_igual():
     [
         "não é json",
         "[]",
+        '{"motive": "x", "participants": []}',  # sem título
+        '{"title": "", "motive": "x", "participants": []}',
+        json.dumps({"title": "t" * 81, "motive": "x", "participants": []}),
         '{"motive": "x"}',
         '{"motive": "", "participants": []}',
         '{"motive": "   ", "participants": []}',
@@ -163,9 +166,13 @@ def test_proposta_de_cena_invalida(raw):
 
 
 def test_proposta_de_cena_valida():
-    p = engine.parse_scene_proposal('```json\n{"motive": "  Uma fuga  ", "participants": [" Ana ", "Guarda"]}\n```')
-    assert p.motive == "Uma fuga" and p.participants == ("Ana", "Guarda")
-    assert engine.parse_scene_proposal(json.dumps({"motive": "m" * 300, "participants": ["p" * 80] * 6})).motive
+    p = engine.parse_scene_proposal(
+        '```json\n{"title": " A  fuga ", "motive": "  Uma fuga  ", "participants": [" Ana ", "Guarda"]}\n```'
+    )
+    assert p.motive == "Uma fuga" and p.participants == ("Ana", "Guarda") and p.title == "A fuga"
+    assert engine.parse_scene_proposal(
+        json.dumps({"title": "t" * 80, "motive": "m" * 300, "participants": ["p" * 80] * 6})
+    ).motive
     assert engine.parse_scene_summary('{"summary": " fim "}') == "fim"
     for raw in ('{"summary": ""}', json.dumps({"summary": "s" * 2001}), '{"summary": "a", "x": 1}', "{}"):
         with pytest.raises(engine.InvalidProposal):
@@ -173,7 +180,9 @@ def test_proposta_de_cena_valida():
 
 
 async def test_novas_tentativas_e_recusa():
-    provider = FakeNarratorProvider(delay=0, completions=["lixo", '{"motive": ""}', '{"motive": "ok", "participants": []}'])
+    provider = FakeNarratorProvider(
+        delay=0, completions=["lixo", '{"motive": ""}', '{"title": "T", "motive": "ok", "participants": []}']
+    )
 
     async def complete(messages):
         return await provider.complete(messages, json_schema=engine.SCENE_PROPOSAL_SCHEMA)

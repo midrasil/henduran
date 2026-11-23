@@ -51,6 +51,8 @@ Passos do esboço: **Mundo, Protagonista, Jornada, Configurações, Revisão.** 
 
 ### 2.3 Jornada em andamento
 
+> **Substituído em 2026-11-23** por `docs/ui-ux/09-tela-da-jornada.md`: sem barra de abas superior, coluna de Cenas, ficha resumida com Objetivos, botão ⚙ flutuante e painel do Aduran com Chat e Log. A tabela abaixo fica como registro do esboço.
+
 Esboço: barra de abas superior, painel do personagem à esquerda, chat no centro, painel de contexto à direita, barra de status embaixo.
 
 | Elemento | MVP | Observação |
@@ -81,6 +83,8 @@ Esboço: barra de abas superior, painel do personagem à esquerda, chat no centr
 | Ilustração da cena e minipaisagem lateral | Substituídas | Ambiente procedural de dia e noite (`07-ambiente-dia-noite.md`). |
 
 ## 3. Decisão: apresentação do Narrador Geral (opção C)
+
+> **Atualizado em 2026-11-23:** os itens 1, 2 e 4 abaixo foram aprovados e detalhados em `docs/ui-ux/09-tela-da-jornada.md` (Fora de Cena, o chat do Aduran ocupa o centro; Em Cena, painel flutuante com Chat e Log). O histórico do painel é único, o do canal Fora de Cena.
 
 **Decidido pelo responsável (2026-11-22):** as duas formas, ou seja, **chat próprio recolhido no canto inferior direito** e **acesso por `@` a partir do chat da Cena.**
 

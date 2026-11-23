@@ -3,6 +3,8 @@
 - Escuta somente em ``127.0.0.1`` (ADR-072).
 - Exige o token de acesso em ``HENDURAN_TOKEN``; sem ele, recusa iniciar.
 - ``HENDURAN_PROVIDER=fake|local`` escolhe o provedor do Narrador (padrão ``local``).
+  Com ``fake``, ``HENDURAN_FAKE_PROPOSE=1`` faz toda resposta terminar com a marcação
+  ``[[propor_cena]]`` (para testar à mão a proposta de Cena do Aduran).
 - ``HENDURAN_DATA_DIR`` troca a pasta de dados (padrão ``%LOCALAPPDATA%\\Henduran``).
 - Quando o servidor está pronto, imprime no stdout uma linha JSON
   ``{"event": "ready", "port": N}``, lida pelo shell Tauri.
@@ -40,6 +42,7 @@ from henduran.storage import JourneyStore, WorldStore
 HOST = "127.0.0.1"
 TOKEN_ENV = "HENDURAN_TOKEN"
 PROVIDER_ENV = "HENDURAN_PROVIDER"
+FAKE_PROPOSE_ENV = "HENDURAN_FAKE_PROPOSE"
 PROVIDERS = ("fake", "local")
 EXIT_MISSING_TOKEN = 2
 EXIT_BAD_PROVIDER = 3
@@ -78,7 +81,10 @@ def build_components(
     settings = SettingsStore(database, legacy_file=paths.settings_file)
     engine = EngineManager(paths, settings)
     provider: NarratorProvider
-    provider = FakeNarratorProvider() if provider_name == "fake" else LocalLlamaProvider(engine)
+    if provider_name == "fake":
+        provider = FakeNarratorProvider(propose=os.environ.get(FAKE_PROPOSE_ENV, "") == "1")
+    else:
+        provider = LocalLlamaProvider(engine)
     hub = ModelHub(paths, settings, engine=engine)
     worlds = WorldStore(paths)
     journeys = JourneyStore(paths, worlds, settings)

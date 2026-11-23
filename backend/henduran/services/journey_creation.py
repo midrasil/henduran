@@ -9,8 +9,10 @@ Etapas:
 3. ``criar_jornada``: cria a Jornada fixada no Mundo e, **na mesma transação do
    ``journey.db``**, grava o personagem, a Ambição e o Desejo ativos e o resumo
    (``character_name``, ``location`` = nome do lugar inicial, ``start_place_id``
-   = id do lugar inicial, ``day_period`` sorteado pelo motor entre os períodos do
-   dia, com peso igual (ADR-076, item 9), ``last_saved_at`` e ``rules_version``).
+   = id do lugar inicial, ``current_place_id`` = o mesmo lugar, ``day_period``
+   sorteado pelo motor entre os períodos do dia, com peso igual (ADR-076, item 9),
+   a data no calendário do Mundo (``calendar_year`` = ano do calendário; mês e dia
+   sorteados pelo motor, ADR-076, item 16), ``last_saved_at`` e ``rules_version``).
 4. ``conferir``: relê o resumo da Jornada criada (somente leitura).
 
 São dois bancos, e cada etapa grava em **um** só (ADR-075, item 4); o Mundo
@@ -27,6 +29,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from henduran.db.connection import Transaction, utc_now_iso
+from henduran.narrative.calendar import draw_date
 from henduran.narrative.periods import draw_day_period
 from henduran.rules import fatia1 as R
 from henduran.rules.creation import Character, FieldError, check_text, validate_character
@@ -125,10 +128,11 @@ def create_journey_with_character(
 ) -> JourneySummary:
     """Cria Mundo, Jornada e personagem; tudo ou nada (com compensação). Devolve o resumo da Jornada.
 
-    ``rng`` sorteia o período inicial (injetável nos testes).
+    ``rng`` sorteia o período inicial e depois a data (injetável nos testes).
     """
     plan = plan_creation(world_content=world_content, start_place_id=start_place_id, character=character, name=name)
     day_period = draw_day_period(rng)
+    year, month, day = draw_date(plan.world_content["calendar"], rng)
     worlds = journeys.worlds
     world_id: str | None = None
     journey_id: str | None = None
@@ -142,11 +146,12 @@ def create_journey_with_character(
             now = utc_now_iso()
             character_store.write_character(tx, plan.character, now)
             tx.execute(
-                "UPDATE journey_meta SET character_name = ?, location = ?, start_place_id = ?, day_period = ?, "
-                "last_saved_at = ?, rules_version = ? WHERE id = ?",
+                "UPDATE journey_meta SET character_name = ?, location = ?, start_place_id = ?, current_place_id = ?, "
+                "day_period = ?, calendar_year = ?, calendar_month = ?, calendar_day = ?, last_saved_at = ?, "
+                "rules_version = ? WHERE id = ?",
                 (
-                    plan.character.name, plan.start_place["name"], plan.start_place["id"], day_period, now,
-                    R.RULES_VERSION, new_id,
+                    plan.character.name, plan.start_place["name"], plan.start_place["id"], plan.start_place["id"],
+                    day_period, year, month, day, now, R.RULES_VERSION, new_id,
                 ),
             )
 

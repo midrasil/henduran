@@ -33,7 +33,7 @@ def test_tres_conjuntos_com_numeracao_propria():
     assert MIGRATION_SETS == ("app", "journey", "world")
     for name in MIGRATION_SETS:
         known = load_migration_set(name)
-        expected = [1, 2, 3] if name == "journey" else [1]  # journey/0002_character, 0003_scenes_messages
+        expected = [1, 2, 3, 4] if name == "journey" else [1]  # journey/0002, 0003 e 0004_journey_screen
         assert [m.version for m in known] == expected
         assert known[0].name == "initial"
     assert mig_mod.MIGRATIONS_DIR == mig_mod.MIGRATIONS_ROOT / "app"
@@ -55,7 +55,7 @@ def test_conjuntos_sao_independentes(tmp_path):
     assert created["app"] == {"settings", "app_meta"}
     assert created["journey"] == {
         "journey_meta", "character", "character_attributes", "character_skills", "convictions", "objectives",
-        "scenes", "messages",
+        "scenes", "messages", "places", "scene_proposals", "events",
     }
     assert created["world"] == {"world_meta", "world_versions"}
 

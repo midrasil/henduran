@@ -62,7 +62,7 @@ describe("Tela Jornadas", () => {
     const { user } = await openList({ journeys: [summary(), SECOND] });
     await screen.findByText("Crônicas do Vale");
     await user.click(within(card("Crônicas do Vale")).getByRole("button", { name: "Abrir" }));
-    expect(await screen.findByRole("heading", { name: "Jornada: Crônicas do Vale" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
   });
 
   it("Excluir pede confirmação, apaga com confirm=true e avisa que o Mundo foi junto", async () => {

@@ -7,7 +7,7 @@ export { PixelIcon, type PixelIconName } from "./icons";
 export { ListCard, type ListCardProps } from "./ListCard/ListCard";
 export { Panel, type PanelProps, type PanelVariant } from "./Panel/Panel";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar/ProgressBar";
-export { PeriodLabel, SkyBackdrop, type SkyBackdropProps } from "./SkyBackdrop/SkyBackdrop";
+export { PeriodLabel, prefersReducedMotion, SkyBackdrop, type SkyBackdropProps } from "./SkyBackdrop/SkyBackdrop";
 export { DEFAULT_PERIOD, PERIOD_LABEL, PERIODS, type DayPeriod } from "./SkyBackdrop/sky";
 export { StatusIndicator, type StatusIndicatorProps, type StatusTone } from "./StatusIndicator/StatusIndicator";
 export { TabPanel, Tabs, tabId, tabPanelId, type TabItem, type TabsProps } from "./Tabs/Tabs";
@@ -17,3 +17,28 @@ export { RadioGroup, type RadioGroupProps, type RadioOption } from "./RadioGroup
 export { Select, type SelectOption, type SelectProps } from "./Select/Select";
 export { Stepper, type StepItem, type StepperProps } from "./Stepper/Stepper";
 export { TrailBoxes, trailText, type TrailBoxesProps } from "./TrailBoxes/TrailBoxes";
+export { Composer, COMPOSER_MAX_HEIGHT, growTextArea, type ComposerProps } from "./Composer/Composer";
+export {
+  CrackIcon,
+  PERIOD_ART,
+  PeriodIcon,
+  PixelArt,
+  pixelRuns,
+  TrackCellIcon,
+  type PixelArtProps,
+  type PixelGrid,
+  type PixelPalette,
+  type TrackCellState,
+  type TrackIconKind,
+} from "./PixelArt/PixelArt";
+export {
+  clampCrop,
+  CroppedImage,
+  cropBox,
+  DEFAULT_CROP,
+  initials,
+  Portrait,
+  type PortraitCropValue,
+  type PortraitProps,
+} from "./Portrait/Portrait";
+export { Track, trackCells, trackText, type TrackProps } from "./Track/Track";

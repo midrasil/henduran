@@ -16,6 +16,8 @@ export interface TabsProps<T extends string> {
   label: string;
   /** Prefixo dos ids: a aba é `${idPrefix}-tab-${id}` e o painel, `${idPrefix}-panel-${id}`. */
   idPrefix: string;
+  /** `vertical` usa as setas para cima e para baixo (abas laterais). */
+  orientation?: "horizontal" | "vertical";
   className?: string;
 }
 
@@ -26,14 +28,16 @@ export const tabPanelId = (prefix: string, id: string) => `${prefix}-panel-${id}
  * Lista de abas WAI-ARIA com ativação automática: setas esquerda e direita,
  * Home e End movem o foco e selecionam. Só a aba ativa entra na tabulação.
  */
-export function Tabs<T extends string>({ items, value, onChange, label, idPrefix, className }: TabsProps<T>) {
+export function Tabs<T extends string>({ items, value, onChange, label, idPrefix, orientation = "horizontal", className }: TabsProps<T>) {
   const refs = useRef(new Map<T, HTMLButtonElement | null>());
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     const index = items.findIndex((t) => t.id === value);
     let next: number | null = null;
-    if (event.key === "ArrowRight") next = (index + 1) % items.length;
-    else if (event.key === "ArrowLeft") next = (index - 1 + items.length) % items.length;
+    const forward = orientation === "vertical" ? "ArrowDown" : "ArrowRight";
+    const backward = orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
+    if (event.key === forward) next = (index + 1) % items.length;
+    else if (event.key === backward) next = (index - 1 + items.length) % items.length;
     else if (event.key === "Home") next = 0;
     else if (event.key === "End") next = items.length - 1;
     const target = next === null ? undefined : items[next];
@@ -44,7 +48,12 @@ export function Tabs<T extends string>({ items, value, onChange, label, idPrefix
   };
 
   return (
-    <div role="tablist" aria-label={label} className={["tabs", className ?? ""].filter(Boolean).join(" ")}>
+    <div
+      role="tablist"
+      aria-label={label}
+      aria-orientation={orientation}
+      className={["tabs", orientation === "vertical" ? "tabs--vertical" : "", className ?? ""].filter(Boolean).join(" ")}
+    >
       {items.map((t) => {
         const selected = t.id === value;
         return (

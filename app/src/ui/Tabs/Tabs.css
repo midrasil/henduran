@@ -49,3 +49,9 @@
 .tabs__icon {
   display: inline-flex;
 }
+
+.tabs--vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+}

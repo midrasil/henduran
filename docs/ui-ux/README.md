@@ -18,6 +18,8 @@ Especificação de pré-produção para transformar o pacote comercial Franuka e
 6. [Guia de implementação](06-guia-implementacao.md)
 7. [Ambiente de dia e noite](07-ambiente-dia-noite.md)
 8. [Guia de componentes (pixel art em CSS, ADR-069)](08-guia-de-componentes.md) — tokens, fontes e componentes em uso; substitui `02-design-system.md` para os tokens.
+9. [Tela da Jornada (MVP)](09-tela-da-jornada.md) — aprovada com protótipo (`prototipos/tela-da-jornada.html`): visual livro, céu do período na barra, Arcos, chat com Aduran e Log, ficha com retrato e ficha completa em abas.
+10. [Prototipagem de telas](10-prototipagem.md) — toda tela nova passa por protótipo navegável aprovado antes do dev; lista das telas a prototipar.
 
 Recursos auxiliares locais: [catálogo visual](catalogo-franuka.local.html) e [manifesto completo](franuka-manifest.json). Regenere ambos com `./scripts/ui-ux/inspect-franuka.ps1` a partir da raiz.
 

@@ -13,6 +13,7 @@ import type {
   WorldContent,
 } from "../api/journeys";
 import { jsonResponse } from "./fakeFetch";
+import { CALENDAR, createScreenHandler, initialScreen, type FakeScreenOptions } from "./fakeJourneyScreen";
 import { RULES, VALID_DRAFT, WORLD, WORLD_SCHEMA, WORLD_SEED } from "./gameData";
 
 export const JOURNEY_ID = "11111111-1111-4111-8111-111111111111";
@@ -64,7 +65,13 @@ export function sheet(draft: CharacterDraft = VALID_DRAFT): CharacterSheet {
 }
 
 export function snapshotOf(j: JourneySummary, character: CharacterSheet = sheet()): JourneySnapshot {
+  const place = WORLD.places[0]!;
   return {
+    mode: "fora_de_cena",
+    scene: null,
+    proposal: null,
+    current_place: { id: place.id, name: place.name, type: place.type, description: place.description, source: "mundo" },
+    calendar: CALENDAR,
     journey: {
       id: j.id,
       name: j.name,
@@ -146,7 +153,7 @@ export function fakeValidateWorld(content: WorldContent): { valid: boolean; erro
   return { valid: errors.length === 0, errors, content: errors.length ? null : content };
 }
 
-export interface FakeGameOptions {
+export interface FakeGameOptions extends FakeScreenOptions {
   journeys?: JourneySummary[];
   lastJourneyId?: string | null;
   backups?: BackupInfo[];
@@ -170,10 +177,12 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
     open: null as JourneySnapshot | null,
     worlds: new Set<string>(options.journeys?.map((j) => j.world_id ?? "") ?? []),
     generated: 0,
+    screen: initialScreen(options),
   };
   const calls: Call[] = [];
+  const screenHandler = createScreenHandler(state, options);
 
-  const handle = (url: string, init: RequestInit = {}): Response | undefined => {
+  const handle = (url: string, init: RequestInit = {}): Response | Promise<Response> | undefined => {
     const method = (init.method ?? "GET").toUpperCase();
     const parsed = new URL(url);
     const path = parsed.pathname;
@@ -211,6 +220,10 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
       });
       state.journeys.unshift(created);
       return jsonResponse({ journey: created }, 201);
+    }
+    if (path.startsWith("/journeys/current/")) {
+      record();
+      return screenHandler(method, path, parsed.searchParams, body, init);
     }
     if (method === "GET" && path === "/journeys/current") {
       return state.open ? jsonResponse(state.open) : jsonResponse({ detail: { code: "nenhuma_jornada_aberta", message: "Nenhuma Jornada está aberta." } }, 404);

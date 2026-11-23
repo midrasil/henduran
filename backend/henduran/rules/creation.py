@@ -8,8 +8,12 @@ Rascunho (JSON vindo da interface)::
       "convictions": [{"text": "...", "pillar": "..."}, ... 3 itens],
       "attributes": {"forca": 4, "agilidade": 3, ...},       # os 6
       "skill_profile": "generalista" | "equilibrado" | "especialista",
-      "skills": {"lutar": 3, "atletismo": 2, ...}          # Perícias sem pontos valem 0
+      "skills": {"lutar": 3, "atletismo": 2, ...},         # Perícias sem pontos valem 0
+      "age"?: "...", "height"?: "...", "origin"?: "...", "personality"?: "..."  # opcionais
     }
+
+Os campos ``age``, ``height``, ``origin`` e ``personality`` são **opcionais**, texto
+livre e sem efeito de regra: ausentes, nulos ou vazios valem "não informado".
 
 :func:`validate_character` devolve **todos** os erros, cada um com ``field``
 (caminho, por exemplo ``convictions[1].pillar``), ``code`` estável e mensagem em
@@ -44,7 +48,19 @@ DRAFT_FIELDS = (
     "attributes",
     "skill_profile",
     "skills",
+    "age",
+    "height",
+    "origin",
+    "personality",
 )
+# Campos opcionais da descrição (sem efeito de regra): (campo, rótulo, uma linha).
+OPTIONAL_TEXT_FIELDS = (
+    ("age", "A idade", True),
+    ("height", "A altura", True),
+    ("origin", "A origem", True),
+    ("personality", "A personalidade", False),
+)
+OPTIONAL_FIELDS = tuple(name for name, _, _ in OPTIONAL_TEXT_FIELDS)
 # Campos de texto simples do rascunho: (campo, chave do limite, rótulo).
 _TEXT_FIELDS = (
     ("name", "name", "O nome"),
@@ -93,6 +109,10 @@ class Character:
     attributes: Mapping[str, int]
     skill_profile: str
     skills: Mapping[str, int]
+    age: str | None = None
+    height: str | None = None
+    origin: str | None = None
+    personality: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -106,6 +126,10 @@ class Character:
             "attributes": {a: self.attributes[a] for a in R.ATTRIBUTE_IDS},
             "skill_profile": self.skill_profile,
             "skills": {s: self.skills[s] for s in R.SKILL_IDS},
+            "age": self.age,
+            "height": self.height,
+            "origin": self.origin,
+            "personality": self.personality,
         }
 
 
@@ -161,6 +185,17 @@ def check_text(
         errors.append(FieldError(path, "caracteres_invalidos", f"{label} contém caracteres de controle não permitidos."))
         return None
     return text
+
+
+def check_optional_text(
+    errors: list[FieldError], path: str, value: Any, limit: int, label: str, *, single_line: bool = False
+) -> str | None:
+    """Texto opcional: ``None`` ou vazio (depois de normalizar) é ausente; o resto segue :func:`check_text`."""
+    if value is None:
+        return None
+    if isinstance(value, str) and len(value) <= limit * 4 + 64 and not clean_text(value):
+        return None
+    return check_text(errors, path, value, limit, label, single_line=single_line)
 
 
 def _is_int(value: Any) -> bool:
@@ -328,6 +363,11 @@ def validate_character(draft: Any) -> ValidationResult:
         texts[name] = check_text(
             errors, name, draft.get(name), R.TEXT_LIMITS[limit_key], label, single_line=name in _SINGLE_LINE
         )
+    optional: dict[str, str | None] = {}
+    for name, label, single_line in OPTIONAL_TEXT_FIELDS:
+        optional[name] = check_optional_text(
+            errors, name, draft.get(name), R.TEXT_LIMITS[name], label, single_line=single_line
+        )
     convictions = _validate_convictions(errors, draft.get("convictions"))
     attributes = _validate_attributes(errors, draft.get("attributes"))
     profile, skills = _validate_skills(errors, draft.get("skill_profile"), draft.get("skills"))
@@ -345,6 +385,7 @@ def validate_character(draft: Any) -> ValidationResult:
         attributes=attributes,
         skill_profile=profile,
         skills=skills,
+        **optional,
     )
     return result
 
@@ -426,8 +467,10 @@ __all__ = [
     "Character",
     "Conviction",
     "DRAFT_FIELDS",
+    "OPTIONAL_FIELDS",
     "FieldError",
     "ValidationResult",
+    "check_optional_text",
     "check_text",
     "clean_text",
     "creation_catalog",

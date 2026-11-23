@@ -28,6 +28,10 @@
   --frame-lo: var(--color-outline);
 }
 
+.dialog--wide {
+  width: min(100%, 920px);
+}
+
 .dialog--danger {
   --frame-inner: var(--color-danger-text);
 }
