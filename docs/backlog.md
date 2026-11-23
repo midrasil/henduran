@@ -18,7 +18,7 @@
 - [x] infra: infraestrutura dos bancos por Jornada e por Mundo (migrações por conjunto, `WorldStore`, `JourneyStore`, bloqueio, anexo do Mundo em leitura, backups e dano) — feito em 2026-11-23; ADR-075
 - [x] feat: backend do passo Nova Jornada — regras da fatia 1 em código, gerador de mundo por código, esquema mínimo de personagem, criação atômica e API de Jornadas — feito em 2026-11-23
 - [x] feat: interface do menu inicial, do assistente de Nova Jornada, da tela Jornadas e da Jornada aberta (Chat, Ficha, Mundo, Objetivos) — feito em 2026-11-23
-- [ ] ⭐ feat: Narrador (Aduran) com o contexto da Jornada e o loop Fora de Cena ↔ Cena: histórico do chat persistido, abrir e encerrar Cenas, Reserva de Dados com confirmação do jogador (ADR-006) — origem: `ESCOPO-MVP.md`
+- [ ] ⭐ feat: Narrador (Aduran) com o contexto da Jornada e o loop Fora de Cena ↔ Cena conforme o ADR-076 (Jornada começa Em Cena com a Cena inicial do Narrador): histórico do chat persistido, abrir e encerrar Cenas, Reserva de Dados com confirmação do jogador (ADR-006) — origem: `ESCOPO-MVP.md`
 - [ ] infra: gravar o id do lugar inicial na Jornada, expor o máximo de Fraturas no `GET /rules/creation` e tornar recolhíveis as seções do passo 1 do assistente — origem: interface de Nova Jornada
 - [x] infra: excluir o Mundo junto com a Jornada quando nenhuma outra o usa — feito em 2026-11-23
 - [ ] infra: melhorar a variedade do gerador de mundo (nomes de lugar com raízes repetidas, descrições repetitivas) — origem: revisão do gerador

@@ -1,13 +1,13 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `menu-e-nova-jornada`.
+Atualizado em 2026-11-23 após a tarefa `adr-cena-inicial`.
 
 ## Estado
 
-- Tarefa: interface do menu inicial, do assistente de Nova Jornada e da Jornada aberta (metade 2 do passo 2).
-- Resultado: o app abre no **menu inicial** (céu no período da última Jornada, cartão "Última Jornada", Continuar, Nova Jornada, Jornadas, Modelos, Sair). **Assistente de Nova Jornada** em 3 passos (Mundo editável com lugar inicial; Protagonista com erros por campo, "Distribuir ao acaso" e Vida e Vontade ao vivo; Revisão). **Tela Jornadas** (abrir, excluir com confirmação, restaurar). **Jornada aberta** com abas Chat, Ficha, Mundo e Objetivos, só de leitura. `exit_app` no Tauri (sem permissão nova). Excluir uma Jornada apaga também o Mundo quando nenhuma outra o usa. 222 testes do frontend e 521 do backend (1 pulado) passam. Teste real do dev no app, com capturas de tela: fluxo completo, excluir, Sair e `taskkill /F` sem processo órfão.
-- A API de Jornadas (PR #19) já está na `main`.
-- Branch: `feat/menu-e-nova-jornada` (PR aberto contra `main`).
+- Tarefa: decisão sobre a Cena inicial e o ciclo de Cena no MVP (só documentação).
+- Resultado: **ADR-076 aprovado**. Toda Jornada começa Em Cena, no lugar inicial, com a primeira mensagem do Narrador. A abertura é gerada na primeira vez que a Jornada abre sem mensagens (botão "Gerar abertura" se o modelo não estiver pronto). O motor sorteia um tom de partida. A Cena nasce em duas etapas (proposta em JSON validada pelo motor, depois narração em *streaming*). O encerramento é feito pelo jogador ou proposto pelo Narrador e confirmado pelo jogador, com resumo gravado. Histórico de Cenas e mensagens no `journey.db`. Ajustados `02-loop-de-gameplay.md`, `05-narrador-ia.md` e `ESCOPO-MVP.md`.
+- A interface do menu e da Nova Jornada (PR #20) já está na `main`.
+- Branch: `docs/cena-inicial` (PR aberto contra `main`).
 
 ## Decisões vigentes
 
@@ -18,6 +18,7 @@ Atualizado em 2026-11-23 após a tarefa `menu-e-nova-jornada`.
 - **Caliope:** uso autorizado pelo autor; ordem de importação `llm.py`, `runtime.py` + `hardware.py`, `modelhub.py`; todas as skills entram.
 - **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em três fatias: (1) chat, ficha, testes, Vontade, Convicções e Descanso; (2) equipamento, Carga e Progressão; (3) combate sem mapa e NPCs por orçamento sem Capacidades.
 - **Dia do Mundo (ADR-073):** limitador de benefícios, começando no Amanhecer; o gatilho continua sendo o acontecimento validado (ADR-010, 012, 013). Ambição e Desejo podem ser trocados quando deixarem de fazer sentido, sem recompensa pela troca.
+- **Cena inicial e ciclo de Cena (ADR-076):** Jornada começa Em Cena no lugar inicial; abertura na primeira abertura da Jornada; tom de partida sorteado; proposta de Cena em JSON validada antes da narração; encerramento pelo jogador ou proposto e confirmado; resumo gravado.
 - **Fatia 1:** 22 Perícias de mundo medieval (sem Dirigir, Pilotar e Conhecimento Específico); sem dano de Vida, Tratamento e Condições; rerrolagem gratuita por Convicção excluída (ADR-013); testes fora de combate com confirmação do jogador (ADR-006).
 
 ## Código existente
@@ -33,7 +34,8 @@ Atualizado em 2026-11-23 após a tarefa `menu-e-nova-jornada`.
 
 ## Pendências relevantes
 
-- **O Narrador ainda não recebe o contexto da Jornada**: o Chat é o chat solto, com um aviso na tela. Essa é a próxima etapa.
+- **O Narrador ainda não recebe o contexto da Jornada**: o Chat é o chat solto, com um aviso na tela. Essa é a próxima etapa, já decidida no ADR-076.
+- **Aprovar a lista de tons de partida** do ADR-076, item 4 (em movimento, chegada, encontro, rotina interrompida, em apuros, consequência). Também em aberto no ADR: limite de mensagens no contexto, formato da proposta de encerramento e do resumo, e Cena seguida de outra Cena sem passar pelo Aduran.
 - Pequenos ajustes da interface: a Jornada só guarda o local atual, então a aba Mundo marca "Você está aqui" em vez do lugar inicial (gravar o id do lugar inicial); o máximo de Fraturas não vem no catálogo de regras; o passo 1 fica longo com mundos grandes (seções recolhíveis). Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200% e reflow a 320 px.
 - O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
 - Gerador de mundo: os nomes de lugar de um mesmo mundo repetem raízes (por exemplo Lumícia, Lumais e Lumanor) e as descrições são repetitivas; melhorar a variedade. Os textos ficam em `backend/henduran/worldgen/data.py`.
@@ -56,4 +58,4 @@ Atualizado em 2026-11-23 após a tarefa `menu-e-nova-jornada`.
 
 ## Próximo passo recomendado
 
-⭐ Narrador com o contexto da Jornada: o Aduran recebe o Mundo e o personagem, o histórico do chat é persistido, e o loop Fora de Cena ↔ Cena (abrir e encerrar Cenas). Depois, os testes da Reserva de Dados com confirmação do jogador (ADR-006). Em paralelo: subir a aba Modelos ao nível do Caliope e ler a fatia 2 do Astra.
+⭐ Backend do ADR-076 (entrega 2): migração com `scenes` e `messages` no `journey.db`, id do lugar inicial na Jornada, montador de contexto (Aduran e Narrador da Cena), abertura da Cena inicial em duas etapas, rotas de histórico, mensagem (SSE), abertura e encerramento de Cena, e testes com o `FakeNarratorProvider`. Depois a interface (entrega 3): Chat com histórico, abertura em *streaming*, cabeçalho da Cena, botão de encerrar, painel do Aduran, cancelar e regenerar. Em seguida, os testes da Reserva de Dados (ADR-006).
