@@ -7,6 +7,9 @@ import { createFakeGameApi, type FakeGameOptions } from "../../test/fakeGameApi"
 import { RULES, VALID_DRAFT, WORLD, WORLD_SCHEMA } from "../../test/gameData";
 import { NewJourneyWizard } from "./NewJourneyWizard";
 
+// Fluxos longos de digitação do assistente passam de 5 s em máquina lenta.
+vi.setConfig({ testTimeout: 20000 });
+
 const INFO = { port: 5000, token: "t" };
 
 afterEach(() => {

@@ -12,6 +12,7 @@ import logging
 import threading
 from typing import Any
 
+from henduran.services.narration import chat_view
 from henduran.storage.errors import StorageError
 from henduran.storage.journeys import JourneyStore, OpenJourney
 from henduran.storage.worlds import checked_id
@@ -51,6 +52,14 @@ class JourneySession:
                 log.exception("não foi possível gravar a última Jornada jogada")
         return journey
 
+    def require(self) -> OpenJourney:
+        """A Jornada aberta; levanta ``nenhuma_jornada_aberta`` se não houver."""
+        with self._lock:
+            journey = self._current
+        if journey is None or journey.closed:
+            raise StorageError("nenhuma_jornada_aberta", "Nenhuma Jornada está aberta.")
+        return journey
+
     def close(self) -> str | None:
         """Fecha a Jornada aberta (se houver) e devolve o id dela."""
         with self._lock:
@@ -61,7 +70,7 @@ class JourneySession:
         return journey.id
 
     def snapshot(self) -> dict[str, Any] | None:
-        """Resumo, personagem com derivados e conteúdo do Mundo da Jornada aberta (ou ``None``)."""
+        """Resumo, personagem com derivados, conteúdo do Mundo e ``mode``/``scene`` da Jornada aberta (ou ``None``)."""
         with self._lock:
             journey = self._current
             if journey is None or journey.closed:
@@ -75,6 +84,7 @@ class JourneySession:
                     "version": journey.world_version,
                     "content": journey.world_content(),
                 },
+                **chat_view(journey),
             }
 
 

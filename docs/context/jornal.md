@@ -196,3 +196,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Pendente: aprovar a lista de tons de partida (item 4 do ADR, **[PROPOSTO]**); limite de mensagens no contexto; formato da proposta de encerramento e do resumo.
 - Arquivos: `docs/main/decisoes/ADR-076-cena-inicial-e-ciclo-de-cena-no-mvp.md`, `docs/main/02-loop-de-gameplay.md`, `docs/main/05-narrador-ia.md`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/context/handoff.md`.
 - Entrega: PR [#21](https://github.com/midrasil/henduran/pull/21) aberto contra `main`.
+
+## 2026-11-23 — `narrador-cena-inicial` (backend)
+
+- Rota: conversa com o planejador → Dev → Entrega. Entrega 2 do ADR-076.
+- Decisões do responsável antes do dev: o motor **sorteia o período inicial** da Jornada e o passa ao Narrador; o tempo é contado em períodos, sem horas e minutos (a passagem de tempo vai para ADR próprio); lista de 6 tons de partida aprovada, com peso igual.
+- Resultado: tabelas `scenes` e `messages` e `start_place_id` no `journey.db` (migração 0003); pacote `narrative/` (períodos, tons, contexto, validação de proposta e resumo); `services/narration.py`; rotas de histórico, abertura (SSE), mensagens (SSE) e encerramento; `FakeNarratorProvider.complete` com JSON.
+- Decisões após o relatório do dev: a Cena e a abertura são gravadas juntas no fim da narração, para uma abertura interrompida não deixar Cena sem mensagem (o texto do ADR-076 foi corrigido); os resumos das 5 últimas Cenas encerradas entram no contexto, para o Aduran saber o que acabou de acontecer; antes da abertura, a interface desabilita digitação e envio (o serviço também recusa com `abertura_pendente`). Itens 10 e 11 acrescentados ao ADR-076.
+- Validações: backend 565 passaram e 1 pulado (suíte completa pelo dev; 70 dos testes novos e alterados reexecutados pelo planejador); frontend 222 de 222 após subir o limite de tempo do `NewJourneyWizard.test.tsx` para 20 s (estourava 5 s nesta máquina). Roteiro manual com provedor falso e curl executado pelo dev. Não testado com modelo local real.
+- Arquivos: `backend/henduran/db/migrations/journey/0003_scenes_messages.sql`, `backend/henduran/narrative/`, `backend/henduran/services/narration.py`, `backend/henduran/storage/scenes.py`, `backend/henduran/api/app.py`, `backend/henduran/providers/fake.py`, `backend/tests/test_narrative.py`, `backend/tests/test_api_narration.py`, `docs/main/decisoes/ADR-076-cena-inicial-e-ciclo-de-cena-no-mvp.md`, `docs/main/modelo-de-dados-jogo.md`.

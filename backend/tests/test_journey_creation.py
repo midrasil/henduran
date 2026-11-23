@@ -11,6 +11,7 @@ import pytest
 
 from henduran.db import open_app_database
 from henduran.db import migrations as mig_mod
+from henduran.narrative.periods import DAY_PERIODS
 from henduran.paths import DataPaths
 from henduran.rules import fatia1 as R
 from henduran.rules.creation import validate_character
@@ -86,7 +87,7 @@ def test_jornada_criada_so_com_0001_migra_com_backup(env, monkeypatch):
 
     monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", original)
     with journeys.open_journey(jid) as journey:
-        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == 2
+        assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == mig_mod.latest_version("journey")
         summary = journey.summary()
         assert summary["rules_version"] == "fatia-1"
         assert summary["character_name"] == "Antes" and summary["location"] == "Vila"
@@ -218,7 +219,7 @@ def test_criacao_caminho_feliz(env):
     assert summary.name == "A Jornada de Ilsa Corvalho"
     assert summary.character_name == "Ilsa Corvalho"
     assert summary.location == content["places"][1]["name"]
-    assert summary.day_period == "amanhecer"
+    assert summary.day_period in DAY_PERIODS
     assert summary.rules_version == "fatia-1"
     assert summary.world_version == 1 and summary.world_name == content["name"]
     assert summary.last_saved_at and summary.created_at
