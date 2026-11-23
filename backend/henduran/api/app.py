@@ -1,4 +1,4 @@
-"""Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos e motor (ADR-072).
+"""Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos, Hugging Face e motor (ADR-072).
 
 Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no ADR-072):
 
@@ -8,7 +8,7 @@ Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no AD
 - ``event: error`` — ``{"message": "...", "code": "..."}``; encerra o fluxo. ``code``:
   ``no_model``, ``engine_not_installed``, ``engine_not_ready`` ou ``generation_failed``.
 
-Erros HTTP das rotas de modelos e motor: ``{"detail": {"code": "...", "message": "..."}}``.
+Erros HTTP das rotas de modelos, motor e Hugging Face: ``{"detail": {"code": "...", "message": "..."}}``.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ from pydantic import BaseModel, Field
 
 from henduran.ai import hardware as hw
 from henduran.ai.engine import EngineError, EngineManager
+from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubError, ModelHub
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
 
 logger = logging.getLogger("henduran.api")
@@ -48,6 +49,28 @@ ERROR_STATUS = {
     "invalid_variant": 422,
     "release_lookup_failed": 502,
     "release_not_found": 502,
+    # modelos e Hugging Face
+    "model_not_found": 404,
+    "repo_invalido": 422,
+    "arquivo_invalido": 422,
+    "arquivo_nao_encontrado": 404,
+    "nao_encontrado": 404,
+    "restrito": 403,
+    "sem_espaco": 507,
+    "rede": 502,
+    "resposta_invalida": 502,
+    "destino_inesperado": 502,
+    "limite_requisicoes": 429,
+    "ocupado": 409,
+    "conflito": 409,
+    "fora_das_pastas": 403,
+    "pasta_externa": 409,
+    "pasta_invalida": 422,
+    "pasta_inexistente": 404,
+    "pasta_sobreposta": 409,
+    "pasta_desconhecida": 404,
+    "download_desconhecido": 404,
+    "engine_unavailable": 503,
 }
 
 
@@ -62,6 +85,15 @@ class ChatRequest(BaseModel):
 
 class SelectModelRequest(BaseModel):
     id: str = Field(min_length=1, max_length=1024)
+
+
+class DownloadRequest(BaseModel):
+    repo: str = Field(min_length=1, max_length=200)
+    file: str = Field(min_length=1, max_length=512)
+
+
+class FolderRequest(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
 
 
 class InstallRequest(BaseModel):
@@ -86,10 +118,12 @@ def create_app(
     *,
     engine: EngineManager | None = None,
     hardware_scan: Callable[[], dict] | None = None,
+    hub: ModelHub | None = None,
 ) -> FastAPI:
     """Cria a aplicação. ``token`` é o segredo por execução exigido em todas as rotas.
 
-    ``engine`` habilita as rotas de modelos e motor; sem ele, respondem 503.
+    ``engine`` habilita as rotas de modelos e motor; ``hub`` habilita as do Hugging
+    Face, a remoção de modelos e as pastas extras. Sem eles, respondem 503.
     """
     if not token:
         raise ValueError("token de acesso obrigatório")
@@ -98,7 +132,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=ALLOWED_ORIGINS,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -106,6 +140,7 @@ def create_app(
     generations: dict[str, asyncio.Event] = {}
     app.state.generations = generations
     app.state.engine = engine
+    app.state.hub = hub
     scan = hardware_scan or hw.scan
     hardware_cache: dict[str, dict] = {}
 
@@ -126,6 +161,14 @@ def create_app(
         if engine is None:
             raise _http_error("engine_unavailable", "O gerenciamento do motor não está ativo.", 503)
         return engine
+
+    def need_hub() -> ModelHub:
+        if hub is None:
+            raise _http_error("hub_unavailable", "O gerenciamento de modelos não está ativo.", 503)
+        return hub
+
+    def hub_error(exc: HubError) -> HTTPException:
+        return _http_error(exc.code, str(exc))
 
     async def hardware(refresh: bool = False) -> dict:
         if refresh or "info" not in hardware_cache:
@@ -205,6 +248,9 @@ def create_app(
                     "complete": m["complete"],
                     "fit": hw.estimate_fit(m["size_bytes"], info),
                     "active": m["id"] == active,
+                    "source": m.get("source", "app"),
+                    "folder": m.get("root"),
+                    "removable": m.get("source", "app") == "app",
                 }
             )
         return {"models": models, "models_dir": str(eng.paths.models_dir), "active": active}
@@ -219,6 +265,100 @@ def create_app(
             raise _http_error("model_incomplete", "Faltam partes deste modelo dividido.")
         eng.settings.update(active_model=model["id"])
         return {"active": model["id"], "name": model["name"]}
+
+    @app.get("/models/folders", dependencies=auth)
+    async def list_folders() -> dict:
+        return {"folders": await asyncio.to_thread(need_hub().folders)}
+
+    @app.post("/models/folders", dependencies=auth)
+    async def add_folder(body: FolderRequest) -> dict:
+        h = need_hub()
+        try:
+            added = await asyncio.to_thread(h.add_folder, body.path)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        return {"added": added, "folders": h.folders()}
+
+    @app.delete("/models/folders", dependencies=auth)
+    async def remove_folder(path: str) -> dict:
+        h = need_hub()
+        try:
+            await h.remove_folder(path)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        return {"folders": h.folders()}
+
+    @app.delete("/models/{model_id:path}", dependencies=auth)
+    async def remove_model(model_id: str) -> dict:
+        h = need_hub()
+        try:
+            return await h.remove_model(model_id)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+
+    # --------------------------------------------------------- Hugging Face
+    @app.get("/hub/search", dependencies=auth)
+    async def hub_search(q: str = "", limit: int = SEARCH_LIMIT_DEFAULT) -> dict:
+        h = need_hub()
+        if not 1 <= limit <= SEARCH_LIMIT_MAX:
+            raise _http_error("limite_invalido", f"limit deve estar entre 1 e {SEARCH_LIMIT_MAX}.", 422)
+        try:
+            return {"results": await h.search(q, limit)}
+        except HubError as exc:
+            raise hub_error(exc) from exc
+
+    @app.get("/hub/repos/{author}/{repo}/files", dependencies=auth)
+    async def hub_files(author: str, repo: str) -> dict:
+        h = need_hub()
+        try:
+            detail = await h.repo_files(f"{author}/{repo}")
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        info = await hardware()
+        for f in detail["files"]:
+            f["fit"] = hw.estimate_fit(f["size_bytes"], info)
+            f["installed"] = await asyncio.to_thread(h.installed, detail["id"], f)
+        detail["free_bytes"] = await asyncio.to_thread(h.free_bytes)
+        return detail
+
+    @app.get("/hub/downloads", dependencies=auth)
+    async def hub_downloads() -> dict:
+        return {"downloads": need_hub().list_downloads()}
+
+    @app.post("/hub/downloads", dependencies=auth)
+    async def hub_start(body: DownloadRequest) -> JSONResponse:
+        h = need_hub()
+        try:
+            item = await h.start(body.repo, body.file)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        return JSONResponse(item.to_dict(), status_code=202)
+
+    @app.post("/hub/downloads/{download_id}/cancel", dependencies=auth)
+    async def hub_cancel(download_id: str) -> dict:
+        h = need_hub()
+        try:
+            return (await h.cancel(download_id)).to_dict()
+        except HubError as exc:
+            raise hub_error(exc) from exc
+
+    @app.post("/hub/downloads/{download_id}/retry", dependencies=auth)
+    async def hub_retry(download_id: str) -> JSONResponse:
+        h = need_hub()
+        try:
+            item = await h.retry(download_id)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        return JSONResponse(item.to_dict(), status_code=202)
+
+    @app.delete("/hub/downloads/{download_id}", dependencies=auth)
+    async def hub_forget(download_id: str) -> dict:
+        h = need_hub()
+        try:
+            h.forget(download_id)
+        except HubError as exc:
+            raise hub_error(exc) from exc
+        return {"removed": download_id}
 
     # ----------------------------------------------------------------- motor
     @app.get("/engine/status", dependencies=auth)

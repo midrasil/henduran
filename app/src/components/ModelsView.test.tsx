@@ -64,6 +64,8 @@ function stubFetch({
     if (path === "/engine/status") return jsonResponse(queue.length > 1 ? queue.shift() : queue[0]);
     if (path === "/hardware") return jsonResponse(HARDWARE);
     if (path === "/models") return jsonResponse(models);
+    if (path === "/hub/downloads") return jsonResponse({ downloads: [] });
+    if (path === "/models/folders") return jsonResponse({ folders: [{ path: MODELS.models_dir, kind: "app", exists: true }] });
     throw new Error(`rota inesperada: ${path}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -170,8 +172,9 @@ describe("ModelsView", () => {
     const user = userEvent.setup();
     render(<Harness copyText={copyText} />);
     expect(await screen.findByText(/Nenhum modelo \.gguf encontrado/)).toBeInTheDocument();
-    expect(screen.getByText(MODELS.models_dir)).toBeInTheDocument();
-    expect(screen.getByText("O download de modelos dentro do app virá em breve.")).toBeInTheDocument();
+    expect(screen.getAllByText(MODELS.models_dir).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/virá em breve/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Buscar modelos no Hugging Face" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Copiar caminho" }));
     expect(copyText).toHaveBeenCalledWith(MODELS.models_dir);
     expect(await screen.findByText("Caminho copiado.")).toBeInTheDocument();

@@ -7,7 +7,10 @@ Guarda apenas:
 
 - ``active_model``: id do modelo ``.gguf`` escolhido pelo jogador (ou ``None``);
 - ``context_size``: tamanho de contexto por conversa, em tokens (padrão 4096);
-- ``engine_variant``: variante do motor baixado (``vulkan`` ou ``cpu``).
+- ``engine_variant``: variante do motor baixado (``vulkan`` ou ``cpu``);
+- ``model_folders``: pastas extras onde o jogador já tem modelos (por exemplo a
+  do LM Studio), varridas junto com a pasta do app. Caminhos absolutos; o app
+  nunca copia nem move arquivos dessas pastas.
 
 A leitura tolera arquivo ausente ou corrompido (volta aos padrões) e a escrita
 é atômica: grava num arquivo temporário na mesma pasta e troca pelo nome final.
@@ -30,7 +33,9 @@ DEFAULTS: dict[str, Any] = {
     "active_model": None,
     "context_size": 4096,
     "engine_variant": "vulkan",
+    "model_folders": [],
 }
+MAX_MODEL_FOLDERS = 20
 CONTEXT_MIN = 512
 CONTEXT_MAX = 131072
 
@@ -50,6 +55,15 @@ def _validate(key: str, value: Any) -> Any:
         if value not in ENGINE_VARIANTS:
             raise ValueError(f"engine_variant deve ser um de {ENGINE_VARIANTS}")
         return value
+    if key == "model_folders":
+        if not isinstance(value, list) or len(value) > MAX_MODEL_FOLDERS:
+            raise ValueError(f"model_folders deve ser uma lista de até {MAX_MODEL_FOLDERS} caminhos")
+        out: list[str] = []
+        for item in value:
+            if not isinstance(item, str) or not item.strip() or "\x00" in item or len(item) > 1024:
+                raise ValueError("model_folders deve conter caminhos em texto")
+            out.append(item)
+        return out
     raise KeyError(f"preferência desconhecida: {key}")
 
 
@@ -80,7 +94,7 @@ class SettingsStore:
         self._data = self._load()
 
     def _load(self) -> dict[str, Any]:
-        data = dict(DEFAULTS)
+        data = {k: list(v) if isinstance(v, list) else v for k, v in DEFAULTS.items()}
         try:
             raw = json.loads(self.path.read_text(encoding="utf-8"))
         except FileNotFoundError:
@@ -101,11 +115,12 @@ class SettingsStore:
 
     def all(self) -> dict[str, Any]:
         with self._lock:
-            return dict(self._data)
+            return {k: list(v) if isinstance(v, list) else v for k, v in self._data.items()}
 
     def get(self, key: str) -> Any:
         with self._lock:
-            return self._data[key]
+            value = self._data[key]
+            return list(value) if isinstance(value, list) else value
 
     def update(self, **changes: Any) -> dict[str, Any]:
         """Valida, aplica e grava. Valor inválido levanta ``ValueError``/``KeyError``."""

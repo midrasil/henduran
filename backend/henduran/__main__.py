@@ -22,6 +22,7 @@ import sys
 import uvicorn
 
 from henduran.ai.engine import EngineManager
+from henduran.ai.modelhub import ModelHub
 from henduran.api.app import create_app
 from henduran.paths import DataPaths
 from henduran.providers.base import NarratorProvider
@@ -63,17 +64,20 @@ def bind_socket(port: int) -> socket.socket:
     return sock
 
 
-def build_components(provider_name: str) -> tuple[NarratorProvider, EngineManager]:
+def build_components(provider_name: str) -> tuple[NarratorProvider, EngineManager, ModelHub]:
     paths = DataPaths.from_env().ensure()
     settings = SettingsStore(paths.settings_file)
     engine = EngineManager(paths, settings)
     provider: NarratorProvider
     provider = FakeNarratorProvider() if provider_name == "fake" else LocalLlamaProvider(engine)
-    return provider, engine
+    hub = ModelHub(paths, settings, engine=engine)
+    return provider, engine, hub
 
 
-async def serve(sock: socket.socket, token: str, provider: NarratorProvider, engine: EngineManager) -> None:
-    app = create_app(provider, token, engine=engine)
+async def serve(
+    sock: socket.socket, token: str, provider: NarratorProvider, engine: EngineManager, hub: ModelHub | None = None
+) -> None:
+    app = create_app(provider, token, engine=engine, hub=hub)
     config = uvicorn.Config(app, log_level="warning", access_log=False, lifespan="off")
     server = uvicorn.Server(config)
     task = asyncio.create_task(server.serve(sockets=[sock]))
@@ -87,6 +91,8 @@ async def serve(sock: socket.socket, token: str, provider: NarratorProvider, eng
         print(json.dumps({"event": "ready", "port": port}), flush=True)
         await task
     finally:
+        if hub is not None:
+            await hub.shutdown()  # o .part fica para retomar depois
         await engine.stop()
 
 
@@ -106,12 +112,12 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return EXIT_BAD_PROVIDER
-    provider, engine = build_components(provider_name)
+    provider, engine, hub = build_components(provider_name)
     # Recuo: se o laço não chegar ao finally (saída abrupta do interpretador), ainda para o motor.
     atexit.register(engine.stop_now)
     sock = bind_socket(args.port)
     try:
-        asyncio.run(serve(sock, token, provider, engine))
+        asyncio.run(serve(sock, token, provider, engine, hub))
     except KeyboardInterrupt:
         pass
     finally:

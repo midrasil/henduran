@@ -34,3 +34,6 @@ assets/tilesets/ui/franuka/
 llama-*-bin-win-*.zip
 engine.new/
 llama-server.exe
+# Downloads de modelos interrompidos (ficam na pasta de dados; nunca no Git)
+*.gguf.part
+*.part
