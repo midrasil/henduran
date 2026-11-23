@@ -61,6 +61,6 @@ O produto deve funcionar como uma aplicação desktop, sem exigir navegador nem 
 - Política exata de confirmação e contestação.
 - Contratos e schemas de ferramentas.
 - Roteamento de contexto, memória, resumos e possíveis embeddings.
-- Como encerrar, suspender e reabrir Cenas.
+- Suspender e reabrir Cenas. A abertura (inclusive a Cena inicial da Jornada) e o encerramento no MVP estão no ADR-076.
 - Estratégia para minimizar alucinações em modelos locais menores.
 - Extensão do suporte a serviços de API que não implementam ferramentas de forma uniforme.

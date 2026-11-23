@@ -187,3 +187,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do dev: a interface não duplica regras (vem de `GET /rules/creation` e `GET /worlds/schema`); "Distribuir ao acaso" usa o catálogo recebido; Continuar usa a Jornada salva mais recentemente se `last_journey_id` estiver vazio; `DELETE` devolve `world_deleted`, `world_id` e `world_kept_reason`; a aba Mundo marca "Você está aqui" porque a Jornada não guarda o id do lugar inicial.
 - Pendente: Narrador com o contexto da Jornada (próxima etapa); id do lugar inicial; máximo de Fraturas no catálogo; seções recolhíveis no passo 1.
 - Arquivos: `app/src/screens/`, `app/src/navigation.ts`, `app/src/api/journeys.ts`, `app/src/ui/`, `app/src-tauri/src/main.rs`, `backend/henduran/services/journey_deletion.py`.
+
+## 2026-11-23 — `adr-cena-inicial`
+
+- Rota: conversa com o planejador → planejador escreve → Entrega. Só documentação.
+- Resultado: ADR-076 aprovado. Toda Jornada começa Em Cena: a primeira mensagem é do Narrador, que monta a Cena inicial no lugar inicial a partir do Mundo e do personagem, com situação livre (perseguição, taverna, rotina interrompida).
+- Decisões do responsável (todas as recomendações aceitas): abertura gerada na primeira vez que a Jornada abre, para a criação não depender do modelo; duas chamadas (proposta em JSON validada pelo motor e narração em *streaming*), mais confiável com modelos locais pequenos; tom de partida sorteado pelo motor para evitar aberturas repetidas; encerramento pelo jogador ou proposto pelo Narrador e confirmado, no espírito do ADR-006; Cena inicial no lugar inicial, o que exige gravar o id dele.
+- Pendente: aprovar a lista de tons de partida (item 4 do ADR, **[PROPOSTO]**); limite de mensagens no contexto; formato da proposta de encerramento e do resumo.
+- Arquivos: `docs/main/decisoes/ADR-076-cena-inicial-e-ciclo-de-cena-no-mvp.md`, `docs/main/02-loop-de-gameplay.md`, `docs/main/05-narrador-ia.md`, `docs/main/planejamento/ESCOPO-MVP.md`, `docs/context/handoff.md`.
+- Entrega: PR [#21](https://github.com/midrasil/henduran/pull/21) aberto contra `main`.

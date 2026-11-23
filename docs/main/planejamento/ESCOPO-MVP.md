@@ -68,7 +68,7 @@ Validar a experiência central do Henduran como **chat com um Narrador de IA rod
 
 1. Itens **[PROPOSTO]** das seções 2 a 4: aprovados. A parte "sem atributos" foi superada pela entrada das regras do Astra no MVP (itens 4, 9 e 13 da seção 2).
 2. **Apresentação do Narrador Geral: opção C**, com chat próprio recolhido no canto inferior direito **e** acesso por `@` a partir do chat da Cena. Uma pergunta ao Narrador Geral durante a Cena não pausa a Cena nem altera o mundo por si só. O desenho de interface proposto está em `docs/ui-ux/esbocos/ANALISE-ESBOCOS.md`, seção 3, e aguarda aprovação.
-3. O Narrador pode iniciar Cenas já no MVP (é o Narrador Geral quem as abre).
+3. O Narrador pode iniciar Cenas já no MVP (é o Narrador Geral quem as abre). **2026-11-23 (ADR-076):** toda Jornada começa Em Cena, com a Cena inicial montada pelo Narrador no lugar inicial; a abertura é gerada na primeira vez que a Jornada abre, em duas etapas (proposta em JSON validada pelo motor e narração em *streaming*); o encerramento é pelo jogador ou proposto pelo Narrador e confirmado pelo jogador.
 4. **Campos do gerador de mundo:** sorteio com edição pelo jogador; 3 a 5 lugares iniciais (item 3 da seção 2).
 5. **`@` responde no próprio chat da Cena**, com destaque e botão de ocultar (item 6 da seção 2).
 6. **Ilustrações:** substituídas por ambiente procedural de dia e noite (item 12 da seção 2).

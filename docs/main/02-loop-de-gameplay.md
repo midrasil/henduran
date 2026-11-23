@@ -6,6 +6,8 @@
 
 O **chat é o núcleo de interação**. O mapa-múndi, o mapa localizado, o inventário e o grid de combate são superfícies auxiliares para mostrar o estado do mundo e executar ações. A Jornada alterna entre **Fora de Cena** e **Em Cena**, mantendo um único estado persistente.
 
+**Início da Jornada (ADR-076):** toda Jornada começa **Em Cena**. A primeira mensagem é do Narrador, que monta a Cena inicial no lugar inicial a partir do Mundo e do personagem; a situação é livre (perseguição, chegada a uma taverna, rotina interrompida...).
+
 ## 2. Fora de Cena
 
 Quando não há Cena ativa, o jogador pode:
