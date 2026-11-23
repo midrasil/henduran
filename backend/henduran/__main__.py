@@ -8,6 +8,8 @@
   ``{"event": "ready", "port": N}``, lida pelo shell Tauri.
 - Na inicialização, abre o banco do app (``<dados>\\henduran.db``) e aplica as
   migrações; se falharem, o serviço não inicia (código 4) e explica o motivo.
+- Cria os armazenamentos de Jornadas e de Mundos (ADR-075), mas **não abre**
+  nenhuma Jornada na inicialização.
 - Ao sair (inclusive por ``KeyboardInterrupt``), para o motor de IA e fecha o banco.
 """
 
@@ -33,6 +35,7 @@ from henduran.providers.base import NarratorProvider
 from henduran.providers.fake import FakeNarratorProvider
 from henduran.providers.local import LocalLlamaProvider
 from henduran.settings import SettingsStore
+from henduran.storage import JourneyStore, WorldStore
 
 HOST = "127.0.0.1"
 TOKEN_ENV = "HENDURAN_TOKEN"
@@ -71,13 +74,15 @@ def bind_socket(port: int) -> socket.socket:
 
 def build_components(
     provider_name: str, paths: DataPaths, database: Database
-) -> tuple[NarratorProvider, EngineManager, ModelHub]:
+) -> tuple[NarratorProvider, EngineManager, ModelHub, JourneyStore, WorldStore]:
     settings = SettingsStore(database, legacy_file=paths.settings_file)
     engine = EngineManager(paths, settings)
     provider: NarratorProvider
     provider = FakeNarratorProvider() if provider_name == "fake" else LocalLlamaProvider(engine)
     hub = ModelHub(paths, settings, engine=engine)
-    return provider, engine, hub
+    worlds = WorldStore(paths)
+    journeys = JourneyStore(paths, worlds, settings)
+    return provider, engine, hub, journeys, worlds
 
 
 async def serve(
@@ -87,8 +92,12 @@ async def serve(
     engine: EngineManager,
     hub: ModelHub | None = None,
     database: Database | None = None,
+    journeys: JourneyStore | None = None,
+    worlds: WorldStore | None = None,
 ) -> None:
-    app = create_app(provider, token, engine=engine, hub=hub, database=database)
+    app = create_app(
+        provider, token, engine=engine, hub=hub, database=database, journeys=journeys, worlds=worlds
+    )
     config = uvicorn.Config(app, log_level="warning", access_log=False, lifespan="off")
     server = uvicorn.Server(config)
     task = asyncio.create_task(server.serve(sockets=[sock]))
@@ -141,12 +150,12 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
     try:
-        provider, engine, hub = build_components(provider_name, paths, database)
+        provider, engine, hub, journeys, worlds = build_components(provider_name, paths, database)
         # Recuo: se o laço não chegar ao finally (saída abrupta do interpretador), ainda para o motor.
         atexit.register(engine.stop_now)
         sock = bind_socket(args.port)
         try:
-            asyncio.run(serve(sock, token, provider, engine, hub, database))
+            asyncio.run(serve(sock, token, provider, engine, hub, database, journeys, worlds))
         except KeyboardInterrupt:
             pass
         finally:

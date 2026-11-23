@@ -202,3 +202,24 @@ def test_banco_mais_novo_impede_o_inicio(tmp_path):
     assert result.returncode == EXIT_DATABASE
     assert "banco_mais_novo" in result.stderr and "não foi iniciado" in result.stderr
     assert result.stdout == ""
+
+
+# ------------------------------------------------------- Jornadas e Mundos
+def test_servico_lista_jornadas_e_mundos_sem_abrir_nenhuma(tmp_path):
+    from henduran.paths import DataPaths
+    from henduran.storage import JourneyStore, WorldStore
+    from henduran.storage.lock import is_locked
+
+    paths = DataPaths(tmp_path)
+    worlds = WorldStore(paths)
+    jid = JourneyStore(paths, worlds).create_journey("J", worlds.create_world("M"))
+    proc, port = _start(tmp_path)
+    try:
+        auth = {"Authorization": f"Bearer {TOKEN}"}
+        journeys = httpx.get(f"http://127.0.0.1:{port}/journeys", headers=auth).json()
+        assert [(j["id"], j["status"]) for j in journeys["journeys"]] == [(jid, "ok")]
+        assert journeys["last_journey_id"] is None
+        assert len(httpx.get(f"http://127.0.0.1:{port}/worlds", headers=auth).json()["worlds"]) == 1
+        assert not is_locked(paths.journey_lock_file(jid))  # nenhuma Jornada aberta pelo serviço
+    finally:
+        _stop(proc)

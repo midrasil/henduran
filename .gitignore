@@ -49,3 +49,7 @@ settings.json.migrado*
 # Cópias de trabalho e configuração local do Claude Code
 .claude/worktrees/
 .claude/settings.local.json
+# Jornadas e Mundos (ADR-075): bancos, bloqueios e arquivos preservados ficam na pasta de dados
+journey.lock
+*.db.danificado-*
+*.db.restaurando

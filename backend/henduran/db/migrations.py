@@ -1,7 +1,10 @@
-"""Migrações do banco do app, só para frente.
+"""Migrações dos bancos SQLite, só para frente, em **conjuntos** separados (ADR-075).
 
-Formato: arquivos ``NNNN_nome.sql`` em ``henduran/db/migrations/``, numerados
-de 1 em diante, sem lacunas. Cada arquivo é dividido em comandos
+Conjuntos: ``app`` (banco do app), ``journey`` (um banco por Jornada) e ``world``
+(um banco por Mundo). Cada conjunto tem sua pasta ``henduran/db/migrations/<conjunto>/``
+e sua numeração própria.
+
+Formato: arquivos ``NNNN_nome.sql``, numerados de 1 em diante, sem lacunas. Cada arquivo é dividido em comandos
 (``sqlite3.complete_statement``) e executado **numa única transação** junto
 com o registro em ``schema_migrations``; falha no meio desfaz tudo. Os
 arquivos não podem controlar a transação (``BEGIN``, ``COMMIT``, ``ROLLBACK``,
@@ -10,13 +13,17 @@ arquivos não podem controlar a transação (``BEGIN``, ``COMMIT``, ``ROLLBACK``
 Proteções:
 
 - o SHA-256 de cada migração aplicada é conferido; arquivo alterado depois de
-  aplicado é erro (``checksum_divergente``);
+  aplicado é erro (``checksum_divergente``). O SHA-256 é calculado com os finais
+  de linha normalizados para LF, para não divergir entre máquinas por causa
+  do ``core.autocrlf`` do Git; um registro antigo feito sobre o arquivo em CRLF
+  continua aceito (mesmo conteúdo lógico);
 - banco com versão maior que a última conhecida pelo app é recusado
   (``banco_mais_novo``), para que uma versão antiga do app não o estrague;
 - antes de aplicar migrações pendentes num banco que já tem conteúdo, é feita
   uma cópia com a API de backup do SQLite em
-  ``<pasta do banco>/backups/henduran-v<versão>-<AAAAMMDD-HHMMSS>.db``,
-  mantendo só as ``BACKUP_KEEP`` mais recentes.
+  ``<pasta do banco>/backups/<prefixo>-v<versão>-<AAAAMMDD-HHMMSS>.db``
+  (prefixo ``henduran``, ``journey`` ou ``world``, conforme o conjunto),
+  mantendo só as ``BACKUP_KEEP`` mais recentes daquele prefixo.
 """
 
 from __future__ import annotations
@@ -33,11 +40,15 @@ from henduran.db.connection import Database, DatabaseError, timestamp, utc_now_i
 
 log = logging.getLogger("henduran.db")
 
-MIGRATIONS_DIR = Path(__file__).with_name("migrations")
+MIGRATIONS_ROOT = Path(__file__).with_name("migrations")
+MIGRATION_SETS = ("app", "journey", "world")
+MIGRATIONS_DIR = MIGRATIONS_ROOT / "app"
 BACKUP_KEEP = 5
 BACKUP_PREFIX = "henduran"
+# Prefixo dos backups pré-migração de cada conjunto.
+BACKUP_PREFIXES = {"app": "henduran", "journey": "journey", "world": "world"}
 _FILE_RE = re.compile(r"^(\d{4})_([a-z0-9_]+)\.sql$")
-_BACKUP_RE = re.compile(rf"^{BACKUP_PREFIX}-v(\d+)-(\d{{8}}-\d{{6}})(?:-(\d+))?\.db$")
+_PREFIX_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _FORBIDDEN = ("BEGIN", "COMMIT", "END", "ROLLBACK", "SAVEPOINT", "RELEASE", "VACUUM")
 
 SCHEMA_MIGRATIONS_SQL = """
@@ -60,6 +71,12 @@ class Migration:
     name: str
     sql: str
     checksum: str
+    # Outros SHA-256 do mesmo conteúdo lógico (o arquivo com finais de linha CRLF),
+    # aceitos ao conferir registros antigos. Ver :func:`checksum_variants`.
+    accepted_checksums: tuple[str, ...] = ()
+
+    def matches(self, checksum: str) -> bool:
+        return checksum == self.checksum or checksum in self.accepted_checksums
 
 
 @dataclass
@@ -67,6 +84,44 @@ class MigrationResult:
     version: int
     applied: list[int] = field(default_factory=list)
     backup: Path | None = None
+
+
+def normalize_newlines(data: bytes) -> bytes:
+    """Finais de linha ``\\r\\n`` e ``\\r`` viram ``\\n``."""
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def migration_checksum(data: bytes) -> str:
+    """SHA-256 do arquivo de migração com os finais de linha normalizados para ``\\n``."""
+    return hashlib.sha256(normalize_newlines(data)).hexdigest()
+
+
+def checksum_variants(data: bytes) -> tuple[str, ...]:
+    """SHA-256 aceitos além do normalizado: o do arquivo em CRLF.
+
+    Antes da normalização o SHA-256 era calculado sobre os bytes crus; num clone
+    com ``core.autocrlf=true`` o arquivo estava em CRLF e esse valor pode estar
+    gravado em bancos já criados. É o mesmo conteúdo lógico, então continua aceito.
+    """
+    lf = normalize_newlines(data)
+    crlf = hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()
+    return () if crlf == hashlib.sha256(lf).hexdigest() else (crlf,)
+
+
+def migrations_dir(migration_set: str) -> Path:
+    if migration_set not in MIGRATION_SETS:
+        raise MigrationError("conjunto_desconhecido", f"Conjunto de migrações desconhecido: {migration_set!r}.")
+    return MIGRATIONS_ROOT / migration_set
+
+
+def load_migration_set(migration_set: str) -> list[Migration]:
+    """Migrações de um conjunto (``app``, ``journey`` ou ``world``)."""
+    return load_migrations(migrations_dir(migration_set))
+
+
+def latest_version(migration_set: str) -> int:
+    known = load_migration_set(migration_set)
+    return known[-1].version if known else 0
 
 
 def load_migrations(folder: Path = MIGRATIONS_DIR) -> list[Migration]:
@@ -81,8 +136,9 @@ def load_migrations(folder: Path = MIGRATIONS_DIR) -> list[Migration]:
             Migration(
                 version=int(m.group(1)),
                 name=m.group(2),
-                sql=data.decode("utf-8"),
-                checksum=hashlib.sha256(data).hexdigest(),
+                sql=normalize_newlines(data).decode("utf-8"),
+                checksum=migration_checksum(data),
+                accepted_checksums=checksum_variants(data),
             )
         )
     for expected, mig in enumerate(items, start=1):
@@ -142,6 +198,12 @@ def _has_content(db: Database) -> bool:
     return bool(row and row["n"])
 
 
+def _backup_re(prefix: str) -> re.Pattern[str]:
+    if not _PREFIX_RE.match(prefix):
+        raise ValueError("prefixo de backup inválido")
+    return re.compile(rf"^{re.escape(prefix)}-v(\d+)-(\d{{8}}-\d{{6}})(?:-(\d+))?\.db$")
+
+
 def backup_database(
     db: Database,
     backups_dir: Path,
@@ -149,31 +211,42 @@ def backup_database(
     *,
     keep: int = BACKUP_KEEP,
     now: datetime | None = None,
+    prefix: str = BACKUP_PREFIX,
 ) -> Path:
     """Copia o banco para ``backups_dir`` e apaga os backups além dos ``keep`` mais recentes."""
+    _backup_re(prefix)
     backups_dir.mkdir(parents=True, exist_ok=True)
     stamp = timestamp(now)
-    target = backups_dir / f"{BACKUP_PREFIX}-v{version}-{stamp}.db"
+    target = backups_dir / f"{prefix}-v{version}-{stamp}.db"
     n = 1
     while target.exists():
-        target = backups_dir / f"{BACKUP_PREFIX}-v{version}-{stamp}-{n}.db"
+        target = backups_dir / f"{prefix}-v{version}-{stamp}-{n}.db"
         n += 1
     db.backup_to(target)
     log.info("backup do banco criado: %s", target.name)
-    rotate_backups(backups_dir, keep)
+    rotate_backups(backups_dir, keep, prefix=prefix)
     return target
 
 
-def rotate_backups(backups_dir: Path, keep: int = BACKUP_KEEP) -> list[Path]:
-    """Mantém os ``keep`` backups mais recentes (pela data no nome). Devolve os removidos."""
-    found: list[tuple[str, int, Path]] = []
+def list_backup_files(backups_dir: Path, prefix: str = BACKUP_PREFIX) -> list[tuple[str, int, int, Path]]:
+    """Backups de ``prefix`` em ``backups_dir``: ``(data, sequência, versão, caminho)``, do mais antigo ao mais novo."""
+    pattern = _backup_re(prefix)
+    found: list[tuple[str, int, int, Path]] = []
+    if not backups_dir.is_dir():
+        return found
     for path in backups_dir.iterdir():
-        m = _BACKUP_RE.match(path.name)
+        m = pattern.match(path.name)
         if m and path.is_file():
-            found.append((m.group(2), int(m.group(3) or 0), path))
-    found.sort()
+            found.append((m.group(2), int(m.group(3) or 0), int(m.group(1)), path))
+    found.sort(key=lambda item: (item[0], item[1]))
+    return found
+
+
+def rotate_backups(backups_dir: Path, keep: int = BACKUP_KEEP, *, prefix: str = BACKUP_PREFIX) -> list[Path]:
+    """Mantém os ``keep`` backups mais recentes (pela data no nome). Devolve os removidos."""
+    found = list_backup_files(backups_dir, prefix)
     removed: list[Path] = []
-    for _, _, path in found[: max(0, len(found) - keep)]:
+    for _, _, _, path in found[: max(0, len(found) - keep)]:
         try:
             path.unlink()
             removed.append(path)
@@ -186,11 +259,20 @@ def migrate(
     db: Database,
     *,
     migrations: list[Migration] | None = None,
+    migration_set: str = "app",
     backups_dir: Path | None = None,
     keep_backups: int = BACKUP_KEEP,
+    backup_prefix: str | None = None,
 ) -> MigrationResult:
-    """Confere e aplica as migrações pendentes. Levanta :class:`MigrationError`."""
-    known = load_migrations() if migrations is None else migrations
+    """Confere e aplica as migrações pendentes. Levanta :class:`MigrationError`.
+
+    ``migration_set`` escolhe o conjunto (``app``, ``journey`` ou ``world``) e o
+    prefixo dos backups; ``migrations`` substitui a lista (testes).
+    """
+    if migration_set not in MIGRATION_SETS:
+        raise MigrationError("conjunto_desconhecido", f"Conjunto de migrações desconhecido: {migration_set!r}.")
+    known = load_migration_set(migration_set) if migrations is None else migrations
+    prefix = backup_prefix or BACKUP_PREFIXES[migration_set]
     latest = known[-1].version if known else 0
     by_version = {m.version: m for m in known}
     had_content = _has_content(db)
@@ -207,7 +289,7 @@ def migrate(
         mig = by_version.get(version)
         if mig is None:
             raise MigrationError("migracao_desconhecida", f"A migração {version:04d} aplicada no banco não existe no app.")
-        if row["checksum"] != mig.checksum:
+        if not mig.matches(row["checksum"]):
             raise MigrationError(
                 "checksum_divergente",
                 f"A migração {version:04d}_{mig.name} foi alterada depois de aplicada (SHA-256 diferente). "
@@ -221,7 +303,7 @@ def migrate(
 
     if had_content:
         folder = backups_dir if backups_dir is not None else db.path.parent / "backups"
-        result.backup = backup_database(db, folder, current, keep=keep_backups)
+        result.backup = backup_database(db, folder, current, keep=keep_backups, prefix=prefix)
 
     for mig in pending:
         statements = split_statements(mig.sql)

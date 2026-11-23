@@ -15,8 +15,10 @@
 - [ ] infra: validar os limiares do `fit`, a escolha da variante do motor por hardware e o comportamento sem GPU; confirmar a licença do `llama-server` antes de distribuir — origem: Tarefa A e ADR-070
 - [x] infra: fundação de persistência SQLite (migrações, backup, corrupção) e migração do `settings.json` — feito em 2026-11-23; ADR-074 proposto
 - [x] decisão: um banco por Jornada e um por Mundo (ADR-075, aprovado em 2026-11-23); durabilidade `FULL` e política de corrupção definidas para os bancos de jogo
-- [ ] ⭐ infra: infraestrutura dos bancos por Jornada e por Mundo — motor de migrações com vários conjuntos (`app`, `journey`, `world`), `journey_meta`, abertura e bloqueio de uma Jornada por vez, anexo do Mundo em leitura, backups por Jornada; sem esquema de jogo ainda — origem: ADR-075
-- [ ] docs: aprovar o ADR-074 (fundação SQLite), ainda como proposta — origem: revisão da persistência
+- [x] infra: infraestrutura dos bancos por Jornada e por Mundo (migrações por conjunto, `WorldStore`, `JourneyStore`, bloqueio, anexo do Mundo em leitura, backups e dano) — feito em 2026-11-23; ADR-075
+- [ ] ⭐ feat: menu inicial, gerador de mundo e criação de personagem (fatia 1 do Astra) sobre a base de UI e os bancos por Jornada e por Mundo — origem: `ESCOPO-MVP.md` e decisão do responsável em 2026-11-23
+- [ ] infra: rotas de criar, abrir, excluir e restaurar Jornada e Mundo, e o esquema de jogo (estado, eventos, memória, salvamentos, ramificações), junto das telas — origem: ADR-075
+- [x] docs: aprovar o ADR-074 (fundação SQLite) — aprovado em 2026-11-23
 - [ ] decisão: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e `ATTACH` do Mundo com FTS5 e vetores — origem: ADR-075 (em aberto)
 - [ ] legal: registrar por escrito a autorização do autor do Caliope e pedir que ele adicione uma `LICENSE`; perguntar a origem do acervo de 520 skills e preservar licenças e atribuições — origem: auditoria do Caliope
 
