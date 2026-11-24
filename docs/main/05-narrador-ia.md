@@ -50,6 +50,10 @@ O produto deve funcionar como uma aplicação desktop, sem exigir navegador nem 
 
 Implementado em 2026-11-24 (ADR-077, item 3): `POST /narrator/fill` (contrato em `backend/README.md`). O serviço monta o contexto (Mundo escolhido, lugar inicial, o que o jogador já preencheu, a descrição da Jornada e a ideia opcional) e pede ao `NarratorProvider` uma resposta com **esquema JSON fixo** por tipo de pedido (`field`, `missing`, `attributes`, `skills`, `history`). **A IA propõe, o motor valida**: textos pelos limites da criação, Atributos e Perícias pela distribuição do catálogo (os já escolhidos ficam fixos no esquema), História por HTML saneado com o limite de 4.000 caracteres de texto puro. Resposta inválida volta ao modelo com o motivo, até 2 novas tentativas. Cancelável, com tempo limite de 120 s e erros explícitos; nada é gravado (o cliente aplica no formulário e oferece Desfazer).
 
+## 6.2 Convenção de formatação do texto
+
+O Narrador e o jogador escrevem com marcas leves (`"fala"`, `*ação*`, `_pensamento_`); o resto é narração, e `Nome: "fala"` indica quem fala (`09-tela-da-jornada.md`, item 2.10). O prompt do Narrador deve dizer a convenção em poucas linhas (custo de tokens desprezível) e que **o pensamento do personagem do jogador é privado e os NPCs não o conhecem**. A formatação é só visual: o motor e o extrator tratam o conteúdo, e o texto do modelo é sempre escapado.
+
 ## 7. Comportamentos a validar
 
 - Narrador mantém identidade e personalidade de NPCs ao longo de Cenas diferentes.
@@ -58,6 +62,7 @@ Implementado em 2026-11-24 (ADR-077, item 3): `POST /narrator/fill` (contrato em
 - Compra de item só altera recursos após operação válida.
 - Memória não cria retroativamente fatos que contradizem o estado oficial.
 - Mudanças de modelo e de janela de contexto preservam a Jornada.
+- O modelo segue a convenção de marcas (fala, ação, pensamento) e nunca revela, pela boca de um NPC, o pensamento do personagem do jogador.
 - Resposta interrompida, erro de inferência ou retry não duplicam transações.
 
 ## 8. Pendências

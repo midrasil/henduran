@@ -121,6 +121,23 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
   - Um NPC pouco conhecido mostra "Você ainda não sabe" nos campos que o jogador não descobriu.
 - **Segredos e stats escondidos**: cada bloco tem um botão **só de ícone** (olho) com dica; revelar abre um popup **"Tem certeza?"** (revelar é spoiler e não dá para desler) com **Cancelar** (foco inicial) e **Revelar mesmo assim**. O olho riscado esconde de novo, sem confirmação. Esc e o fundo fecham só o popup.
 
+### 2.10 Formatação do texto do chat (narração, fala, ação e pensamento)
+
+**Estado:** protótipo aprovado em 2026-11-24 (estilo "A · Simples"), com a aparência de livro de RPG. Vale para o chat da Cena e para o do Aduran.
+
+- **Convenção de marcas**, a mesma para o Narrador e para o jogador (as marcas são o que o modelo escreve e o jogador digita; a conversão para o visual é só da interface):
+  - **Narração**: sem marca, serifa normal.
+  - **Fala**: entre aspas, `"assim"`. Aparece **com travessão (—)**, em **itálico**, no mesmo estilo da ação, e **sem aspas**.
+  - **Ação**: entre asteriscos, `*assim*`. Aparece em **itálico**, na mesma cor e estilo da fala, sem marcador.
+  - **Pensamento**: entre sublinhados, `_assim_`. Aparece em itálico roxo, **entre parênteses** e com um fundo suave.
+- **Quem fala**: quando o texto começa com um nome conhecido seguido de dois pontos e uma fala (`Osvaldo: "…"`), a interface mostra um **chip roxo com o nome** (pixel, borda dourada) **acima da fala, sem recuo**, e o chip **abre a ficha do NPC no Diário**. Sem esse prefixo (ou para um nome desconhecido), a fala aparece só com o travessão.
+- **No campo de escrita**: uma barra com **Fala**, **Ação** e **Pensamento** aplica a marca ao texto selecionado (ou insere o par de marcas com o cursor dentro) e um botão **?** abre a legenda com exemplos. **Texto sem marca que o jogador escreve conta como ação.**
+- **O pensamento é privado**: o pensamento do personagem do jogador **não é conhecido pelos NPCs**; o contexto do Narrador deve marcá-lo assim, e o extrator do Estado da Cena e as fichas dos NPCs não o tratam como algo dito.
+- **Segurança**: o texto vindo do modelo é **escapado** antes de aplicar as marcas; HTML solto nunca é interpretado.
+- **Acessibilidade**: o destaque não depende só de cor (ADR-068); cada tipo difere pela forma (travessão, itálico, parênteses, chip).
+- **Se o modelo esquecer as marcas**, o trecho aparece como narração comum, sem erro; o teste de continuidade pode medir a aderência à convenção.
+- Estilos descartados no protótipo: faixa lateral, placa de nome (card) e duas colunas.
+
 ## 3. Estados
 
 - **Jornada sem abertura**: o centro mostra a preparação da Cena inicial; digitação e envio **desabilitados** (ADR-076, item 10); sem modelo, aviso com o caminho para a configuração e **Gerar abertura** desabilitado.

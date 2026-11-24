@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário do jogador e ficha do NPC no protótipo da tela da Jornada).
+Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário, ficha do NPC e formatação do texto do chat no protótipo da tela da Jornada).
 
 ## Estado
 
@@ -37,6 +37,7 @@ Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário do jogador
 - **Protótipo aprovado** (acréscimo à tela da Jornada; `09-tela-da-jornada.md`, item 2.9; este PR): botão **Diário** à esquerda do expandir da Ficha, com **Anotações** (só do jogador), **O que sei** (com origem de cada informação) e **NPCs que conheço** (filtros Todos, Nesta Cena, Fora da Cena). A **ficha do NPC tem duas abas**: **Narrativa** (identidade, personalidade e voz, motivações e segredos, o que sabe e lembra, relações, estado, anotações do jogador) e **Stats** (patamar, atributos, perícias e trilhas). **Segredos e stats ficam escondidos até o jogador descobrir**; revelar é um botão de ícone com popup "Tem certeza?". O Aduran vê tudo.
 - O Estado da Cena **não tem mais campo "Sabe"** com texto: só o link **ver na ficha** (o conhecimento do NPC vem da ficha).
 - **Em aberto:** a **ficha de regras** do NPC (fatia 3 do Astra; os valores do protótipo são de exemplo) e **como o jogador descobre os stats** (não inventado); esquema de dados do Diário.
+- **Formatação do texto do chat** (item 2.10 do `09`): convenção `"fala"`, `*ação*`, `_pensamento_`; narração sem marca. Fala com travessão e ação no mesmo estilo (itálico); pensamento em itálico roxo entre parênteses; `Nome: "fala"` mostra um **chip roxo com o nome acima da fala, sem recuo**, que abre a ficha do NPC; barra **Fala, Ação, Pensamento** no campo de escrita e legenda no **?**. Estilo "A · Simples" escolhido entre quatro. **O pensamento do jogador é privado** (NPCs não o conhecem). A convenção entra no prompt do Narrador (`05`, seção 6.2).
 - O PR #37 (Estado da Cena e dúvida de continuidade) já foi mergeado.
 
 ## Decisões vigentes

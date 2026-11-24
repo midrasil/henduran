@@ -466,6 +466,26 @@ svg.px { shape-rendering: crispEdges; display: block; }
 .dsecret { padding: 6px 10px; gap: 4px; } .fs-main .btn.danger { background: var(--red-800); color: var(--ivory-100); border-color: var(--red-400); }
 
 .str.know { grid-template-columns: 5.2em minmax(0, 1fr); } .stv .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; font-size: var(--fs-xs); } .kitem { display: block; } .kitem + .kitem { margin-top: 2px; } .stfromf { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-family: var(--font-pixel); } .stv .linkish, .stfromf .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; }
+
+/* ---------------------------------------- formatação do texto do chat: fala, ação, pensamento */
+.msg .body .fala { font-weight: 600; color: var(--purple-800); } .msg .body .acao { font-style: italic; color: var(--brown-700); } .msg .body .acao::before { content: "▸ "; font-style: normal; color: var(--red-800); }
+.msg .body .pens { font-style: italic; color: var(--purple-600); background: rgba(110,49,151,.12); padding: 0 5px; } .msg .body .pens::before { content: "( "; font-style: normal; } .msg .body .pens::after { content: " )"; font-style: normal; }
+.msg.player .body .fala { color: var(--gold-200); } .msg.player .body .acao { color: var(--ivory-100); } .msg.player .body .acao::before { color: var(--gold-400); } .msg.player .body .pens { color: var(--purple-200); background: rgba(196,155,227,.15); }
+[data-view="margem"] .msg .body .fala { color: var(--gold-200); } [data-view="margem"] .msg .body .acao { color: var(--ivory-400); } [data-view="margem"] .msg .body .pens { color: var(--purple-200); }
+.spk { font: 600 11px/1 var(--font-pixel); letter-spacing: .06em; text-transform: uppercase; background: var(--purple-600); color: var(--gold-200); border: 2px solid var(--gold-600); padding: 3px 7px; margin-right: 6px; vertical-align: 2px; cursor: pointer; } .spk:hover { background: var(--purple-500); } .spk.me { background: var(--ink-700); border-color: var(--ink-400); cursor: default; }
+.fmtbar { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; } .fmtbar button { display: inline-flex; gap: 6px; align-items: center; min-height: 30px; padding: 2px 10px; font-size: 12px; background: var(--ink-800); border: 2px solid var(--ink-600); color: var(--ivory-100); } .fmtbar button:hover:not(:disabled) { border-color: var(--gold-400); } .fmtbar button:disabled { opacity: .45; } .fmtbar .fi { font-weight: 700; color: var(--gold-200); } .fmtbar .fhelp { margin-left: auto; min-width: 30px; justify-content: center; }
+[data-view="cena"] .fmtbar button { background: var(--parch-300); border-color: var(--parch-500); color: var(--brown-900); } [data-view="cena"] .fmtbar .fi { color: var(--purple-800); }
+.fmthelp { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .fmthelp li { display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 10px; background: var(--ink-800); border: 2px solid var(--ink-600); padding: 8px 12px; font-family: var(--font-serif); font-size: var(--fs-md); } .fmthelp .k { font-family: var(--font-pixel); font-size: var(--fs-xs); color: var(--gold-200); text-transform: uppercase; letter-spacing: .08em; } .fmthelp code { font-family: var(--font-pixel); background: var(--ink-950); padding: 1px 6px; }
+.fmthelp .fala { color: var(--gold-200); font-weight: 600; } .fmthelp .acao { color: var(--ivory-400); font-style: italic; } .fmthelp .acao::before { content: "▸ "; font-style: normal; color: var(--gold-400); } .fmthelp .pens { color: var(--purple-200); font-style: italic; } .fmthelp .pens::before { content: "( "; } .fmthelp .pens::after { content: " )"; }
+
+/* ---------------------------------------- texto do chat: nome acima e recuado, fala e ação no mesmo estilo */
+.msg .body p.dlgp { margin-left: 0; } .msg .body p.dlgp .spk { display: table; margin: 0 0 4px; }
+.msg .body .fala, .msg .body .acao { font-style: italic; font-weight: 400; color: var(--brown-700); }
+.msg .body .acao::before { content: none; }
+.msg.player .body .fala, .msg.player .body .acao { color: var(--ivory-100); }
+[data-view="margem"] .msg .body .fala, [data-view="margem"] .msg .body .acao { color: var(--ivory-400); }
+.fmthelp .fala, .fmthelp .acao { color: var(--ivory-100); font-style: italic; font-weight: 400; } .fmthelp .acao::before { content: none; } .fmthelp .spk { display: table; margin-bottom: 4px; }
+
 </style>
 
 <header class="top" id="top">
@@ -630,12 +650,12 @@ const S = {
       msgs: [ { r: "n", t: ["Os portões de Norilunde se abrem com o primeiro sino da manhã, e a lama da estrada do pântano ainda pesa nas suas botas."] } ] },
     { n: 2, arc: 1, title: "Costas para o cais", place: "Cais de Norilunde", period: "entardecer", motive: "Ilsa procura trabalho entre os barqueiros", status: "encerrada",
       summary: "Ilsa ajudou a descarregar uma barca em troca de abrigo e ouviu que alguém de capa cinzenta perguntou por ela no cais.",
-      msgs: [ { r: "n", t: ["O cais fede a sal e piche. Barqueiros gritam ordens enquanto a maré começa a virar."] }, { r: "p", t: ["Pergunto ao primeiro barqueiro se precisa de braços."] }, { r: "n", t: ["Ele mede você de cima a baixo. <q>Braços eu tenho. Preciso de costas.</q>"] } ] },
+      msgs: [ { r: "n", t: ["O cais fede a sal e piche. Barqueiros gritam ordens enquanto a maré começa a virar."] }, { r: "p", t: ["Pergunto ao primeiro barqueiro se precisa de braços."] }, { r: "n", t: ["*Ele mede você de cima a baixo.*", "Maro: “Braços eu tenho. Preciso de costas.”"] } ] },
     { n: 3, arc: 1, title: "A carta da garça", place: "Taverna do Corvo Manco", period: "noite", motive: "Um mensageiro procura Ilsa com uma carta lacrada", status: "aberta",
       msgs: [
-        { r: "n", t: ["A chuva bate nas janelas do Corvo Manco quando a porta se abre e deixa entrar o frio do cais. Um rapaz magro, encharcado até os ossos, varre o salão com os olhos e para em você.", "<q>Ilsa de Vel?</q> Ele aperta contra o peito um envelope selado com cera negra. <q>Me pagaram para entregar isto só nas suas mãos.</q>"] },
-        { r: "p", t: ["Faço sinal para ele sentar e peço um caldo quente para o garoto antes de pegar a carta."] },
-        { r: "n", t: ["O taberneiro resmunga, mas traz a tigela. O rapaz come como quem não vê comida há dias. Quando você vira o envelope, reconhece o selo: a garça de três penas, a mesma que seu irmão usava nas cartas da guarnição.", "Do outro lado do salão, dois homens de capa cinzenta param de conversar"], cut: true } ] },
+        { r: "n", t: ["A chuva bate nas janelas do Corvo Manco quando a porta se abre e deixa entrar o frio do cais. Um rapaz magro, encharcado até os ossos, varre o salão com os olhos e para em você.", "Tibo: “Ilsa de Vel?” *Ele aperta contra o peito um envelope selado com cera negra.* “Me pagaram para entregar isto só nas suas mãos.”"] },
+        { r: "p", t: ["Faço sinal para ele sentar e peço um caldo quente para o garoto antes de pegar a carta. “Senta, garoto. Come primeiro.” _Ele não parece mentir, mas está com medo._"] },
+        { r: "n", t: ["O taberneiro resmunga, mas traz a tigela. O rapaz come como quem não vê comida há dias. Quando você vira o envelope, reconhece o selo: a garça de três penas, a mesma que seu irmão usava nas cartas da guarnição.", "Osvaldo: “Aqui ninguém come de graça, moça. Mas hoje eu deixo passar.” *Ele volta a limpar o mesmo copo.*", "Do outro lado do salão, dois homens de capa cinzenta param de conversar"], cut: true } ] },
   ],
   aduran: [
     { r: "n", t: ["Você chegou a Norilunde sem nada além da espada do seu irmão. O que pretende fazer agora?"] },
@@ -653,19 +673,40 @@ const openScene = () => S.scenes.find((x) => x.status === "aberta");
 const arc = () => S.arcs.find((a) => a.status === "ativa");
 
 /* ---------------------------------------------------------- mensagens */
+/* Formatação do texto do chat (proposta): "fala", *ação*, _pensamento_; o resto é narração.
+   Um nome conhecido seguido de dois pontos antes de uma fala vira o rótulo de quem fala. */
+const SPEAKERS = { Tibo: "rapaz", Osvaldo: "tab", Maro: "maro", Ilsa: null };
+function fmt(text) {
+  let rest = String(text), spk = "";
+  const m = rest.match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*_])/);
+  if (m && m[1] in SPEAKERS) {
+    const id = SPEAKERS[m[1]];
+    spk = id ? `<button class="spk" data-d="npc" data-id="${id}" data-tip="Ver a ficha" aria-label="Ver a ficha de ${m[1]}">${m[1]}</button>` : `<span class="spk me">${m[1]}</span>`;
+    rest = rest.slice(m[0].length);
+  }
+  const safe = rest.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const body = safe.replace(/"([^"]+)"|“([^”]+)”|\*([^*]+)\*|_([^_]+)_/g, (all, a, b, c, d) => (a || b) ? `<span class="fala">— ${a || b}</span>` : c ? `<em class="acao">${c}</em>` : `<em class="pens">${d}</em>`);
+  return spk ? spk + `<span class="dtxt">${body}</span>` : body;
+}
+const fmtP = (text) => { const m = String(text).match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*_])/); return m && m[1] in SPEAKERS ? ' class="dlgp"' : ""; };
 function msgHTML(m, i, list, o = {}) {
   const lastNarr = m.r === "n" && list.slice(i + 1).every((x) => x.r !== "n");
   const a = (act, icon, tip) => `<button data-act="${act}" data-tip="${tip}" aria-label="${tip}">${icon}</button>`;
   const acts = (m.doubt && S.dbt && S.dbt.status !== "aberta" ? a("doubt", IC.doubt, "Ver a dúvida de continuidade") : "") + a("copy", IC.copy, "Copiar") + (!o.readonly && lastNarr && !S.streaming ? a("regen", IC.regen, "Regenerar") : "") + (!o.readonly && m.cut ? a("cont", IC.cont, "Continuar") : "");
   return `<article class="msg ${m.r === "p" ? "player" : "narr"} ${i === 0 && m.r === "n" ? "first" : ""} ${m.cut ? "cut" : ""}">
     <div class="actions" role="group" aria-label="Ações da mensagem">${acts}</div>
-    <div class="who">${m.r === "p" ? "Ilsa" : o.aduran ? "Aduran" : "Narrador"}</div><div class="body ${m.typing ? "typing" : ""}">${m.t.map((p) => `<p>${p}</p>`).join("")}</div>
+    <div class="who">${m.r === "p" ? "Ilsa" : o.aduran ? "Aduran" : "Narrador"}</div><div class="body ${m.typing ? "typing" : ""}">${m.t.map((p) => `<p${fmtP(p)}>${fmt(p)}</p>`).join("")}</div>
     ${m.cut ? `<div class="cutnote">Resposta interrompida.</div>` : ""}</article>`;
 }
+const fmtbar = (disabled) => `<div class="fmtbar" role="toolbar" aria-label="Formatar o texto">
+  <button type="button" data-f="fala" ${disabled ? "disabled" : ""} data-tip="Fala (aspas)" aria-label="Marcar como fala"><span class="fi">“ ”</span> Fala</button>
+  <button type="button" data-f="acao" ${disabled ? "disabled" : ""} data-tip="Ação (itálico)" aria-label="Marcar como ação"><span class="fi">*</span> Ação</button>
+  <button type="button" data-f="pens" ${disabled ? "disabled" : ""} data-tip="Pensamento (só seu)" aria-label="Marcar como pensamento"><span class="fi">_</span> Pensamento</button>
+  <button type="button" class="fhelp" data-f="help" data-tip="Como funciona" aria-label="Como funciona a formatação do texto">?</button></div>`;
 function composer(placeholder, disabled = false) {
   return `<div class="composer"><div class="field ${disabled ? "off" : ""}"><textarea id="ta" rows="1" placeholder="${placeholder}" ${disabled ? "disabled" : ""} aria-label="Mensagem"></textarea>
     ${S.streaming ? `<button class="send" data-act="stop" data-tip="Parar" aria-label="Parar">${IC.stop}</button>` : `<button class="send" data-act="send" data-tip="Enviar" aria-label="Enviar" ${disabled ? "disabled" : ""}>${IC.send}</button>`}</div>
-    <div class="field-hint"><span>${disabled ? "" : "Enter envia · Shift+Enter pula linha"}</span></div></div>`;
+    ${fmtbar(disabled)}<div class="field-hint"><span>${disabled ? "" : "Enter envia · Shift+Enter pula linha"}</span></div></div>`;
 }
 function logHTML(sceneN) {
   const items = sceneN == null ? S.log : S.log.filter((e) => e.scene === sceneN);
@@ -989,6 +1030,27 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("#laye
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderTop(); renderStage(); }, 120); });
 $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v="${p}">${PLABEL[p]}</button>`).join("");
 
+
+
+/* ---------------- formatação do texto: botões do campo de escrita e legenda */
+document.addEventListener("mousedown", (e) => { if (e.target.closest(".fmtbar button")) e.preventDefault(); });
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-f]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+  if (b.dataset.f === "help") {
+    dialog("Formatação do texto", `<p style="margin:0">O texto do chat usa quatro estilos. O Narrador segue a mesma convenção; o que você escreve também.</p>
+      <ul class="fmthelp"><li><span class="k">Narração</span><span>Sem marca. Descreve o mundo e o que acontece.</span></li>
+      <li><span class="k">Fala</span><span><code>"assim"</code> entre aspas; no chat aparece com travessão e em itálico, no mesmo estilo da ação. O nome de quem fala vem acima, recuado. ${fmt('Tibo: "Eu só entrego, moça."')}</span></li>
+      <li><span class="k">Ação</span><span><code>*assim*</code> entre asteriscos; aparece em itálico, no mesmo estilo da fala. ${fmt("*Você pega o envelope.*")}</span></li>
+      <li><span class="k">Pensamento</span><span><code>_assim_</code> entre sublinhados. ${fmt("_Esse selo é do meu irmão._")}</span></li></ul>
+      <p style="margin:0;font-size:var(--fs-xs);color:var(--muted)">Os botões <b>Fala</b>, <b>Ação</b> e <b>Pensamento</b> aplicam a marca ao texto selecionado. Texto sem marca que você escreve conta como ação. <b>O pensamento é só seu</b>: os NPCs não o conhecem. O destaque nunca depende só da cor.</p>`);
+    return;
+  }
+  const ta = $("#ta"); if (!ta || ta.disabled) return;
+  const [o, c] = { fala: ['"', '"'], acao: ["*", "*"], pens: ["_", "_"] }[b.dataset.f];
+  const st = ta.selectionStart, en = ta.selectionEnd, sel = ta.value.slice(st, en);
+  ta.setRangeText(o + sel + c, st, en, "end"); if (!sel) ta.setSelectionRange(st + 1, st + 1);
+  ta.focus(); grow(ta);
+}, true);
 
 /* ====================================================== Diário do jogador: anotações, o que sei e NPCs que conheço */
 IC.eye = L(["........", "..####..", ".#....#.", "#..##..#", "#..##..#", ".#....#.", "..####..", "........"]);
