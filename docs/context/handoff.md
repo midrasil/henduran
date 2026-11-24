@@ -1,18 +1,16 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `menu-inicial` (implementação do redesenho aprovado).
+Atualizado em 2026-11-23 após a tarefa `prototipo-nova-jornada` (prototipagem da Nova Jornada).
 
 ## Estado
 
-- Tarefa: implementação do menu inicial conforme `docs/ui-ux/11-menu-inicial.md` e `prototipos/menu-inicial.html`: paisagem animada em canvas (castelos simétricos, estandartes, cantos dourados), título com rosa dos ventos, botões no eixo central (Modelos fora dos botões), cartão "Última Jornada" (retrato ou iniciais, lugar e Mundo, período e data do calendário, Cena em andamento, "Salvo há…") e rodapé com versão e indicador clicável de serviço e modelo.
-- Backend: `GET /journeys` ganhou `calendar`, `current_scene_title` e `portrait` (opcionais, só com status `ok`, leitura sem migrar, `null` se não puder ler) e a rota `GET /journeys/{id}/portrait` (token obrigatório, `no-store`; 404 `jornada_nao_encontrada` e `retrato_ausente`, 422 `id_invalido`).
-- Ajuste visual do fundo: castelos fora do cartão e com a base no chão (`castlePlacement` em `MenuLandscape.tsx`), astros longe do título e do cartão.
-- Diferenças em relação ao protótipo (registradas em `11-menu-inicial.md`, seção 5): rodapé "Henduran · v<versão>", estados extras do indicador (carregando o modelo, baixando o motor, erro do serviço), retrato de 64 px, estado de primeira vez sem botão "Criar a primeira Jornada", Sair só no Tauri.
-- Validações: `npm run typecheck` sem erros; `npm run test` 285/285; `pytest` 591 passando, 1 pulado e 1 falha em `test_storage.py::test_bloqueio_contra_outro_processo_e_liberado_ao_matar` na execução completa (teste de bloqueio entre processos, arquivo não alterado nesta tarefa), que passou isolado; `vite build` sem erro (relatado pelo dev). O responsável validou o menu no app.
-- Não verificado: animação em movimento em todos os períodos, DPI de 125% a 200%, leitor de tela, hover e foco dos botões em detalhe, 1024×768 do Tauri com barra de título.
-- Branch: `feat/menu-inicial`; PR [#27](https://github.com/midrasil/henduran/pull/27) aberto contra `main`.
-- **Em paralelo, ainda não entregue:** o protótipo da **Nova Jornada** (`docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html`) está em revisão (Mundo e Protagonista revisados; falta a Revisão) num worktree separado, `../henduran-proto`, branch `docs/prototipo-nova-jornada`, sem commit. Decisões em aberto dele: formato da História (hoje texto simples de 4.000 caracteres; o editor produz formatação) e a rota do Narrador para preencher dados.
-- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
+- Tarefa: protótipo navegável e documento da **Nova Jornada**, aprovados pelo responsável depois de várias rodadas. Só documentação; o app continua com o assistente antigo (`app/src/screens/newJourney/`).
+- Artefatos: `docs/ui-ux/12-nova-jornada.md` e `docs/ui-ux/prototipos/nova-jornada.html` (botão **Protótipo** com todos os estados).
+- Resumo do desenho: trilho com 3 passos (Mundo, Protagonista, Revisão) e a tela **Iniciar Jornada**; todos em cartão de pergaminho com abas e altura total. **Mundo:** lista de Mundos salvos (somente leitura, com Duplicar e editar), semente, Gerar mundo e Criar do zero, abas Visão geral, Calendário, Religiões e Lugares; semente "gerada ao criar" para Mundos editados à mão. **Protagonista:** retrato (a própria área é o botão, com recorte), abas Identidade, História (a aba é um editor de texto), Objetivos e Status (Atributos e Perícias), botões do Narrador para preencher dados (Sugerir por campo e Preencher o que falta) com Desfazer. **Revisão:** abas Mundo e Personagem. **Iniciar Jornada:** nome e descrição da Jornada, opcionais, com Sugerir do Narrador. **Avançar** vai à próxima aba incompleta quando a atual está completa.
+- Processo: o dev ficou em outro worktree/branch; o menu inicial (PR #27) foi entregue e mergeado em paralelo.
+- Validações: o protótipo foi conferido com testes de fluxo em jsdom e capturas no Edge headless (1280×800 e 1024×768); o responsável revisou o protótipo publicado. Não verificado: leitor de tela, DPI de 125% a 200%, o editor de texto com formatação real em outros navegadores (usa `execCommand`, só protótipo).
+- Branch: `docs/prototipo-nova-jornada`; PR aberto contra `main` (link no jornal).
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial (implementado) e Nova Jornada. Ajustes pequenos podem ir direto ao código.
 
 ## Decisões vigentes
 
@@ -65,4 +63,4 @@ Atualizado em 2026-11-23 após a tarefa `menu-inicial` (implementação do redes
 
 ## Próximo passo recomendado
 
-⭐ Concluir a revisão do protótipo da **Nova Jornada** (falta a tela de Revisão), entregá-lo (PR de documentação) e só então mandar o dev implementar. Depois, prototipar **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado. Pendente de decisão antes da implementação da Nova Jornada: formato da História e rota do Narrador para preencher dados.
+⭐ Decidir os três pontos que bloqueiam a implementação da Nova Jornada e então mandar o dev implementá-la (item no topo do backlog): (1) **formato da História**: o servidor guarda texto simples (até 4.000 caracteres) e o editor produz formatação, então escolher Markdown limitado ou HTML saneado e como o Narrador lê; (2) **rota do Narrador para preencher dados**, via `NarratorProvider`, com o motor validando; (3) **descrição da Jornada** como campo novo em `journey_meta` (ADR-075), usado no contexto do Narrador. Depois, prototipar **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado.

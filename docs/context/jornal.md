@@ -258,3 +258,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Em paralelo: protótipo da Nova Jornada em revisão, em outro worktree (não faz parte deste PR).
 - Arquivos principais: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/*`, `backend/henduran/storage/journeys.py`, `backend/henduran/api/app.py`, `docs/ui-ux/11-menu-inicial.md`.
 - Entrega: PR [#27](https://github.com/midrasil/henduran/pull/27) aberto contra `main`.
+
+## 2026-11-23 — `prototipo-nova-jornada`
+
+- Rota: conversa com o planejador → protótipo em várias rodadas (artifact privado, mesmo link) → aprovação → Entrega. Só documentação.
+- Resultado: `12-nova-jornada.md` e `prototipos/nova-jornada.html` aprovados. Assistente de 3 passos com tela Iniciar Jornada, cartões de pergaminho com abas e altura total.
+- Decisões do responsável ao longo das rodadas: modais de Mundo em altura total e lista de Mundos salvos para escolher; sem aviso fixo de "gerar outro substitui as edições"; detalhes do Mundo como campos preenchíveis à mão (semente gerada ao criar); Protagonista em abas sem cabeçalho, com retrato (a área é o botão), aparência opcional, História como aba-editor com recursos de processador de texto, botões do Narrador como no Caliope (sugerir por campo, preencher o que falta, Desfazer); Atributos e Perícias numa aba Status (Perícias em lista única, descrições em "?"); Convicção e Pilar no mesmo padrão de campo; sem botões de aba anterior ou próxima e sem lista de pendências; Avançar vai à próxima aba incompleta só quando a atual está completa; Revisão em duas abas (Mundo e Personagem); nome e descrição da Jornada numa tela própria depois dos três passos.
+- Decisões minhas, a validar: Mundos salvos somente leitura com Duplicar e editar (ADR-075); mesma regra de Avançar nas abas do Mundo; sem campo de ideia nas abas de Status e História.
+- Em aberto, no backlog: formato da História, rota do Narrador para preencher dados, campo "descrição da Jornada" em `journey_meta`; o texto dos botões do Narrador no protótipo é só exemplo.
+- Arquivos principais: `docs/ui-ux/12-nova-jornada.md`, `docs/ui-ux/prototipos/nova-jornada.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`.
