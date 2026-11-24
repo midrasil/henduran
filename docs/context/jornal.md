@@ -236,3 +236,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisão: não adicionar `cargo:rerun-if-changed=icons` ao `build.rs` por enquanto; registrado no handoff.
 - Não testado: ícone no instalador (`npm run tauri build`).
 - Arquivos: `app/src-tauri/icons/*`, `docs/ui-ux/icone/*`, `app/index.html`, `app/public/favicon.png`, `docs/context/handoff.md`.
+- Entrega: PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.

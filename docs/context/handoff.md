@@ -8,7 +8,7 @@ Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
 - Resultado: `app/src-tauri/icons/` regenerado (`32x32`, `128x128`, `128x128@2x`, `icon.png`, `icon.ico` com 16 a 256 px); `docs/ui-ux/icone/gerar_icone.py` e `icone-1024.png` guardam a fonte; `app/public/favicon.png` e `<link rel="icon">` em `app/index.html` para o navegador. O `tauri.conf.json` já apontava para os arquivos.
 - Ocorrência: o ícone não aparecia no Windows porque o `henduran.exe` de debug tinha sido compilado antes e o Cargo não refaz o recurso do Windows só porque os PNG/ICO mudaram. Resolvido com `touch app/src-tauri/build.rs` e `cargo build`; o responsável confirmou no app. Se trocar o ícone de novo, repetir o `touch`; alternativa permanente: `println!("cargo:rerun-if-changed=icons")` no `build.rs` (não feito).
 - Validações: `cargo check` e `cargo build` passaram; ícone embutido no exe conferido por extração; o responsável conferiu a janela e a barra de tarefas. `npm run tauri build` (ícone do instalador) não foi testado.
-- Branch: `chore/icone-do-jogo`; PR aberto contra `main` (link no jornal).
+- Branch: `chore/icone-do-jogo`; PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.
 - Antes disso: PR #25 (largura das mensagens da Jornada) mergeado, junto com #23 (tela da Jornada) e #24 (protótipo do menu). O commit provisório do ícone foi feito pelo responsável com o opencode, em outra máquina, quando acabaram os tokens.
 - Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos prontos: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
 
