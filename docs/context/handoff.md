@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de Mundos; PR #34).
+Atualizado em 2026-11-24 após a tarefa `prototipo-modelos` (protótipo da tela Modelos e Skills) e o ADR-078 (proposta).
 
 ## Estado
 
@@ -18,6 +18,12 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de 
 - Aprovado pelo responsável: editor sob demanda, remoção do `character-count`, `world/0002` intacta, comportamento de Sugerir Atributos e Perícias e os limites (ideia 500 caracteres, 120 s, 2 novas tentativas), na opção recomendada.
 - Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial, Nova Jornada e Mundos (registro).
 - Ajustes do menu em paralelo (PR #29 merged): rodapé sem caixa com `Conectado · <detalhe> · Modelos ▸`, cartão de primeira vez removido, gap dos botões centrais de 12 px para 16 px (`--space-2`) e sombra externa removida; seguem no PR [#31](https://github.com/midrasil/henduran/pull/31), aberto contra `main` após resolução de conflitos com a `main` atual.
+
+## Atualização de 2026-11-24 (tarde): Modelos e Skills, ADR-078
+
+- **Protótipo da tela Modelos e Skills aprovado** (`docs/ui-ux/14-modelos.md`, `prototipos/modelos.html`; este PR): cabeçalho de estado (Este PC, Motor de IA, Narrador) e quatro abas: **Modelos** (meus e para baixar, com filtros Todos, Meus modelos e Para baixar, busca única, notas de qualidade por quantização, ocultar, ajustes de contexto e camadas da GPU, sugestões por hardware), **Skills** (acervo do Caliope, filtros, limite de 3 ativas, importação do skills.sh/GitHub e de pasta, com conferência e entrada desativada), **Procurar neste PC** e **Downloads**. Implementação no backlog; decisões abertas: padrão do filtro +18, licenças das skills, API e termos do skills.sh, ativação por Jornada e por Cena.
+- **ADR-078 (proposta, PR #35 mergeado)**: memória e contexto do Narrador (Quadro da Cena, Cânone, fichas de NPC com memória, compactação, orçamento de tokens, pergunta de continuidade e teste de continuidade). Só a pergunta de continuidade (modo padrão "só em contradição clara") está aprovada; os itens ⏳ aguardam confirmação do responsável.
+- PRs de hoje já mergeados: #30 a #35 (Nova Jornada rodadas 1 e 2, botão Configurar modelo, registro da tela de Mundos e ADR-078).
 
 ## Decisões vigentes
 
@@ -49,4 +55,4 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de 
 
 ## Próximo passo recomendado
 
-⭐ Prototipar **Jornadas** (lista) e **Modelos** (no nível do Caliope), conforme `docs/ui-ux/10-prototipagem.md`, uma tela por vez. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador e o TipTap no app), o botão Configurar modelo (PR #33) e conferir o menu em 1024×768 e maximizado.
+⭐ (1) **Confirmar os itens ⏳ do ADR-078** e prototipar o painel **"Estado da Cena"** na tela da Jornada; (2) prototipar a tela **Jornadas** (lista), a última tela existente sem protótipo; (3) implementar a tela **Modelos** (item no backlog) depois de decidir o padrão do filtro +18 e o tratamento das licenças das skills. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador, TipTap no app e o botão Configurar modelo) e conferir o menu em 1024×768 e maximizado.
