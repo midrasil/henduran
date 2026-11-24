@@ -33,6 +33,8 @@ export interface MainMenuProps {
   onContinue: (journey: JourneySummary) => void;
   onNew: () => void;
   onJourneys: () => void;
+  /** Tela de Mundos (modelo inicial provisório; docs/ui-ux/13-mundos.md). */
+  onWorlds?: () => void;
   onModels: () => void;
   canExit: boolean;
   onExit: () => void;
@@ -55,6 +57,7 @@ export function MainMenu({
   onContinue,
   onNew,
   onJourneys,
+  onWorlds,
   onModels,
   canExit,
   onExit,
@@ -110,6 +113,12 @@ export function MainMenu({
               <BookIcon width={24} />
               <span className="menu__button-text">Jornadas</span>
             </Button>
+            {onWorlds ? (
+              <Button className="menu__button" disabled={!connected} onClick={onWorlds}>
+                <PixelIcon name="globe" size={24} />
+                <span className="menu__button-text">Mundos</span>
+              </Button>
+            ) : null}
             {canExit ? (
               <Button className="menu__button" onClick={onExit}>
                 <PixelIcon name="door" size={24} />

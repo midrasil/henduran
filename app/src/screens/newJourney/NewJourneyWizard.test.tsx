@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -75,20 +75,26 @@ async function fill(user: UserEvent, el: HTMLElement, text: string) {
   await user.paste(text);
 }
 
-/** O editor da História é `contenteditable`: escreve direto no DOM e avisa com `input`. */
-function writeHistory(html: string) {
+/**
+ * O editor da História (TipTap) observa o próprio DOM: trocar o conteúdo faz o ProseMirror
+ * ler a mudança (pelo esquema dele) e emitir o HTML. No jsdom não há digitação de verdade.
+ */
+async function writeHistory(html: string) {
   const area = screen.getByRole("textbox", { name: "História do personagem" });
-  area.innerHTML = html;
-  fireEvent.input(area);
+  await act(async () => {
+    area.innerHTML = html;
+    fireEvent.input(area);
+    await new Promise((r) => setTimeout(r, 0));
+  });
 }
 
 async function fillCharacter(user: UserEvent) {
   await user.click(tab(/^Identidade/));
   await fill(user, screen.getByRole("textbox", { name: "Nome" }), VALID_DRAFT.name);
   await fill(user, screen.getByRole("textbox", { name: "Conceito" }), VALID_DRAFT.concept);
-  await fill(user, screen.getByRole("textbox", { name: "Aparência" }), "Alta.");
+  await fill(user, screen.getByRole("textbox", { name: "Aparência (opcional)" }), "Alta.");
   await user.click(tab(/^História/));
-  writeHistory("<h3>Origens</h3><p>Cresceu no <b>porto</b>.</p>");
+  await writeHistory("<h3>Origens</h3><p>Cresceu no <b>porto</b>.</p>");
   await user.click(tab(/^Objetivos/));
   await fill(user, screen.getByRole("textbox", { name: "Ambição" }), VALID_DRAFT.ambition);
   await fill(user, screen.getByRole("textbox", { name: "Desejo" }), VALID_DRAFT.desire);
@@ -232,15 +238,15 @@ describe("Nova Jornada — passo 1, Mundo", () => {
     const removes = () => screen.getAllByRole("button", { name: /^Remover o lugar/ });
     while (count() > WORLD_SCHEMA.places.min) await user.click(removes()[0]!);
     expect(removes()[0]).toBeDisabled();
-    // Editado: a semente passa a ser gerada ao criar.
-    expect(screen.getByText("semente gerada ao criar a Jornada")).toBeInTheDocument();
+    // Editado: vira Mundo personalizado (sem semente).
+    expect(screen.getByText("Mundo personalizado")).toBeInTheDocument();
   });
 
   it("Criar do zero traz as linhas mínimas do esquema, sem semente", async () => {
     const { user } = setup();
     await user.click(screen.getByRole("button", { name: "Criar do zero" }));
     expect(screen.getByRole("textbox", { name: "Nome do Mundo" })).toHaveValue("");
-    expect(screen.getByText("semente gerada ao criar a Jornada")).toBeInTheDocument();
+    expect(screen.getByText("Mundo personalizado")).toBeInTheDocument();
     await user.click(tab(/^Calendário/));
     expect(screen.getAllByRole("textbox", { name: /^Nome do mês \d+$/ })).toHaveLength(WORLD_SCHEMA.months.min);
     expect(screen.getAllByRole("textbox", { name: /^Dia \d+ da semana$/ })).toHaveLength(WORLD_SCHEMA.weekdays.min);
@@ -274,7 +280,7 @@ describe("Nova Jornada — passo 1, Mundo", () => {
     const { user, api } = setup({ savedWorlds: [savedWorld({ journey_count: 2 }), other] });
     const item = await screen.findByRole("option", { name: new RegExp(WORLD.name) });
     expect(item).toHaveTextContent(`semente 476 · Usado em 2 Jornadas`);
-    expect(screen.getByRole("option", { name: /Costa de Marvelhar/ })).toHaveTextContent("sem semente · Ainda sem Jornadas");
+    expect(screen.getByRole("option", { name: /Costa de Marvelhar/ })).toHaveTextContent("Mundo personalizado · Ainda sem Jornadas");
 
     await user.click(item);
     const nameField = await screen.findByRole("textbox", { name: "Nome do Mundo" });
@@ -293,7 +299,7 @@ describe("Nova Jornada — passo 1, Mundo", () => {
     expect(copy).toHaveValue(`${WORLD.name} (cópia)`);
     expect(copy).not.toHaveAttribute("readonly");
     expect(screen.getByRole("option", { name: /Novo · salvo ao criar a Jornada/ })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("semente gerada ao criar a Jornada")).toBeInTheDocument();
+    expect(screen.getByText("Mundo personalizado")).toBeInTheDocument();
   });
 
   it("erro ao listar os Mundos salvos aparece com Tentar de novo", async () => {
@@ -318,7 +324,7 @@ describe("Nova Jornada — passo 2, Protagonista", () => {
 
     await fill(user, name, VALID_DRAFT.name);
     await fill(user, screen.getByRole("textbox", { name: "Conceito" }), VALID_DRAFT.concept);
-    await fill(user, screen.getByRole("textbox", { name: "Aparência" }), "Alta.");
+    await fill(user, screen.getByRole("textbox", { name: "Aparência (opcional)" }), "Alta.");
     await waitFor(() => expect(tab(/^Identidade/)).toHaveAccessibleName("Identidade (completa)"));
     // Identidade completa: Avançar vai à próxima incompleta (História).
     await user.click(screen.getByRole("button", { name: "Avançar" }));
@@ -372,8 +378,8 @@ describe("Nova Jornada — passo 2, Protagonista", () => {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
     expect(screen.getByRole("combobox", { name: "Estilo do parágrafo" })).toBeInTheDocument();
-    writeHistory("<h3>Origens</h3><p>Cresceu no <b>porto</b>.</p>");
-    expect(screen.getByText(/4 palavras · 25\/4\.000 caracteres/)).toBeInTheDocument();
+    await writeHistory("<h3>Origens</h3><p>Cresceu no <b>porto</b>.</p>");
+    expect(await screen.findByText(/4 palavras · 25\/4\.000 caracteres/)).toBeInTheDocument();
   });
 
   it("Voltar preserva o Mundo e o personagem", async () => {
@@ -490,7 +496,8 @@ describe("Nova Jornada — Revisão e Iniciar Jornada", () => {
     expect(body.world.seed).toBe(42);
     expect(body.world.content?.name).toBe(`${WORLD.name} 42`);
     expect(body.start_place_id).toBe(WORLD.places[1]!.id);
-    expect(body.character.history_html).toBe("<h3>Origens</h3><p>Cresceu no <b>porto</b>.</p>");
+    // O esquema do editor normaliza <b> para <strong>.
+    expect(body.character.history_html).toBe("<h3>Origens</h3><p>Cresceu no <strong>porto</strong>.</p>");
     expect(body.character.history).toBe("Origens\nCresceu no porto.");
   });
 

@@ -9,8 +9,10 @@ Banco de Mundo danificado **nunca é recriado**: vira :class:`WorldDamaged` e o
 arquivo fica como está.
 
 A migração ``world/0002`` acrescenta ``world_meta.seed`` (ADR-077, item 5): a semente do
-gerador num Mundo gerado e não editado, ou uma semente nova, atribuída ao criar, num
-Mundo editado à mão, criado do zero ou duplicado. Nula em Mundos criados antes.
+gerador num Mundo gerado e não editado. Um Mundo editado à mão, criado do zero ou duplicado
+é um **Mundo personalizado** e fica com a semente nula (decisão de 2026-11-24; o comentário
+da 0002 fala em "semente nova", mas a migração não pode mudar depois de aplicada e a coluna já
+aceita nulo). Nula também em Mundos criados antes.
 
 :meth:`WorldStore.catalog` é a lista de Mundos salvos da Nova Jornada: além do resumo,
 nome da era e do tom da última versão, a semente e quantas Jornadas usam cada Mundo,
@@ -101,6 +103,10 @@ def _summary_from(world_id: str, snap: DbSnapshot, latest: int) -> WorldSummary:
         summary.error_code = "id_divergente"
         summary.error_message = "O identificador gravado no Mundo não corresponde à pasta."
     return summary
+
+
+# Prefixo das pastas de Mundos excluídos que ainda não foram apagadas (a lista as ignora).
+TRASH_PREFIX = ".excluindo-"
 
 
 class WorldStore:
@@ -362,6 +368,12 @@ class WorldStore:
 
         Também recusa (``uso_indeterminado``) se houver Jornada ilegível, porque não
         dá para saber se ela depende deste Mundo (ela pode ser restaurada de backup).
+
+        A exclusão é atômica para o jogador: a pasta é primeiro **renomeada** para um nome
+        que a lista ignora (``.excluindo-<id>-<n>``, na mesma pasta ``worlds``). Se o
+        renome falhar (arquivo em uso), nada muda e o erro é ``exclusao_falhou``. Depois
+        do renome o Mundo já não existe; se apagar os arquivos falhar, a pasta oculta fica
+        e é removida na próxima exclusão.
         """
         wid = checked_id(world_id)
         if confirm is not True:
@@ -377,8 +389,29 @@ class WorldStore:
                 "uso_indeterminado",
                 f"Há {len(unknown)} Jornada(s) que não puderam ser lidas; não dá para saber se usam este Mundo.",
             )
+        trash = self._trash_path(wid)
         try:
-            shutil.rmtree(folder)
+            folder.rename(trash)
         except OSError as exc:
             raise StorageError("exclusao_falhou", f"Não foi possível excluir o Mundo: {exc}", path=folder) from exc
         log.info("mundo excluído: %s", wid)
+        self._empty_trash()
+
+    def _trash_path(self, world_id: str) -> Path:
+        root = self.paths.worlds_dir
+        n = 0
+        while (root / f"{TRASH_PREFIX}{world_id}-{n}").exists():
+            n += 1
+        return root / f"{TRASH_PREFIX}{world_id}-{n}"
+
+    def _empty_trash(self) -> None:
+        """Apaga as pastas de Mundos já excluídos (renomeados); o que falhar fica para depois."""
+        root = self.paths.worlds_dir
+        if not root.is_dir():
+            return
+        for entry in root.iterdir():
+            if entry.name.startswith(TRASH_PREFIX) and entry.is_dir() and not entry.is_symlink():
+                try:
+                    shutil.rmtree(entry)
+                except OSError as exc:
+                    log.warning("pasta de mundo excluído não removida (%s): %s", entry.name, exc)

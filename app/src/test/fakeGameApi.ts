@@ -13,7 +13,7 @@ import type {
   SavedWorld,
   WorldContent,
 } from "../api/journeys";
-import { jsonResponse } from "./fakeFetch";
+import { jsonResponse, sse, sseResponse } from "./fakeFetch";
 import { CALENDAR, createScreenHandler, initialScreen, type FakeScreenOptions } from "./fakeJourneyScreen";
 import { RULES, VALID_DRAFT, WORLD, WORLD_SCHEMA, WORLD_SEED } from "./gameData";
 
@@ -93,7 +93,6 @@ export function snapshotOf(j: JourneySummary, character: CharacterSheet = sheet(
 const LABELS: Record<string, string> = {
   name: "O nome",
   concept: "O Conceito",
-  appearance: "A aparência",
   history: "A história",
   ambition: "A Ambição",
   desire: "O Desejo",
@@ -189,6 +188,43 @@ export interface FakeGameOptions extends FakeScreenOptions {
   openError?: { status: number; code: string; message: string };
   /** Resposta de `POST /journeys` (padrão: 201 com uma Jornada nova). */
   createResponse?: () => Response;
+  /** Resposta de `POST /narrator/fill` (padrão: um resultado válido de teste para o pedido). */
+  fillResponse?: (body: FillBody, init: RequestInit) => Response | Promise<Response>;
+}
+
+/** Corpo de `POST /narrator/fill` (o que os testes conferem). */
+export interface FillBody {
+  kind: string;
+  field?: string;
+  tab?: string;
+  mode?: string;
+  idea?: string;
+  world?: Record<string, string>;
+  character?: CharacterDraft;
+  journey?: { name?: string; description?: string };
+}
+
+const FILL_TABS: Record<string, string[]> = {
+  ident: ["name", "concept", "appearance"],
+  obj: ["ambition", "desire", "convictions[0].text", "convictions[0].pillar", "convictions[1].text", "convictions[1].pillar", "convictions[2].text", "convictions[2].pillar"],
+};
+
+/** Resultado de teste do Narrador que preenche dados (o serviço real valida e propõe). */
+export function fakeFillResult(body: FillBody): Record<string, unknown> {
+  const draft = body.character;
+  const textOf = (path: string): string => {
+    const m = /^convictions\[(\d+)\]\.(text|pillar)$/.exec(path);
+    if (m) return draft?.convictions[Number(m[1])]?.[m[2] as "text" | "pillar"] ?? "";
+    return ((draft as unknown as Record<string, string> | undefined)?.[path] ?? "") as string;
+  };
+  if (body.kind === "field") return { values: { [body.field!]: `Sugestão para ${body.field}` } };
+  if (body.kind === "missing") {
+    const blank = (FILL_TABS[body.tab ?? ""] ?? []).filter((p) => !textOf(p).trim());
+    return { values: Object.fromEntries(blank.map((p) => [p, `Sugestão para ${p}`])) };
+  }
+  if (body.kind === "attributes") return { attributes: { ...VALID_DRAFT.attributes, ...(draft?.attributes ?? {}) } };
+  if (body.kind === "skills") return { skill_profile: VALID_DRAFT.skill_profile, skills: { ...VALID_DRAFT.skills } };
+  return { history_html: "<h3>Origens</h3><p>Narrada pelo Narrador.</p>", history: "Origens\nNarrada pelo Narrador." };
 }
 
 export interface Call {
@@ -205,6 +241,7 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
     open: null as JourneySnapshot | null,
     worlds: new Set<string>(options.journeys?.map((j) => j.world_id ?? "") ?? []),
     generated: 0,
+    savedWorlds: [...(options.savedWorlds ?? [])],
     screen: initialScreen(options),
   };
   const calls: Call[] = [];
@@ -229,14 +266,44 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
     }
     if (method === "GET" && path === "/worlds") {
       if (options.worldsError) return jsonResponse({ detail: { code: "storage_unavailable", message: "Indisponível." } }, 503);
-      return jsonResponse({ worlds: (options.savedWorlds ?? []).map((w) => w.world) });
+      return jsonResponse({ worlds: state.savedWorlds.map((w) => w.world) });
+    }
+    if (method === "POST" && path === "/worlds") {
+      record();
+      const b = body as { content: WorldContent; seed?: number };
+      const check = fakeValidateWorld(b.content);
+      if (!check.valid) {
+        const errors = check.errors.map((e) => ({ ...e, field: `content.${e.field}` }));
+        return jsonResponse({ detail: { code: "mundo_invalido", message: "O Mundo tem erros; nada foi salvo.", errors } }, 422);
+      }
+      const id = `44444444-4444-4444-8444-${String(state.savedWorlds.length + 1).padStart(12, "0")}`;
+      const item = savedWorld({ id, journey_count: 0, seed: b.seed ?? null }, b.content);
+      state.savedWorlds.push(item);
+      return jsonResponse({ world: item.world }, 201);
     }
     const worldRoute = /^\/worlds\/([^/]+)$/.exec(path);
     if (method === "GET" && worldRoute && worldRoute[1] !== "schema") {
       record();
-      const found = options.savedWorlds?.find((w) => w.world.id === decodeURIComponent(worldRoute[1]!));
+      const found = state.savedWorlds.find((w) => w.world.id === decodeURIComponent(worldRoute[1]!));
       if (!found) return jsonResponse({ detail: { code: "mundo_nao_encontrado", message: "Mundo não encontrado." } }, 404);
       return jsonResponse({ world: found.world, content: found.content });
+    }
+    if (method === "DELETE" && worldRoute) {
+      record();
+      const wid = decodeURIComponent(worldRoute[1]!);
+      const found = state.savedWorlds.find((w) => w.world.id === wid);
+      if (!found) return jsonResponse({ detail: { code: "mundo_nao_encontrado", message: "Mundo não encontrado." } }, 404);
+      if ((found.world.journey_count ?? 0) > 0) {
+        return jsonResponse({ detail: { code: "mundo_em_uso", message: "O Mundo é usado por 1 Jornada(s); exclua-as antes." } }, 409);
+      }
+      state.savedWorlds = state.savedWorlds.filter((w) => w.world.id !== wid);
+      return jsonResponse({ deleted: wid });
+    }
+    if (method === "POST" && path === "/narrator/fill") {
+      record();
+      const b = body as FillBody;
+      if (options.fillResponse) return options.fillResponse(b, init);
+      return sseResponse([sse("start", { id: "g-fill" }), sse("done", { reason: "completed", kind: b.kind, result: fakeFillResult(b) })]);
     }
     if (method === "POST" && path === "/worlds/validate") {
       return jsonResponse(fakeValidateWorld((body as { content: WorldContent }).content));
@@ -265,6 +332,21 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
     if (path.startsWith("/journeys/current/")) {
       record();
       return screenHandler(method, path, parsed.searchParams, body, init);
+    }
+    if (method === "PATCH" && path === "/journeys/current") {
+      record();
+      if (!state.open) return jsonResponse({ detail: { code: "nenhuma_jornada_aberta", message: "Nenhuma Jornada está aberta." } }, 404);
+      const b = body as { name?: string | null; description?: string | null };
+      if (typeof b.name === "string" && b.name.trim().length > 200) {
+        const errors = [{ field: "name", code: "muito_longo", message: "O nome da Jornada deve ter até 200 caracteres." }];
+        return jsonResponse({ detail: { code: "resumo_invalido", message: "O nome ou a descrição da Jornada têm erros; nada mudou.", errors } }, 422);
+      }
+      const j = { ...state.open.journey };
+      if ("name" in b) j.name = b.name?.trim() ? b.name.trim() : `A Jornada de ${state.open.character?.name ?? "seu personagem"}`;
+      if ("description" in b) j.description = b.description?.trim() ? b.description.trim() : null;
+      state.open = { ...state.open, journey: j };
+      state.journeys = state.journeys.map((x) => (x.id === j.id ? { ...x, name: j.name } : x));
+      return jsonResponse({ journey: j });
     }
     if (method === "GET" && path === "/journeys/current") {
       return state.open ? jsonResponse(state.open) : jsonResponse({ detail: { code: "nenhuma_jornada_aberta", message: "Nenhuma Jornada está aberta." } }, 404);
@@ -303,9 +385,7 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
       if (!m[2] && method === "DELETE") {
         state.journeys = state.journeys.filter((j) => j.id !== id);
         if (state.lastJourneyId === id) state.lastJourneyId = null;
-        const worldDeleted = !state.journeys.some((j) => j.world_id === journey.world_id);
-        if (worldDeleted && journey.world_id) state.worlds.delete(journey.world_id);
-        return jsonResponse({ deleted: id, world_id: journey.world_id, world_deleted: worldDeleted, world_kept_reason: worldDeleted ? null : "mundo_em_uso" });
+        return jsonResponse({ deleted: id, world_id: journey.world_id });
       }
     }
     return undefined;

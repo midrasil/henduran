@@ -370,11 +370,10 @@ export interface BackupInfo {
   size_bytes: number;
 }
 
+/** Jornada excluída; o Mundo dela continua salvo (só a tela de Mundos o exclui). */
 export interface JourneyDeletion {
   deleted: string;
   world_id: string | null;
-  world_deleted: boolean;
-  world_kept_reason: string | null;
 }
 
 /** Mundo salvo, na lista da Nova Jornada (`GET /worlds`). */
@@ -388,7 +387,7 @@ export interface SavedWorld {
   status: "ok" | "danificado" | "mais_novo" | string;
   error_code: string | null;
   error_message: string | null;
-  /** Semente do Mundo; `null` em Mundos antigos. */
+  /** Semente do Mundo; `null` em Mundos antigos e nos personalizados (editados, criados do zero ou duplicados). */
   seed: number | null;
   /** Nome da era e do tom da última versão. */
   era: string | null;
@@ -426,6 +425,17 @@ export const listWorlds = (info: BackendInfo) => request<{ worlds: SavedWorld[] 
 
 export const fetchWorld = (info: BackendInfo, id: string) =>
   request<{ world: SavedWorld; content: WorldContent | null }>(info, `/worlds/${encodeURIComponent(id)}`);
+
+/** Salva um Mundo sem Jornada (tela de Mundos); a semente só fica se reproduz o conteúdo. */
+export const saveWorld = (info: BackendInfo, content: WorldContent, seed?: number | null) =>
+  request<{ world: SavedWorld }>(info, "/worlds", {
+    method: "POST",
+    body: seed == null ? { content } : { content, seed },
+  });
+
+/** Exclui um Mundo salvo; 409 `mundo_em_uso` se alguma Jornada o usa. */
+export const deleteWorld = (info: BackendInfo, id: string) =>
+  request<{ deleted: string }>(info, `/worlds/${encodeURIComponent(id)}?confirm=true`, { method: "DELETE" });
 
 export const validateWorld = (info: BackendInfo, content: WorldContent) =>
   request<WorldValidation>(info, "/worlds/validate", { method: "POST", body: { content } });

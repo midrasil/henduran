@@ -1495,3 +1495,141 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Enquanto o editor da História (TipTap) carrega. */
+.rte-loading {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  border: 3px solid var(--color-parchment-edge);
+  background: var(--color-parchment-light);
+  color: var(--color-text-on-parchment-muted);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-sm);
+}
+
+/* Tela de Mundos (modelo provisório): só o painel, sem o trilho do assistente. */
+.nj--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ------------------------------------------------ Narrador que preenche dados (ADR-077, item 3) */
+.nj-aibtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 9px;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-accent-light);
+  background: var(--color-primary);
+  border: 2px solid var(--color-frame);
+  border-radius: var(--radius);
+  box-shadow: 2px 2px 0 var(--px-ink-950);
+  cursor: pointer;
+}
+
+.nj-aibtn:hover:not(:disabled) {
+  background: var(--color-primary-hover, var(--color-primary));
+  border-color: var(--color-accent-light);
+}
+
+.nj-aibtn:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nj-aibtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.nj-aibtn--busy:disabled {
+  cursor: progress;
+  opacity: 1;
+}
+
+.nj-aibtn--big {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: var(--font-size-sm);
+  border-width: 3px;
+  box-shadow: 3px 3px 0 var(--px-ink-950);
+  align-self: end;
+}
+
+.nj-tbtns .nj-aibtn {
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.nj-spin {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: nj-spin 0.8s steps(8) infinite;
+}
+
+@keyframes nj-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nj-spin {
+    animation-duration: 2.4s;
+  }
+}
+
+.nj-aibar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 14px;
+  align-items: end;
+  padding: 8px 12px;
+  background: rgba(110, 49, 151, 0.12);
+  border: 3px dashed var(--px-purple-500);
+}
+
+.nj-aibar__hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment-muted);
+}
+
+.nj-toast {
+  position: fixed;
+  z-index: var(--z-overlay);
+  left: calc(50% + 140px);
+  bottom: 92px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(560px, 90vw);
+  padding: 8px 12px;
+  background: var(--px-ink-950);
+  border: 3px solid var(--color-accent);
+  font-size: var(--font-size-sm);
+}
+
+.nj-toast--error {
+  border-color: var(--color-danger, #e06060);
+}
+
+@media (max-width: 900px) {
+  .nj-toast {
+    left: 50%;
+  }
+
+  .nj-aibar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

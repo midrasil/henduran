@@ -150,7 +150,7 @@ export function FullSheetDialog({ open, onClose, character, rules, arcs, portrai
                       ))}
                       <div className="kv__row">
                         <dt>Aparência</dt>
-                        <dd className="prose">{character.appearance}</dd>
+                        <dd className="prose">{character.appearance ? character.appearance : <span className="kv__empty">não informada</span>}</dd>
                       </div>
                       <div className="kv__row">
                         <dt>Personalidade</dt>

@@ -5,6 +5,17 @@
  */
 
 const GRIDS = {
+  /** Brilho: as ações do Narrador que preenche dados (Sugerir, Preencher o que falta). */
+  spark: [
+    "...#....",
+    "...#..#.",
+    "..###...",
+    "#######.",
+    "..###...",
+    "...#....",
+    ".#.#....",
+    "........",
+  ],
   sun: [
     "...#....",
     ".#...#..",

@@ -157,8 +157,22 @@ def test_perfil_ausente_ou_desconhecido():
 
 # ------------------------------------------------------------------ textos
 TEXT_FIELDS = [
-    ("name", 200), ("concept", 300), ("ambition", 300), ("desire", 300), ("appearance", 4000), ("history", 4000),
+    ("name", 200), ("concept", 300), ("ambition", 300), ("desire", 300), ("history", 4000),
 ]
+
+
+def test_aparencia_opcional_com_limite():
+    """Aparência opcional (migração journey/0006): ausente, nula ou vazia vale texto vazio."""
+    for empty in ("", "   ", "\n\t ", None):
+        result = validate_character(valid_draft(appearance=empty))
+        assert result.valid and result.character.appearance == ""
+    draft = valid_draft()
+    del draft["appearance"]
+    assert validate_character(draft).character.appearance == ""
+    assert validate_character(valid_draft(appearance="a" * 4000)).valid
+    assert ("appearance", "muito_longo") in codes(validate_character(valid_draft(appearance="a" * 4001)))
+    assert ("appearance", "tipo_invalido") in codes(validate_character(valid_draft(appearance=42)))
+    assert ("appearance", "caracteres_invalidos") in codes(validate_character(valid_draft(appearance="a\x00b")))
 
 
 @pytest.mark.parametrize("field,limit", TEXT_FIELDS)
@@ -232,7 +246,8 @@ def test_rascunho_nao_objeto_e_campos_desconhecidos():
 def test_todos_os_erros_de_uma_vez():
     result = validate_character({"name": "", "attributes": {"forca": 9}, "skill_profile": "x"})
     fields = {e.field for e in result.errors}
-    assert {"name", "concept", "appearance", "history", "ambition", "desire", "convictions",
+    assert "appearance" not in fields
+    assert {"name", "concept", "history", "ambition", "desire", "convictions",
             "attributes.forca", "attributes.vigor", "skill_profile"} <= fields
     for e in result.errors:
         assert e.code and e.message and e.code.isascii()

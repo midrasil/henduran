@@ -1,24 +1,22 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 1).
+Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 2).
 
 ## Estado
 
-- Tarefa: implementação da Nova Jornada aprovada (`docs/ui-ux/12-nova-jornada.md`, protótipo `prototipos/nova-jornada.html`, ADR-077), **rodada 1** de 2. O responsável testou no app e validou.
-- Interface: assistente com trilho de 3 passos e a tela **Iniciar Jornada** (nome e descrição); Mundo com lista de Mundos salvos (somente leitura, Duplicar e editar), semente, Gerar mundo e Criar do zero; Protagonista em abas (Identidade, História, Objetivos, Status) com retrato e recorte; Revisão em abas; Avançar por abas incompletas, sem lista de pendências. `HistoryEditor` (`app/src/ui/HistoryEditor/`) é um editor **provisório** com contenteditable, com espaço `toolbarExtra` para os botões do Narrador.
-- Backend: `richtext.py` (sanitizador de HTML só com `html.parser`, lista permitida, texto puro derivado); `history_html` na criação e na ficha; descrição da Jornada em `journey_meta` (até 2.000 caracteres, entra no contexto do Narrador); criação com `world_id` (Mundo salvo, só leitura para a Jornada); semente do Mundo em `world_meta.seed` (a pedida só vale se gera exatamente o conteúdo enviado; senão o serviço atribui uma nova); `GET /worlds` (catálogo com semente, era, tom e número de Jornadas), `GET /worlds/{id}`; migrações `journey/0005_description_history.sql` e `world/0002_seed.sql`.
-- Validações: `npm run typecheck` sem erros; `npm run test` 303/303 (reconfirmado depois de levar as alterações para a `main` atualizada); `pytest` 638 passando e 1 pulado (relatado pelo dev; não reexecutado depois do rebase, que só trouxe o PR #29, do menu).
-- Não verificado: app Tauri real em DPI de 125% a 200%, leitor de tela, reflow a 320 px, movimento reduzido, comandos de formatação do editor em outros navegadores.
-- Diferenças em relação ao protótipo (seção 9 do doc 12): selos das abas contam erros do servidor; **aparência continua obrigatória** (o banco exige 1 caractere); sem botões do Narrador; trocar de Mundo zera o lugar inicial (ids `lugar-N` se repetem); moldura sem cantos em pixel e trilho só com o céu; zoom do retrato até 4 (o serviço aceita até 8).
-- Ocorrência: no meio do trabalho a pasta principal foi trocada para `fix/rodape-menu-modelo` (PR #29, mergeado); as alterações do dev foram levadas para `feat/nova-jornada` em cima da `main` atualizada, sem conflito.
-- Branch: `feat/nova-jornada`; PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
-- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial e Nova Jornada.
-
-## Decisões de 2026-11-24 para a rodada 2 e depois
-
-- **Rodada 2** (dev): instalar o **TipTap** (aprovado; MIT; medir o bundle e desligar `link`, `code` e `codeBlock` do StarterKit) no lugar do editor provisório; **rota do Narrador que preenche dados** e os botões (Sugerir, Preencher o que falta, Escrever, Continuar, Desfazer), conforme ADR-077; **aparência opcional** (migração que reconstrói a tabela `character`); **aviso na tela** quando o envio do retrato falha depois da criação.
-- **Tela de Mundos no menu inicial**: botão no menu que leva a uma lista dos Mundos salvos, com criação de Mundo lá dentro. Tela nova: **precisa de protótipo aprovado** antes do dev. Ao projetá-la, decidir também a exclusão: hoje excluir a última Jornada de um Mundo apaga o Mundo (`delete_journey_and_orphan_world`), o que não combina com Mundos como itens salvos; proposta: o Mundo só é excluído pela lista de Mundos, de forma explícita.
-- Editar nome e descrição **dentro** da Jornada (não existe rota de edição do resumo): a decidir.
+- Tarefa: rodada 2 da Nova Jornada (a rodada 1 foi o PR #30, mergeado) mais três ampliações pedidas pelo responsável no mesmo dia. Branch `feat/nova-jornada-narrador`; PR aberto contra `main` (link no jornal).
+- **TipTap** (3.35.0, MIT, versões exatas) no lugar do editor provisório: `@tiptap/react`, `pm`, `starter-kit`, `extension-text-align`, `extension-placeholder` (underline vem no StarterKit v3; `link`, `code`, `codeBlock`, `horizontalRule`, `hardBreak` e `trailingNode` desligados; `extension-character-count` removido). Carregado sob demanda na aba História (`LazyHistoryEditor`): pacote inicial 435,5 kB (132,6 kB gzip), editor 407,5 kB (129,6 kB gzip). O servidor continua sendo a fonte de verdade do saneamento.
+- **Narrador que preenche dados**: `POST /narrator/fill` (SSE; `start` e `done` com `result` ou `error`; tipos `field`, `missing`, `attributes`, `skills`, `history`; esquema fixo, resposta inválida repetida até 2 vezes, tempo limite de 120 s, cancelável; sem modelo usa os códigos do chat; nada é gravado) e os botões na interface (Sugerir, Preencher o que falta, Sugerir Atributos e Perícias, Escrever, Continuar, Desfazer). Código em `backend/henduran/narrative/fill.py` e `services/fill.py`, `app/src/screens/newJourney/narrator.tsx` e `app/src/api/narratorFill.ts`. Sugerir Atributos e Perícias só preenche o que falta; ideia até 500 caracteres.
+- **Aparência opcional**: migração `journey/0006_optional_appearance.sql` (reconstrói `character` preservando Atributos, Perícias, Convicções e objetivos); a aparência só entra no contexto do Narrador se existir.
+- **Aviso do retrato**: se o envio falha depois da criação, a Jornada abre com aviso e os botões Tentar de novo, Escolher outro e Fechar.
+- **Mundo personalizado**: Mundo editado, do zero ou duplicado não tem semente (`world_meta.seed` nulo); a interface mostra "Mundo personalizado". A `world/0002` não foi reescrita (mudaria o checksum dos bancos do PR #30).
+- **Excluir Jornada não apaga mais o Mundo** (`services/journey_deletion.delete_journey`, resposta `{deleted, world_id}`).
+- **Tela de Mundos, modelo inicial provisório e sem protótipo** (exceção à regra de protótipo, decisão do responsável em 2026-11-24): botão **Mundos** no menu, `app/src/screens/WorldsScreen.tsx` (reaproveita `WorldStep` em modo `library`), `POST /worlds`, `DELETE /worlds/{id}` (409 `mundo_em_uso` ou `uso_indeterminado`; exclusão atômica por renomeação). Documento curto `docs/ui-ux/13-mundos.md`. **O protótipo será feito em 2026-11-25, em outra máquina**, e a tela será ajustada depois.
+- **Editar Jornada**: `PATCH /journeys/current` (nome e descrição, regras da criação; 422 `resumo_invalido`) e "Editar Jornada" no menu ⚙ da Jornada.
+- Validações: `npm run typecheck` sem erros; `npm run test` 320/320 (reexecutado pelo planejador); `pytest` 662 passando e 1 pulado, `npm run build` ok (relatados pelo dev; não reexecutados pelo planejador).
+- Não verificado: app Tauri real, TipTap em navegador real (digitar, atalhos, colar do Word), leitor de tela, DPI de 125% a 200%, reflow a 320 px, qualidade das sugestões com modelo local real e se o `llama-server` aceita os esquemas com `const` e `enum` (se recusar, o cliente repete sem esquema e o motor valida).
+- Aprovado pelo responsável: editor sob demanda, remoção do `character-count`, `world/0002` intacta, comportamento de Sugerir Atributos e Perícias e os limites (ideia 500 caracteres, 120 s, 2 novas tentativas), na opção recomendada.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial e Nova Jornada; **Mundos pendente**.
 
 ## Decisões vigentes
 
@@ -50,4 +48,4 @@ Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 1).
 
 ## Próximo passo recomendado
 
-⭐ Rodada 2 da Nova Jornada pelo dev (Narrador, TipTap, aparência opcional, aviso do retrato), em branch empilhada sobre a da rodada 1 ou depois do merge do PR da rodada 1. Em paralelo, prototipar a tela de **Mundos** (lista, criar Mundo, exclusão explícita), depois **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`.
+⭐ Prototipar a tela de **Mundos** (2026-11-25, outra máquina) conforme `docs/ui-ux/13-mundos.md` e `10-prototipagem.md`: layout da lista, criação, exclusão explícita e a organização futura em abas de geração; depois ajustar a implementação provisória. Em seguida, prototipar **Jornadas** e **Modelos**. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador e o TipTap no app), e conferir o menu em 1024×768 e maximizado.

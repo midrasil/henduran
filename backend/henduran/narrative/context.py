@@ -135,9 +135,10 @@ def character_brief(sheet: dict[str, Any] | None) -> str:
     lines = [
         f"Personagem do jogador: {sheet.get('name', '')}",
         f"Conceito: {sheet.get('concept', '')}",
-        f"Aparência: {sheet.get('appearance', '')}",
-        f"Histórico: {sheet.get('history', '')}",
     ]
+    if sheet.get("appearance"):  # opcional (migração journey/0006)
+        lines.append(f"Aparência: {sheet['appearance']}")
+    lines.append(f"Histórico: {sheet.get('history', '')}")
     for key, label in (("age", "Idade"), ("height", "Altura"), ("origin", "Origem"), ("personality", "Personalidade")):
         if sheet.get(key):
             lines.append(f"{label}: {sheet[key]}")

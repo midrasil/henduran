@@ -1,6 +1,6 @@
 # Modelo de dados de jogo
 
-**Estado:** reflete o código em `backend/henduran/db/migrations/` (Jornada até a `0005`, Mundo até a `0002`, app na `0001`). Decisões de base: ADR-050, ADR-074, ADR-075, ADR-076 e ADR-077.
+**Estado:** reflete o código em `backend/henduran/db/migrations/` (Jornada até a `0006`, Mundo até a `0002`, app na `0001`). Decisões de base: ADR-050, ADR-074, ADR-075, ADR-076 e ADR-077.
 
 ## Onde os dados moram
 
@@ -17,7 +17,7 @@ A Jornada só **lê** o Mundo (anexado em modo leitura); nenhuma operação grav
 | Tabela | Para quê |
 | --- | --- |
 | `journey_meta` | uma linha: `id`, `name`, `character_name`, `location` (nome do lugar atual), `start_place_id` (id do lugar inicial no Mundo; nulo em Jornadas criadas antes da `0003`), `current_place_id` (id do lugar atual, do Mundo ou da Jornada; na criação e na migração `0004`, o lugar inicial), `day_period` (sorteado pelo motor na criação entre `madrugada`, `amanhecer`, `manha`, `tarde`, `entardecer` e `noite`, com peso igual; ADR-076, item 9), `calendar_year`, `calendar_month` (1..N) e `calendar_day` (1..dias do mês): a data no calendário do Mundo (ADR-076, item 16; abaixo), `world_id` e `world_version` (Mundo fixado), `created_at`, `last_saved_at`, `rules_version` e `description` (a descrição da Jornada escrita pelo jogador na Nova Jornada; opcional, 1 a 2.000 caracteres, nula = sem descrição; `0005`, ADR-077, item 4; vai no contexto geral do Narrador). |
-| `character` | uma linha: nome, Conceito, aparência, história (`history`: **texto puro**, até 4.000 caracteres; é o que o Narrador lê) e `history_html` (a História formatada, **HTML saneado** pelo serviço com lista permitida; até 40.000 caracteres; nula nas Histórias gravadas antes da `0005`, que a API entrega como parágrafos; ADR-077, item 2), perfil de Perícias da criação, os contadores de dano de Vida e de Vontade (superficial e agravado, começam em 0), os campos opcionais da descrição (`age` até 100, `height` até 100, `origin` até 200, `personality` até 1000; texto livre, nulo = não informado, sem efeito de regra) e o retrato: `portrait_file` (`portrait.png`, `portrait.jpg` ou `portrait.webp`, em `assets\`) e `portrait_crop` (JSON `{x, y, zoom}`, x e y de 0 a 1, zoom de 1 a 8; os dois existem juntos ou nenhum). |
+| `character` | uma linha: nome, Conceito, aparência (opcional desde a `0006`: texto vazio = não informada, até 4.000 caracteres; a `0006` reconstrói a tabela preservando todas as linhas e os dados ligados a ela), história (`history`: **texto puro**, até 4.000 caracteres; é o que o Narrador lê) e `history_html` (a História formatada, **HTML saneado** pelo serviço com lista permitida; até 40.000 caracteres; nula nas Histórias gravadas antes da `0005`, que a API entrega como parágrafos; ADR-077, item 2), perfil de Perícias da criação, os contadores de dano de Vida e de Vontade (superficial e agravado, começam em 0), os campos opcionais da descrição (`age` até 100, `height` até 100, `origin` até 200, `personality` até 1000; texto livre, nulo = não informado, sem efeito de regra) e o retrato: `portrait_file` (`portrait.png`, `portrait.jpg` ou `portrait.webp`, em `assets\`) e `portrait_crop` (JSON `{x, y, zoom}`, x e y de 0 a 1, zoom de 1 a 8; os dois existem juntos ou nenhum). |
 | `character_attributes` | os 6 Atributos (1 a 5). |
 | `character_skills` | as 22 Perícias (0 a 5), inclusive as em 0. |
 | `convictions` | as 3 Convicções (posição 1 a 3), com Pilar e Fraturas (0 a 2). |
@@ -38,7 +38,7 @@ Cenas, resumos, títulos, lugares, propostas e eventos só são gravados por ope
 
 | Tabela | Para quê |
 | --- | --- |
-| `world_meta` | uma linha: `id`, `name`, `created_at` e `seed` (`0002`, ADR-077, item 5: a semente do gerador num Mundo gerado e não editado; uma semente nova, atribuída ao criar, num Mundo editado à mão, criado do zero ou duplicado; nula em Mundos criados antes). |
+| `world_meta` | uma linha: `id`, `name`, `created_at` e `seed` (`0002`, ADR-077, item 5: a semente do gerador, gravada só quando ela reproduz exatamente o conteúdo, num Mundo gerado e não editado; num Mundo editado à mão, criado do zero ou duplicado, nula: é um **Mundo personalizado**, decisão de 2026-11-24; nula também em Mundos criados antes). Mundos são salvos pela Nova Jornada ou pela tela de Mundos (`POST /worlds`) e só são excluídos pela tela de Mundos (`DELETE /worlds/{id}`, recusado com Jornadas que o usem); excluir a última Jornada de um Mundo **não** o apaga. |
 | `world_versions` | versões do Mundo (ADR-024): `version`, `label`, `created_at`, `content` (JSON). O gerador cria a versão 1. |
 
 Conteúdo, **esquema v1**: `schema`, `name`, `era`, `tone`, `calendar` (nome, ano, nome do ano, 8 a 14 meses de 20 a 40 dias, 5 a 8 dias da semana), `religions` (1 a 3) e `places` (3 a 5, com `id`, nome, tipo e descrição). Limites completos em `backend/README.md`.

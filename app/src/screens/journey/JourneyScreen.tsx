@@ -3,13 +3,14 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNod
 import type { BackendInfo } from "../../api/backend";
 import { ENGINE_ERROR_CODES } from "../../api/chatStream";
 import type { EngineStatus } from "../../api/engine";
-import { fetchPortraitImage, fetchScene, type ArcScene, type JourneyMessage } from "../../api/journeyScreen";
-import type { CreationRules, JourneySnapshot, MessageChannel, PortraitInfo, SceneView } from "../../api/journeys";
+import { fetchPortraitImage, fetchScene, portraitErrorMessage, uploadPortrait, type ArcScene, type JourneyMessage } from "../../api/journeyScreen";
+import type { CreationRules, JourneySnapshot, MessageChannel, OpenJourneySummary, PortraitCrop, PortraitInfo, SceneView } from "../../api/journeys";
 import { engineNoticeText } from "../../components/EngineNotice";
 import { useJourneySession, type LiveStream } from "../../hooks/useJourneySession";
 import { describeError, toPeriod } from "../../lib/format";
 import { Button, Composer, Dialog, PERIOD_LABEL, PeriodIcon, PixelIcon, prefersReducedMotion, Tabs, type PixelIconName } from "../../ui";
 import { ArcsColumn } from "./ArcsColumn";
+import { EditJourneyDialog } from "./EditJourneyDialog";
 import { EventLog } from "./EventLog";
 import { FullSheetDialog } from "./FullSheetDialog";
 import { JourneyTopBar, modelReady } from "./JourneyTopBar";
@@ -31,12 +32,26 @@ export interface JourneyScreenProps {
   onOpenModels: () => void;
   onBackToMenu: () => void;
   copyText?: (text: string) => Promise<void>;
+  /**
+   * Retrato escolhido na Nova Jornada que não pôde ser enviado depois da criação: a tela
+   * mostra um aviso com Tentar de novo e Escolher outro (o diálogo do retrato da ficha).
+   */
+  portraitRetry?: PortraitRetry | null;
+  /** Nome ou descrição editados (Editar Jornada); quem chama atualiza o seu resumo. */
+  onJourneyChanged?: (journey: OpenJourneySummary) => void;
+}
+
+export interface PortraitRetry {
+  file: Blob;
+  crop: PortraitCrop;
+  /** Motivo da falha, já em texto para o jogador. */
+  reason: string;
 }
 
 type Center = "cena" | "aduran" | "log";
 type View = "loading" | "pending" | "cena" | "aduran" | "log" | "readonly";
 type Side = "arcos" | "chat" | "ficha";
-type Modal = "world" | "sheet" | "portrait" | "close" | "menu" | null;
+type Modal = "world" | "sheet" | "portrait" | "close" | "menu" | "edit" | null;
 
 const SIDE_PREFIX = "jornada-col";
 const SIDES: { id: Side; label: string }[] = [
@@ -119,7 +134,7 @@ function HeadTool({
  * dos Arcos, centro (página da Cena ou margem do Aduran e do Log) e Ficha.
  * Abrir, encerrar e gravar são do serviço; a tela só pede e mostra.
  */
-export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, onOpenModels, onBackToMenu, copyText = defaultCopy }: JourneyScreenProps) {
+export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, onOpenModels, onBackToMenu, copyText = defaultCopy, portraitRetry = null, onJourneyChanged }: JourneyScreenProps) {
   const session = useJourneySession(info, snapshot, { onEngineProblem: () => onEngineProblem?.() });
   const { history, live, arcs } = session;
   const character = snapshot.character;
@@ -146,6 +161,9 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
   const [portraitVersion, setPortraitVersion] = useState(0);
   const [portraitUrl, setPortraitUrl] = useState<string | null>(null);
   const [closeError, setCloseError] = useState<string | null>(null);
+  const [retry, setRetry] = useState<PortraitRetry | null>(portraitRetry);
+  const [summary, setSummary] = useState<OpenJourneySummary>(snapshot.journey);
+  const [retrying, setRetrying] = useState(false);
   const [turn, setTurn] = useState(0);
   const [seenAduran, setSeenAduran] = useState<number | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
@@ -341,6 +359,20 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
     setPortrait(saved);
     if (newImage) setPortraitVersion((n) => n + 1);
     setToast(saved ? "Retrato salvo" : "Retrato removido");
+    if (saved) setRetry(null);
+  };
+
+  const retryPortrait = async () => {
+    if (!retry || retrying) return;
+    setRetrying(true);
+    try {
+      const saved = await uploadPortrait(info, retry.file, retry.crop);
+      onPortraitSaved(saved, true);
+    } catch (err) {
+      setRetry({ ...retry, reason: portraitErrorMessage(err) });
+    } finally {
+      setRetrying(false);
+    }
   };
 
   /* ------------------------------------------------------------------ partes */
@@ -674,7 +706,7 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
   return (
     <div className="jscreen">
       <JourneyTopBar
-        journeyName={journeyTitle(snapshot)}
+        journeyName={summary.name ?? journeyTitle(snapshot)}
         characterName={characterName}
         worldName={snapshot.world.content?.name ?? null}
         period={journeyPeriod}
@@ -683,7 +715,27 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
         onOpenModels={onOpenModels}
         onOpenWorld={() => setModal("world")}
         onBackToMenu={() => setModal("menu")}
+        onEditJourney={() => setModal("edit")}
       />
+      {retry ? (
+        <div className="callout callout--warn jscreen__notice" role="alert">
+          <p>
+            A Jornada foi criada, mas o retrato não foi enviado: {retry.reason} Tente de novo ou escolha outro retrato na
+            ficha do personagem.
+          </p>
+          <div className="actions">
+            <Button size="sm" variant="primary" loading={retrying} onClick={() => void retryPortrait()}>
+              Tentar de novo
+            </Button>
+            <Button size="sm" disabled={retrying || !character} onClick={() => setModal("portrait")}>
+              Escolher outro
+            </Button>
+            <Button size="sm" variant="ghost" disabled={retrying} onClick={() => setRetry(null)}>
+              Fechar
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <Tabs items={SIDES} value={side} onChange={setSide} label="Colunas da Jornada" idPrefix={SIDE_PREFIX} className="jscreen__sides" />
       <div className="jscreen__game" data-side={side} data-arcs={arcsCollapsed ? "min" : "max"}>
         <ArcsColumn
@@ -766,6 +818,19 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
             </Button>
           </>
         }
+      />
+
+      <EditJourneyDialog
+        open={modal === "edit"}
+        onClose={() => setModal(null)}
+        info={info}
+        journey={summary}
+        characterName={characterName}
+        onSaved={(saved) => {
+          setSummary(saved);
+          setToast("Jornada atualizada");
+          onJourneyChanged?.(saved);
+        }}
       />
 
       <WorldDialog open={modal === "world"} onClose={() => setModal(null)} info={info} world={snapshot.world.content} characterName={characterName} />

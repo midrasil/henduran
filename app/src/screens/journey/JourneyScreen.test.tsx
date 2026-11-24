@@ -7,7 +7,7 @@ import { ENGINE_IDLE, INFO, stubGame } from "../../test/appHarness";
 import { snapshotOf, summary, type FakeGameOptions } from "../../test/fakeGameApi";
 import { OPENING_TEXT, sceneOf } from "../../test/fakeJourneyScreen";
 import { RULES } from "../../test/gameData";
-import { JourneyScreen } from "./JourneyScreen";
+import { JourneyScreen, type PortraitRetry } from "./JourneyScreen";
 
 vi.setConfig({ testTimeout: 20000 });
 
@@ -18,7 +18,12 @@ afterEach(() => {
 const READY = { ...ENGINE_IDLE, provider: "fake" } as EngineStatus;
 const NO_MODEL = { ...ENGINE_IDLE, provider: "local", installed: false } as EngineStatus;
 
-function setup(options: FakeGameOptions = {}, engine: EngineStatus = READY, prepare?: (api: ReturnType<typeof stubGame>["api"]) => void) {
+function setup(
+  options: FakeGameOptions = {},
+  engine: EngineStatus = READY,
+  prepare?: (api: ReturnType<typeof stubGame>["api"]) => void,
+  portraitRetry: PortraitRetry | null = null,
+) {
   const game = stubGame({ journeys: [summary()], ...options });
   const snapshot = snapshotOf(summary());
   game.api.state.open = snapshot;
@@ -35,10 +40,45 @@ function setup(options: FakeGameOptions = {}, engine: EngineStatus = READY, prep
       onOpenModels={onOpenModels}
       onBackToMenu={vi.fn()}
       copyText={copyText}
+      portraitRetry={portraitRetry}
     />,
   );
   return { ...game, user, onOpenModels, copyText };
 }
+
+describe("Retrato da Nova Jornada não enviado", () => {
+  const retry = (): PortraitRetry => ({
+    file: new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "rosto.png", { type: "image/png" }),
+    crop: { x: 0.5, y: 0.5, zoom: 1 },
+    reason: "O serviço não respondeu.",
+  });
+
+  it("avisa na tela e Tentar de novo envia o retrato (o aviso some)", async () => {
+    const { user, api } = setup({}, READY, undefined, retry());
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("A Jornada foi criada, mas o retrato não foi enviado: O serviço não respondeu.");
+    await user.click(within(alert).getByRole("button", { name: "Tentar de novo" }));
+    await waitFor(() => expect(screen.queryByText(/o retrato não foi enviado/)).not.toBeInTheDocument());
+    expect(api.calls.filter((c) => c.method === "PUT" && c.path.startsWith("/journeys/current/portrait"))).toHaveLength(1);
+    expect(await screen.findByText("Retrato salvo")).toBeInTheDocument();
+  });
+
+  it("falha de novo: o aviso fica com o motivo novo; Escolher outro abre o retrato da ficha; Fechar dispensa", async () => {
+    const { user } = setup(
+      { portraitError: { status: 422, code: "formato_invalido", message: "x" } },
+      READY,
+      undefined,
+      retry(),
+    );
+    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+    expect(await screen.findByText(/Este arquivo não é uma imagem PNG, JPEG ou WebP/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Escolher outro" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(screen.queryByText(/o retrato não foi enviado/)).not.toBeInTheDocument();
+  });
+});
 
 const sent = (api: ReturnType<typeof stubGame>["api"], path: string) => api.calls.filter((c) => c.method === "POST" && c.path === path);
 
