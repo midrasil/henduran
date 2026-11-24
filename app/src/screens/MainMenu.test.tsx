@@ -2,10 +2,13 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { EngineStatus } from "../api/engine";
 import { App } from "../App";
-import { INFO, stubGame } from "../test/appHarness";
+import { ENGINE_IDLE, INFO, stubGame } from "../test/appHarness";
 import { summary } from "../test/fakeGameApi";
+import { CALENDAR } from "../test/fakeJourneyScreen";
 import { WORLD } from "../test/gameData";
+import { serviceState } from "./MainMenu";
 
 const { getBackendInfo, canExitApp, exitApp } = vi.hoisted(() => ({
   getBackendInfo: vi.fn(),
@@ -38,35 +41,90 @@ async function renderMenu() {
   await screen.findByText("Conectado");
 }
 
-const sky = () => document.querySelector(".app__sky");
+const scene = () => document.querySelector(".menu-scene");
+const card = () => screen.getByRole("region", { name: "Última Jornada" });
+const indicator = () => screen.getByRole("button", { name: /Abrir Modelos$/ });
 
 describe("Menu inicial", () => {
-  it("abre no menu, sem Jornadas: convida a criar e Continuar fica desativado", async () => {
+  it("primeira vez: convida a criar, Continuar desativado, sem Modelos entre os botões", async () => {
     stubGame();
     await renderMenu();
     expect(screen.getByRole("heading", { level: 1, name: "Henduran" })).toBeInTheDocument();
     expect(screen.getByText("Jornada solo de fantasia com Narrador IA")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Comece a sua primeira Jornada" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
-    for (const name of ["Nova Jornada", "Jornadas", "Modelos"]) expect(screen.getByRole("button", { name })).toBeEnabled();
-    // Sem Jornada, o céu do período padrão.
-    expect(sky()).toHaveAttribute("data-period", "entardecer");
-    expect(screen.getByText(/RPG solo guiado por IA/)).toHaveTextContent(/v\d+\.\d+\.\d+/);
+    const first = await screen.findByRole("region", { name: "Sua primeira Jornada" });
+    expect(first).toHaveTextContent(/Ainda não há nenhuma Jornada/);
+    const nav = screen.getByRole("navigation", { name: "Menu inicial" });
+    expect(within(nav).getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
+    for (const name of ["Nova Jornada", "Jornadas"]) expect(within(nav).getByRole("button", { name })).toBeEnabled();
+    // Modelos não é botão do menu: o acesso fica no indicador do rodapé.
+    expect(within(nav).queryByRole("button", { name: /Modelos/ })).not.toBeInTheDocument();
+    // Sem Jornada, a paisagem do período padrão.
+    expect(scene()).toHaveAttribute("data-period", "entardecer");
+    expect(screen.getByText(/^Henduran · v\d+\.\d+\.\d+/)).toBeInTheDocument();
     // Fora do Tauri, não há Sair.
     expect(screen.queryByRole("button", { name: "Sair" })).not.toBeInTheDocument();
   });
 
-  it("mostra a última Jornada, com o céu do período dela, e Continuar abre a Jornada", async () => {
+  it("cartão da última Jornada: personagem, lugar e Mundo, período e data, Cena e salvo há…; Ver todas abre Jornadas", async () => {
+    const saved = new Date(Date.now() - 2 * 3600 * 1000 - 60 * 1000).toISOString();
+    stubGame({
+      journeys: [summary({ calendar: CALENDAR, current_scene_title: "A carta da garça", last_saved_at: saved })],
+      lastJourneyId: summary().id,
+    });
+    const user = userEvent.setup();
+    await renderMenu();
+    await screen.findByText("O Selo de Elmora");
+    const c = card();
+    expect(within(c).getByText(/Ilsa Corvalho/)).toBeInTheDocument();
+    expect(within(c).getByText(new RegExp(`${WORLD.places[0]!.name}, ${WORLD.name}`))).toBeInTheDocument();
+    expect(within(c).getByText("Noite")).toBeInTheDocument();
+    expect(within(c).getByText(`· 12 de ${CALENDAR.month_name}, ${CALENDAR.weekday_name} · ${CALENDAR.era_label}`)).toBeInTheDocument();
+    expect(within(c).getByText("Em Cena: “A carta da garça”")).toBeInTheDocument();
+    expect(within(c).getByText("Salvo há 2 horas")).toHaveAttribute("datetime", saved);
+    // Sem retrato: as iniciais.
+    expect(within(c).getByRole("img", { name: "Ilsa Corvalho, sem retrato" })).toHaveTextContent("IC");
+    await waitFor(() => expect(scene()).toHaveAttribute("data-period", "noite"));
+    await user.click(within(c).getByRole("button", { name: "Ver todas" }));
+    expect(await screen.findByRole("heading", { name: "Jornadas" })).toHaveFocus();
+  });
+
+  it("Fora de Cena e sem data: o cartão não inventa nada", async () => {
+    stubGame({ journeys: [summary()], lastJourneyId: summary().id });
+    await renderMenu();
+    await screen.findByText("O Selo de Elmora");
+    expect(within(card()).queryByText(/Em Cena/)).not.toBeInTheDocument();
+    expect(within(card()).getByText("Noite").parentElement).toHaveTextContent(/^Período do dia: Noite$/);
+  });
+
+  it("com retrato, o cartão busca a imagem pela rota da Jornada (sem abri-la)", async () => {
+    const created = vi.fn(() => "blob:retrato");
+    const original = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+    URL.createObjectURL = created;
+    URL.revokeObjectURL = vi.fn();
+    try {
+      const id = summary().id;
+      const { fetchMock } = stubGame({
+        journeys: [summary({ portrait: { crop: { x: 0.5, y: 0.4, zoom: 2 }, url_path: `/journeys/${id}/portrait` } })],
+        lastJourneyId: id,
+      });
+      await renderMenu();
+      await screen.findByText("O Selo de Elmora");
+      expect(await within(card()).findByRole("img", { name: "Retrato de Ilsa Corvalho" })).toBeInTheDocument();
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith(`/journeys/${id}/portrait`))).toBe(true);
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith(`/journeys/${id}/open`))).toBe(false);
+      expect(created).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = original.create;
+      URL.revokeObjectURL = original.revoke;
+    }
+  });
+
+  it("mostra a última Jornada com o céu do período dela, e Continuar abre a Jornada", async () => {
     const { api } = stubGame({ journeys: [summary()], lastJourneyId: summary().id });
     const user = userEvent.setup();
     await renderMenu();
     await screen.findByText("O Selo de Elmora");
-    const card = screen.getByRole("region", { name: "Última Jornada" });
-    expect(within(card).getByText(/Ilsa Corvalho/)).toBeInTheDocument();
-    expect(within(card).getByText(new RegExp(`${WORLD.places[0]!.name}, ${WORLD.name}`))).toBeInTheDocument();
-    expect(within(card).getByText(/Salvo em:/)).toHaveTextContent(/Salvo em: .*\d{2}:\d{2}/);
-    expect(within(card).getByText("Noite")).toBeInTheDocument();
-    await waitFor(() => expect(sky()).toHaveAttribute("data-period", "noite"));
+    await waitFor(() => expect(scene()).toHaveAttribute("data-period", "noite"));
 
     await user.click(screen.getByRole("button", { name: "Continuar Jornada" }));
     expect(await screen.findByRole("heading", { level: 1, name: "O Selo de Elmora" })).toHaveFocus();
@@ -77,16 +135,18 @@ describe("Menu inicial", () => {
     expect(bar).toHaveTextContent("Noite");
   });
 
-  it("Jornada danificada: aviso no cartão e Continuar desativado", async () => {
+  it("Jornada danificada: aviso no cartão com o caminho para Jornadas e Continuar desativado", async () => {
     stubGame({
       journeys: [summary({ status: "danificada", error_code: "banco_danificado", error_message: "x" })],
       lastJourneyId: summary().id,
     });
+    const user = userEvent.setup();
     await renderMenu();
     await screen.findByText(/está danificado/);
-    const card = screen.getByRole("region", { name: "Última Jornada" });
+    expect(within(card()).getByRole("note")).toHaveTextContent("O arquivo desta Jornada está danificado. Restaure um backup na tela Jornadas.");
     expect(screen.getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
-    expect(within(card).getByRole("button", { name: "Ver Jornadas" })).toBeInTheDocument();
+    await user.click(within(card()).getByRole("button", { name: "Ver todas" }));
+    expect(await screen.findByRole("heading", { name: "Jornadas" })).toHaveFocus();
   });
 
   it("erro ao continuar aparece com mensagem clara e leva às Jornadas", async () => {
@@ -106,6 +166,16 @@ describe("Menu inicial", () => {
     expect(await screen.findByRole("heading", { name: "Jornadas" })).toHaveFocus();
   });
 
+  it("indicador do rodapé: provedor pronto e abre Modelos", async () => {
+    stubGame();
+    const user = userEvent.setup();
+    await renderMenu();
+    await waitFor(() => expect(indicator()).toHaveAccessibleName("Conectado, provedor fake pronto. Abrir Modelos"));
+    expect(indicator()).toHaveAttribute("data-light", "ok");
+    await user.click(indicator());
+    expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+  });
+
   it("Sair chama o encerramento do app (só dentro do Tauri)", async () => {
     canExitApp.mockReturnValue(true);
     stubGame();
@@ -113,6 +183,39 @@ describe("Menu inicial", () => {
     await renderMenu();
     await user.click(screen.getByRole("button", { name: "Sair" }));
     expect(exitApp).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Menu inicial — estados do serviço", () => {
+  it("serviço iniciando: três primeiros botões desativados, Sair ativo, cartão e luz de espera", async () => {
+    canExitApp.mockReturnValue(true);
+    let release: () => void = () => undefined;
+    getBackendInfo.mockReturnValue(new Promise((resolve) => (release = () => resolve(INFO))));
+    stubGame();
+    render(<App backendOptions={{ attempts: 2, retryDelayMs: 1 }} />);
+    for (const name of ["Continuar Jornada", "Nova Jornada", "Jornadas"]) expect(screen.getByRole("button", { name })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Sair" })).toBeEnabled();
+    expect(card()).toHaveTextContent("Preparando o serviço local…");
+    expect(indicator()).toHaveAttribute("data-light", "busy");
+    expect(screen.getByRole("status")).toHaveTextContent(/Iniciando o serviço/);
+    release();
+    await screen.findByText("Conectado");
+  });
+});
+
+describe("serviceState", () => {
+  const connected = { kind: "connected" as const, info: INFO };
+  it("liga a luz pelo serviço e pelo modelo, sempre com texto", () => {
+    expect(serviceState({ kind: "starting" }, null)).toEqual({ light: "busy", main: "Iniciando o serviço", detail: "aguarde" });
+    expect(serviceState({ kind: "error", message: "x" }, null).light).toBe("off");
+    const local = { ...ENGINE_IDLE, provider: "local" } as EngineStatus;
+    expect(serviceState(connected, { ...local, state: "ready", installed: true, active_model: "m", active_model_name: "Qwen 2.5 7B" })).toEqual({
+      light: "ok",
+      main: "Conectado",
+      detail: "Qwen 2.5 7B pronto",
+    });
+    expect(serviceState(connected, local)).toEqual({ light: "off", main: "Conectado", detail: "nenhum modelo carregado" });
+    expect(serviceState(connected, { ...local, state: "starting", installed: true, active_model: "m" }).light).toBe("busy");
   });
 });
 

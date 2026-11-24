@@ -68,20 +68,11 @@
   display: none;
 }
 
-/* No menu, o céu cobre a janela inteira atrás dos painéis (o texto fica sempre em fundo sólido).
-   Seletor com ".app" para valer sobre o ".sky" do componente. */
-.app .app__sky--menu {
-  position: absolute;
-  inset: 0;
-  z-index: var(--z-sky);
-  height: auto;
-  border-bottom: 0;
-}
-
+/* No menu, a paisagem viva e o rodapé são do próprio menu (src/screens/menu/MainMenu.css). */
 .app--menu .app__main {
   position: relative;
   z-index: var(--z-base);
-  padding-top: 0;
+  padding: 0;
 }
 
 .app__main {

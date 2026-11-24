@@ -30,7 +30,8 @@ Narrador na Jornada aberta (ADR-076), com os mesmos eventos e o mesmo cancelamen
 - ``POST /journeys/current/scene/close`` (JSON): resumo validado e Cena encerrada.
 - ``PATCH /journeys/current/scenes/{id}``, ``GET /journeys/current/scenes/{id}``, ``GET .../arcs``,
   ``GET .../events``, ``GET .../places`` e o retrato (``PUT``/``PATCH``/``GET``/``DELETE``
-  ``/journeys/current/portrait``). Contrato completo em ``backend/README.md``.
+  ``/journeys/current/portrait``). ``GET /journeys/{id}/portrait``: o retrato sem abrir a Jornada (menu).
+  Contrato completo em ``backend/README.md``.
 
 Erros HTTP: ``{"detail": {"code": "...", "message": "..."}}``. Nas validações (422), ``detail`` traz
 também ``errors: [{"field", "code", "message"}]``.
@@ -1071,5 +1072,23 @@ def create_app(
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
         return {"portrait": None}
+
+    # Retrato de uma Jornada sem abri-la (cartão "Última Jornada" do menu). Registrada depois de
+    # ``/journeys/current/portrait`` para "current" nunca cair aqui.
+    @app.get("/journeys/{journey_id}/portrait", dependencies=auth)
+    async def journeys_portrait_by_id(journey_id: str) -> Response:
+        store, _ = need_journeys()
+
+        def work() -> tuple[bytes, str]:
+            path, media = store.portrait_file(journey_id)
+            return path.read_bytes(), media
+
+        try:
+            data, media = await asyncio.to_thread(work)
+        except StorageError as exc:
+            raise storage_error(exc) from exc
+        except OSError as exc:
+            raise _http_error("retrato_ausente", "O arquivo do retrato não pôde ser lido.", 404) from exc
+        return Response(content=data, media_type=media, headers={"Cache-Control": "no-store"})
 
     return app

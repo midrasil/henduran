@@ -731,3 +731,68 @@ def test_campos_opcionais_da_descricao(make):
     assert call(srv, "GET", "/rules/creation").json()["text_limits"]["personality"] == 1000
     r = call(srv, "POST", "/characters/validate", json={"draft": {**draft, "age": "x" * 101}})
     assert r.json()["valid"] is False and r.json()["errors"][0]["field"] == "age"
+
+
+# ------------------------------------------------------------------ cartão "Última Jornada" do menu
+def listed(srv, journey_id: str) -> dict:
+    r = call(srv, "GET", "/journeys")
+    assert r.status_code == 200, r.text
+    return next(j for j in r.json()["journeys"] if j["id"] == journey_id)
+
+
+def test_lista_traz_data_cena_e_retrato_para_o_menu(make):
+    from henduran.services import portrait as portraits
+    from henduran.storage import character as character_store
+
+    assert character_store.PORTRAIT_FILES == portraits.FILE_NAMES
+    srv = make()
+    _, snap = open_new_journey(srv)
+    jid = snap["journey"]["id"]
+    item = listed(srv, jid)
+    # Data no calendário do Mundo, igual à da Jornada aberta; Fora de Cena e sem retrato.
+    assert item["calendar"] == snap["calendar"] and item["calendar"]["month_name"]
+    assert item["current_scene_title"] is None and item["portrait"] is None
+    r = call(srv, "GET", f"/journeys/{jid}/portrait")
+    assert r.status_code == 404 and r.json()["detail"]["code"] == "retrato_ausente"
+    # Cena em andamento: o título da Cena aberta.
+    stream(srv, "/journeys/current/opening")
+    scene = history(srv)["scene"]
+    assert scene["status"] == "aberta" and scene["title"]
+    assert listed(srv, jid)["current_scene_title"] == scene["title"]
+    # Retrato: enquadramento e a rota que serve a imagem sem abrir a Jornada.
+    assert put_portrait(srv, PNG, "?x=0.4&y=0.6&zoom=2").status_code == 200
+    item = listed(srv, jid)
+    assert item["portrait"] == {"crop": {"x": 0.4, "y": 0.6, "zoom": 2.0}, "url_path": f"/journeys/{jid}/portrait"}
+    # "current" continua indo para a rota da Jornada aberta.
+    assert call(srv, "GET", "/journeys/current/portrait").content == PNG
+    assert call(srv, "POST", "/journeys/current/scene/close").status_code == 200
+    assert call(srv, "POST", "/journeys/close").status_code == 200
+    item = listed(srv, jid)
+    assert item["current_scene_title"] is None and item["portrait"]["url_path"] == f"/journeys/{jid}/portrait"
+    got = call(srv, "GET", f"/journeys/{jid}/portrait")
+    assert got.status_code == 200 and got.content == PNG and got.headers["content-type"] == "image/png"
+    assert got.headers["cache-control"] == "no-store"
+    # Sem token, id inválido ou Jornada inexistente.
+    assert httpx.get(f"{srv.base_url}/journeys/{jid}/portrait", timeout=30).status_code == 401
+    assert call(srv, "GET", "/journeys/nao-e-um-id/portrait").status_code == 422
+    r = call(srv, "GET", f"/journeys/{'0' * 8}-0000-4000-8000-{'0' * 12}/portrait")
+    assert r.status_code == 404 and r.json()["detail"]["code"] == "jornada_nao_encontrada"
+    # Arquivo do retrato sumido: sem retrato na lista e 404 na rota.
+    for f in srv.paths.journey_assets_dir(jid).iterdir():
+        f.unlink()
+    assert listed(srv, jid)["portrait"] is None
+    assert call(srv, "GET", f"/journeys/{jid}/portrait").status_code == 404
+
+
+def test_lista_de_jornada_danificada_sem_dados_do_cartao(make):
+    srv = make()
+    _, snap = open_new_journey(srv)
+    jid = snap["journey"]["id"]
+    assert put_portrait(srv, PNG).status_code == 200
+    assert call(srv, "POST", "/journeys/close").status_code == 200
+    srv.paths.journey_db_file(jid).write_bytes(b"isto nao e um banco sqlite" * 100)
+    item = listed(srv, jid)
+    assert item["status"] == "danificada"
+    assert (item["calendar"], item["current_scene_title"], item["portrait"]) == (None, None, None)
+    r = call(srv, "GET", f"/journeys/{jid}/portrait")
+    assert r.status_code == 404 and r.json()["detail"]["code"] == "retrato_ausente"

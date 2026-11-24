@@ -143,7 +143,8 @@ export interface PixelContext {
   clearRect(x: number, y: number, w: number, h: number): void;
 }
 
-function disc(ctx: PixelContext, cx: number, cy: number, r: number, color: string) {
+/** Disco em pixel art (linhas horizontais), centrado em `cx`, `cy`. */
+export function disc(ctx: PixelContext, cx: number, cy: number, r: number, color: string) {
   ctx.fillStyle = color;
   for (let dy = -r; dy <= r; dy++) {
     const half = Math.floor(Math.sqrt(r * r + r * 0.8 - dy * dy));
@@ -152,7 +153,8 @@ function disc(ctx: PixelContext, cx: number, cy: number, r: number, color: strin
   }
 }
 
-function ridge(width: number, height: number, seed: number, base: number, amp: number): number[] {
+/** Linha de relevo determinística: o topo de cada coluna, de 0 a `width - 1`. */
+export function ridge(width: number, height: number, seed: number, base: number, amp: number): number[] {
   const rand = seeded(seed);
   const p1 = rand() * Math.PI * 2;
   const p2 = rand() * Math.PI * 2;
@@ -165,6 +167,38 @@ function ridge(width: number, height: number, seed: number, base: number, amp: n
     out.push(Math.round(height - base - amp * (v * 0.5 + 0.5)));
   }
   return out;
+}
+
+/** Astro do período: sol com halo pontilhado opcional ou lua crescente, com raio `r` em pixels de arte. */
+export function drawBody(ctx: PixelContext, body: SkyScene["body"], cx: number, cy: number, r: number): void {
+  if (body.halo) {
+    ctx.fillStyle = body.halo;
+    const hr = r + 2;
+    for (let dy = -hr; dy <= hr; dy++) {
+      for (let dx = -hr; dx <= hr; dx++) {
+        const d = dx * dx + dy * dy;
+        if (d > r * r + r && d <= hr * hr + hr && (dx + dy) % 2 === 0) ctx.fillRect(cx + dx, cy + dy, 1, 1);
+      }
+    }
+  }
+  if (body.kind === "sun") {
+    disc(ctx, cx, cy, r, body.color);
+    disc(ctx, cx, cy, Math.max(1, r - 2), body.core);
+  } else {
+    // Lua crescente: pixels do disco que ficam fora de um segundo disco deslocado
+    // (o céu atrás continua visível), com o miolo mais claro.
+    const bx = cx + Math.ceil(r * 0.7);
+    const by = cy - Math.ceil(r * 0.3);
+    const inside = (x: number, y: number, ox: number, oy: number, rr: number) =>
+      (x - ox) ** 2 + (y - oy) ** 2 <= rr * rr + rr * 0.8;
+    for (let y = cy - r; y <= cy + r; y++) {
+      for (let x = cx - r; x <= cx + r; x++) {
+        if (!inside(x, y, cx, cy, r) || inside(x, y, bx, by, r)) continue;
+        ctx.fillStyle = inside(x, y, cx - 1, cy, r - 2) && !inside(x, y, bx - 1, by, r + 1) ? body.core : body.color;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
 }
 
 /** Desenha o céu do período num canvas de `width` x `height` pixels de arte. */
@@ -198,37 +232,7 @@ export function drawSky(ctx: PixelContext, width: number, height: number, period
 
   // Astro
   const body = scene.body;
-  const r = Math.max(2, Math.round(height * body.r));
-  const cx = Math.round(width * body.x);
-  const cy = Math.round(height * body.y);
-  if (body.halo) {
-    ctx.fillStyle = body.halo;
-    const hr = r + 2;
-    for (let dy = -hr; dy <= hr; dy++) {
-      for (let dx = -hr; dx <= hr; dx++) {
-        const d = dx * dx + dy * dy;
-        if (d > r * r + r && d <= hr * hr + hr && (dx + dy) % 2 === 0) ctx.fillRect(cx + dx, cy + dy, 1, 1);
-      }
-    }
-  }
-  if (body.kind === "sun") {
-    disc(ctx, cx, cy, r, body.color);
-    disc(ctx, cx, cy, Math.max(1, r - 2), body.core);
-  } else {
-    // Lua crescente: pixels do disco que ficam fora de um segundo disco deslocado
-    // (o céu atrás continua visível), com o miolo mais claro.
-    const bx = cx + Math.ceil(r * 0.7);
-    const by = cy - Math.ceil(r * 0.3);
-    const inside = (x: number, y: number, ox: number, oy: number, rr: number) =>
-      (x - ox) ** 2 + (y - oy) ** 2 <= rr * rr + rr * 0.8;
-    for (let y = cy - r; y <= cy + r; y++) {
-      for (let x = cx - r; x <= cx + r; x++) {
-        if (!inside(x, y, cx, cy, r) || inside(x, y, bx, by, r)) continue;
-        ctx.fillStyle = inside(x, y, cx - 1, cy, r - 2) && !inside(x, y, bx - 1, by, r + 1) ? body.core : body.color;
-        ctx.fillRect(x, y, 1, 1);
-      }
-    }
-  }
+  drawBody(ctx, body, Math.round(width * body.x), Math.round(height * body.y), Math.max(2, Math.round(height * body.r)));
 
   // Nuvens (dia): faixas em degraus
   if (scene.clouds) {

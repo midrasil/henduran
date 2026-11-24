@@ -21,6 +21,9 @@ from henduran.rules.creation import Character
 from henduran.storage.errors import StorageError
 
 PORTRAIT_URL_PATH = "/journeys/current/portrait"
+# Nomes possíveis do arquivo do retrato em ``assets`` e o ``Content-Type`` de cada um
+# (os mesmos de ``services.portrait.FILE_NAMES``; a lista das Jornadas lê sem abrir a Jornada).
+PORTRAIT_FILES = {"portrait.png": "image/png", "portrait.jpg": "image/jpeg", "portrait.webp": "image/webp"}
 
 
 class _Writer(Protocol):
@@ -157,6 +160,7 @@ def set_portrait(tx: _Writer, file_name: str | None, crop: dict[str, float] | No
 
 
 __all__ = [
+    "PORTRAIT_FILES",
     "PORTRAIT_URL_PATH",
     "character_sheet",
     "portrait_file",

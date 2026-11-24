@@ -1,0 +1,619 @@
+/*
+ * Menu inicial (docs/ui-ux/11-menu-inicial.md; protótipo aprovado em
+ * docs/ui-ux/prototipos/menu-inicial.html). Paisagem em tela cheia, título e botões
+ * no eixo central, cartão da última Jornada preso à direita da coluna e rodapé com
+ * a versão e o indicador do serviço e do modelo. Só tokens; as cores de pixel art
+ * ficam nos desenhos (menuArt.tsx, landscape.ts).
+ */
+
+.menu {
+  --menu-foot-height: 48px;
+  --menu-column: 320px;
+  --menu-card: 340px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--color-text);
+}
+
+/* --------------------------------------------------------------- paisagem */
+
+.menu__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.menu-scene__canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Vinheta escura nas bordas, para dar foco ao centro. */
+.menu-scene__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 70% at 50% 45%,
+    transparent 55%,
+    color-mix(in srgb, var(--color-outline) 55%, transparent) 100%
+  );
+}
+
+/* --------------------------------------------------------------- decoração */
+
+.menu-corner {
+  position: absolute;
+  z-index: 3;
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+}
+
+.menu-corner svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.menu-corner--tl {
+  left: 12px;
+  top: 12px;
+}
+
+.menu-corner--tr {
+  right: 12px;
+  top: 12px;
+  transform: scaleX(-1);
+}
+
+.menu-corner--bl {
+  left: 12px;
+  bottom: calc(var(--menu-foot-height) + 12px);
+  transform: scaleY(-1);
+}
+
+.menu-corner--br {
+  right: 12px;
+  bottom: calc(var(--menu-foot-height) + 12px);
+  transform: scale(-1);
+}
+
+.menu-banner {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  width: 72px;
+  pointer-events: none;
+}
+
+.menu-banner--left {
+  left: max(48px, 6vw);
+}
+
+.menu-banner--right {
+  right: max(48px, 6vw);
+}
+
+.menu-banner svg {
+  display: block;
+}
+
+.menu-banner__sway {
+  display: block;
+  transform-origin: top center;
+  animation: menu-sway 6s ease-in-out infinite;
+}
+
+.menu-banner--right .menu-banner__sway {
+  animation-delay: -3s;
+}
+
+@keyframes menu-sway {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+
+/* ------------------------------------------------------------ eixo central */
+
+.menu__stage {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  min-height: 0;
+  padding: clamp(32px, 9vh, 96px) var(--space-2) var(--space-3);
+  overflow-y: auto;
+}
+
+.menu__title-block {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.menu__logo {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.menu__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: calc(clamp(3.2rem, 7vw, 5.6rem) * var(--text-scale));
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--color-accent-light);
+  /* sombra em degraus, sem desfoque */
+  text-shadow:
+    0 3px 0 var(--color-frame-dark),
+    0 6px 0 var(--color-outline),
+    4px 8px 0 color-mix(in srgb, var(--color-outline) 45%, transparent);
+}
+
+.menu__title:focus-visible {
+  outline-offset: 6px;
+}
+
+.menu__mark {
+  width: clamp(44px, 5vw, 64px);
+  height: auto;
+  animation: menu-glint 5s steps(1) infinite;
+}
+
+.menu__mark--mirror {
+  transform: scaleX(-1);
+}
+
+/* Brilho ocasional na marca do título. */
+@keyframes menu-glint {
+  0%,
+  88% {
+    filter: none;
+  }
+  90%,
+  94% {
+    filter: brightness(1.6);
+  }
+}
+
+.menu__rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu__rule i {
+  display: block;
+  width: clamp(80px, 14vw, 180px);
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 10px);
+}
+
+.menu__subtitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: calc(clamp(1.05rem, 1.6vw, 1.3rem) * var(--text-scale));
+  color: var(--color-parchment-light);
+  text-shadow: 2px 2px 0 var(--color-outline);
+}
+
+/* Coluna fixa dos botões; o cartão fica preso à direita dela sem deslocar o eixo. */
+.menu__main {
+  position: relative;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--menu-column);
+  max-width: 100%;
+  margin-top: -4vh;
+}
+
+.menu__buttons {
+  display: grid;
+  gap: 12px;
+  padding: 4px;
+}
+
+.menu .menu__button {
+  position: relative;
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-1) 14px;
+  font-family: var(--font-serif);
+  font-size: calc(1.3rem * var(--text-scale));
+  font-weight: 600;
+  background: linear-gradient(var(--color-surface-raised), var(--color-surface));
+  transition: transform var(--duration-fast) steps(2);
+}
+
+.menu .menu__button .btn__label {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.menu__button .btn__label > svg {
+  justify-self: center;
+  color: var(--color-accent-light);
+}
+
+.menu__button-text {
+  grid-column: 2;
+  text-align: center;
+}
+
+.menu .menu__button:hover:not(:disabled) {
+  background: linear-gradient(var(--color-secondary-hover), var(--color-surface-raised));
+  transform: translateY(-2px);
+}
+
+.menu .menu__button--main {
+  min-height: 64px;
+  font-size: calc(1.4rem * var(--text-scale));
+  background: linear-gradient(var(--color-primary-hover), var(--color-primary-active));
+}
+
+.menu .menu__button--main:hover:not(:disabled) {
+  background: linear-gradient(var(--color-primary-bevel), var(--color-primary));
+}
+
+.menu .menu__button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.menu .menu__button:disabled {
+  background: var(--color-disabled-bg);
+  transform: none;
+}
+
+.menu .menu__button:disabled .btn__label > svg {
+  color: inherit;
+}
+
+/* Losangos dourados nas duas pontas ao passar o mouse ou com foco. */
+.menu__button:not(:disabled):is(:hover, :focus-visible)::before,
+.menu__button:not(:disabled):is(:hover, :focus-visible)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  background: var(--color-accent-light);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.menu__button:not(:disabled):is(:hover, :focus-visible)::before {
+  left: -24px;
+}
+
+.menu__button:not(:disabled):is(:hover, :focus-visible)::after {
+  right: -24px;
+}
+
+.menu__error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: var(--color-surface);
+}
+
+/* ---------------------------------------------------------- cartão */
+
+.menu .last-journey {
+  position: absolute;
+  left: calc(100% + 56px);
+  top: 50%;
+  width: var(--menu-card);
+  transform: translateY(-50%);
+}
+
+.last-journey .panel__titlebar {
+  padding: var(--space-1) 14px;
+}
+
+.last-journey .panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-light);
+}
+
+.last-journey .panel__body {
+  gap: 12px;
+  padding: 14px;
+}
+
+.last-journey--message .panel__body {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-md);
+}
+
+.last-journey__body {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.last-journey__name {
+  font-family: var(--font-serif);
+  font-size: calc(1.3rem * var(--text-scale));
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.last-journey__facts {
+  display: grid;
+  gap: 3px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment-muted);
+}
+
+.last-journey__facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.last-journey__facts svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  color: var(--color-ink-on-parchment-accent);
+}
+
+.last-journey__facts b {
+  color: var(--color-text-on-parchment);
+}
+
+.last-journey__scene {
+  font-style: italic;
+}
+
+.last-journey__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: 6px 10px;
+  border: var(--border-thin) solid var(--color-text-on-parchment-muted);
+  background: color-mix(in srgb, var(--px-amber-300) 25%, transparent);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment);
+}
+
+.last-journey__warn svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.last-journey__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  margin: 0 -14px -14px;
+  padding: 4px 14px;
+  border-top: var(--border-thin) dashed var(--color-parchment-edge);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment-muted);
+}
+
+.last-journey__saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu .last-journey__all {
+  min-height: var(--target-min);
+}
+
+/* ------------------------------------------------------------- rodapé */
+
+.menu__foot {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--menu-foot-height);
+  padding: 4px var(--space-2);
+  background: var(--color-outline);
+  border-top: var(--border-frame) solid var(--color-frame);
+  box-shadow: inset 0 2px 0 var(--color-accent-light);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+}
+
+.menu__version {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.menu__version-mark {
+  color: var(--color-accent);
+}
+
+.menu__foot-mid svg {
+  display: block;
+}
+
+.menu__service {
+  justify-self: end;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.menu__service-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 4px 12px;
+  border: var(--border-thin) solid var(--px-ink-600);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.menu__service-btn > span:not(.menu__led),
+.menu__service-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu__service-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.menu__service-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.menu__led {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--color-outline);
+}
+
+.menu__service-btn[data-light="ok"] .menu__led {
+  background: var(--color-success-text);
+}
+
+.menu__service-btn[data-light="busy"] .menu__led {
+  background: var(--color-warn-text);
+  animation: menu-blink 1.2s steps(1) infinite;
+}
+
+.menu__service-btn[data-light="off"] .menu__led {
+  background: var(--px-red-400);
+}
+
+@keyframes menu-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.menu__service-detail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.menu__service-go {
+  flex: none;
+  color: var(--color-accent-light);
+}
+
+/* --------------------------------------------------------- telas estreitas */
+
+@media (max-width: 1179.98px) {
+  .menu__main {
+    margin-top: var(--space-3);
+  }
+
+  .menu .last-journey {
+    position: static;
+    align-self: center;
+    width: min(var(--menu-card), calc(100vw - 32px));
+    transform: none;
+    margin-top: var(--space-1);
+  }
+
+  .menu-banner {
+    display: none;
+  }
+}
+
+@media (max-height: 820px) {
+  .menu__stage {
+    padding-top: var(--space-3);
+  }
+
+  .menu__title {
+    font-size: calc(clamp(2.6rem, 6vw, 4.4rem) * var(--text-scale));
+  }
+
+  .menu__main {
+    margin-top: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .menu__foot {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .menu__foot-mid {
+    display: none;
+  }
+
+  .menu__service {
+    justify-self: center;
+  }
+}
+
+/* Movimento reduzido (ADR-068): estandartes, brilho e luz parados. */
+@media (prefers-reduced-motion: reduce) {
+  .menu-banner__sway,
+  .menu__mark,
+  .menu__service-btn .menu__led {
+    animation: none !important;
+  }
+
+  .menu .menu__button {
+    transition: none;
+  }
+}
+
+.motion-reduced .menu-banner__sway,
+.motion-reduced .menu__mark,
+.motion-reduced .menu__service-btn .menu__led {
+  animation: none !important;
+}
