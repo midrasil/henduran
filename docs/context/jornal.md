@@ -11,7 +11,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: LED + `Conectado · <detalhe> · Modelos ▸` com o mesmo `aria-label`; `LastJourneyCard` retorna `null` quando a lista carregou vazia; protótipo e `11-menu-inicial.md` ajustados; teste da primeira vez trocado por ausência de cartão.
 - Validações: em worktree temporário com apenas as mudanças da tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal, mudanças concorrentes da Nova Jornada causaram falhas fora deste escopo (`App.tsx` importa `CreatedExtras` inexistente; `model.test.ts` espera `history_html`); foram deixadas de fora do commit. Conferência visual no app real fica com o responsável.
 - Arquivos: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
-- Entrega: branch `fix/rodape-menu-modelo`; PR a abrir nesta entrega (link será acrescentado).
+- Entrega: branch `fix/rodape-menu-modelo`; PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
 
 ## 2026-11-23 — `largura-mensagens-chat`
 
