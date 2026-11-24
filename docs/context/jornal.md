@@ -267,3 +267,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões minhas, a validar: Mundos salvos somente leitura com Duplicar e editar (ADR-075); mesma regra de Avançar nas abas do Mundo; sem campo de ideia nas abas de Status e História.
 - Em aberto, no backlog: formato da História, rota do Narrador para preencher dados, campo "descrição da Jornada" em `journey_meta`; o texto dos botões do Narrador no protótipo é só exemplo.
 - Arquivos principais: `docs/ui-ux/12-nova-jornada.md`, `docs/ui-ux/prototipos/nova-jornada.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`.
+- Entrega: PR [#28](https://github.com/midrasil/henduran/pull/28) aberto contra `main`.
