@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `chat-fala-e-melhorar-texto` (ajustes no chat da Jornada).
+Atualizado em 2026-11-24 após a tarefa `skills-por-cena-e-idioma-do-prompt` (decisões de skills e de idioma).
 
 ## Estado
 
@@ -52,6 +52,13 @@ Atualizado em 2026-11-24 após a tarefa `chat-fala-e-melhorar-texto` (ajustes no
 - **PR #39 mergeado** (Jornadas e Pontos de retorno).
 - **Ajustes aprovados no protótipo do chat** (este PR): travessão de abertura e fechamento da fala, pensamento removido, menu `/` no lugar da barra de botões e botão **Melhorar texto** (item 2.10 do `09`; `05`, seção 6.2).
 - **Próximos passos:** ⭐ implementar com o dev (Modelos, depois Estado da Cena, Diário, pontos de retorno e este chat, incluindo a rota de "melhorar texto"); ficha de regras do NPC; ADR de armazenamento dos pontos de retorno.
+
+## Atualização de 2026-11-24 (madrugada, 4): skills e idioma do prompt
+
+- **ADR-079 (aprovada, com medição):** instruções internas em inglês, resposta direta em português, sem camada de tradução. O dev mede o custo em tokens nos dois idiomas e cria o teste de idioma.
+- **Skills por Cena** (ADR-078, item 7, atualizado): até 3, texto completo das ativas, modo automático (filtro por código no acervo local e escolha do modelo) e manual; **sem padrão** no filtro +18; todas as skills do acervo entram; importação por comando, link ou `dono/repositório` **sem `npx`**.
+- **A confirmar:** modo padrão de uma Cena nova (proposta: automático), regra de troca no meio da Cena e fixar skill entre Cenas. **Licenças** das skills: pendência de lançamento.
+- **Próximos passos:** ⭐ plano da rodada 1 de Modelos (sem a aba Skills) já pronto para o dev, aguardando a ordem do responsável; depois a rodada 2 (Skills), Estado da Cena, Diário, pontos de retorno e chat.
 
 ## Decisões vigentes
 
