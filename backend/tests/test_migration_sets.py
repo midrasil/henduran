@@ -33,7 +33,8 @@ def test_tres_conjuntos_com_numeracao_propria():
     assert MIGRATION_SETS == ("app", "journey", "world")
     for name in MIGRATION_SETS:
         known = load_migration_set(name)
-        expected = [1, 2, 3, 4] if name == "journey" else [1]  # journey/0002, 0003 e 0004_journey_screen
+        # journey/0002 a 0005 (0005: descrição e História formatada); world/0002: semente; app só a 0001
+        expected = {"journey": [1, 2, 3, 4, 5], "world": [1, 2], "app": [1]}[name]
         assert [m.version for m in known] == expected
         assert known[0].name == "initial"
     assert mig_mod.MIGRATIONS_DIR == mig_mod.MIGRATIONS_ROOT / "app"

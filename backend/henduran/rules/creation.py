@@ -15,6 +15,12 @@ Rascunho (JSON vindo da interface)::
 Os campos ``age``, ``height``, ``origin`` e ``personality`` são **opcionais**, texto
 livre e sem efeito de regra: ausentes, nulos ou vazios valem "não informado".
 
+História formatada (ADR-077, item 2): o rascunho pode trazer ``history_html`` (HTML do
+editor). O serviço o sanea (:mod:`henduran.richtext`), deriva o **texto puro** e o usa
+como ``history``: o limite de ``TEXT_LIMITS["history"]`` conta o texto puro, e os erros
+saem no campo ``history``. Com ``history_html``, o ``history`` enviado é ignorado; sem
+ele, ``history`` continua aceito como texto simples (clientes antigos).
+
 :func:`validate_character` devolve **todos** os erros, cada um com ``field``
 (caminho, por exemplo ``convictions[1].pillar``), ``code`` estável e mensagem em
 português. Os textos são dados: nunca são interpretados; são normalizados (NFC,
@@ -52,7 +58,12 @@ DRAFT_FIELDS = (
     "height",
     "origin",
     "personality",
+    "history_html",
 )
+# Teto do HTML saneado da História e da entrada bruta (defesa do serviço; o limite que vale para
+# o jogador é o do texto puro, ``TEXT_LIMITS["history"]``).
+HISTORY_HTML_MAX = 40000
+HISTORY_HTML_INPUT_MAX = 200000
 # Campos opcionais da descrição (sem efeito de regra): (campo, rótulo, uma linha).
 OPTIONAL_TEXT_FIELDS = (
     ("age", "A idade", True),
@@ -113,6 +124,7 @@ class Character:
     height: str | None = None
     origin: str | None = None
     personality: str | None = None
+    history_html: str | None = None  # HTML saneado; None quando a História veio em texto simples
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -130,6 +142,7 @@ class Character:
             "height": self.height,
             "origin": self.origin,
             "personality": self.personality,
+            "history_html": self.history_html,
         }
 
 
@@ -196,6 +209,33 @@ def check_optional_text(
     if isinstance(value, str) and len(value) <= limit * 4 + 64 and not clean_text(value):
         return None
     return check_text(errors, path, value, limit, label, single_line=single_line)
+
+
+def check_history_html(errors: list[FieldError], value: Any) -> tuple[str | None, str | None]:
+    """Sanea o HTML da História e confere o texto puro. Devolve ``(texto puro, HTML)`` ou ``(None, None)``."""
+    from henduran.richtext import sanitize  # importação tardia: só quem valida a História precisa
+
+    limit = R.TEXT_LIMITS["history"]
+    if not isinstance(value, str):
+        errors.append(FieldError("history", "tipo_invalido", "A história deve ser um texto."))
+        return None, None
+    if len(value) > HISTORY_HTML_INPUT_MAX:
+        errors.append(FieldError("history", "muito_longo", f"A história deve ter até {limit} caracteres."))
+        return None, None
+    rich = sanitize(value)
+    plain = rich.plain
+    if not plain.strip():
+        errors.append(FieldError("history", "obrigatorio", "A história é obrigatório(a)."))
+        return None, None
+    if len(plain) > limit:
+        errors.append(FieldError("history", "muito_longo", f"A história deve ter até {limit} caracteres (tem {len(plain)})."))
+        return None, None
+    if len(rich.html) > HISTORY_HTML_MAX:
+        errors.append(
+            FieldError("history", "formatacao_demais", "A história tem formatação demais. Simplifique a formatação.")
+        )
+        return None, None
+    return plain, rich.html
 
 
 def _is_int(value: Any) -> bool:
@@ -359,10 +399,16 @@ def validate_character(draft: Any) -> ValidationResult:
         if key not in DRAFT_FIELDS:
             errors.append(FieldError(str(key)[:40], "campo_desconhecido", "Campo desconhecido no rascunho."))
     texts: dict[str, str | None] = {}
+    rich_history = draft.get("history_html") is not None
     for name, limit_key, label in _TEXT_FIELDS:
+        if name == "history" and rich_history:
+            continue
         texts[name] = check_text(
             errors, name, draft.get(name), R.TEXT_LIMITS[limit_key], label, single_line=name in _SINGLE_LINE
         )
+    history_html: str | None = None
+    if rich_history:
+        texts["history"], history_html = check_history_html(errors, draft.get("history_html"))
     optional: dict[str, str | None] = {}
     for name, label, single_line in OPTIONAL_TEXT_FIELDS:
         optional[name] = check_optional_text(
@@ -385,6 +431,7 @@ def validate_character(draft: Any) -> ValidationResult:
         attributes=attributes,
         skill_profile=profile,
         skills=skills,
+        history_html=history_html,
         **optional,
     )
     return result
@@ -470,6 +517,8 @@ __all__ = [
     "OPTIONAL_FIELDS",
     "FieldError",
     "ValidationResult",
+    "HISTORY_HTML_MAX",
+    "check_history_html",
     "check_optional_text",
     "check_text",
     "clean_text",

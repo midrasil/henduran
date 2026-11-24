@@ -1,6 +1,8 @@
 """Aplicação FastAPI: saúde, chat em streaming (SSE), cancelamento, hardware, modelos, Hugging Face, motor (ADR-072)
 as Jornadas e os Mundos (ADR-075) e o passo "Nova Jornada": regras de criação da fatia 1, gerador
-de mundo, validação, criação atômica, abertura, fechamento, exclusão e restauração.
+de mundo, Mundos salvos (``GET /worlds`` e ``GET /worlds/{id}``), validação, criação atômica (num
+Mundo novo ou salvo, com descrição da Jornada e História formatada, ADR-077), abertura, fechamento,
+exclusão e restauração.
 
 Formato dos eventos SSE (provisório; o formato definitivo segue em aberto no ADR-072):
 
@@ -548,9 +550,10 @@ def create_app(
 
     @app.get("/worlds", dependencies=auth)
     async def list_worlds() -> dict:
+        """Mundos salvos: resumo, semente, era e tom da última versão e quantas Jornadas usam cada um."""
         if worlds is None:
             raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
-        items = await asyncio.to_thread(worlds.list_worlds)
+        items = await asyncio.to_thread(worlds.catalog)
         return {"worlds": [item.to_dict() for item in items]}
 
     # ------------------------------------------------- Nova Jornada: regras e Mundo
@@ -624,6 +627,27 @@ def create_app(
             raise invalid("semente_invalida", message, [{"field": "seed", "code": "semente_invalida", "message": message}])
         return await asyncio.to_thread(generate_world, seed)
 
+    @app.get("/worlds/{world_id}", dependencies=auth)
+    async def get_world(world_id: str) -> dict:
+        """Um Mundo salvo com o conteúdo da última versão (somente leitura; nada é migrado nem alterado)."""
+        if worlds is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
+
+        def work() -> dict:
+            summary = worlds.inspect_world(world_id)
+            content = (
+                worlds.read_content(summary.id, summary.versions[-1])
+                if summary.status == "ok" and summary.versions
+                else None
+            )
+            summary.journey_count = len(worlds.journeys_using(summary.id)[0])
+            return {"world": summary.to_dict(), "content": content}
+
+        try:
+            return await asyncio.to_thread(work)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+
     @app.post("/worlds/validate", dependencies=auth)
     async def worlds_validate(request: Request) -> dict:
         body = await read_json(request, ("content",))
@@ -641,17 +665,17 @@ def create_app(
     @app.post("/journeys", dependencies=auth)
     async def journeys_create(request: Request) -> JSONResponse:
         store, _ = need_journeys()
-        body = await read_json(request, ("name", "world", "start_place_id", "character"))
+        body = await read_json(request, ("name", "description", "world", "start_place_id", "character"))
         world = body.get("world")
         failed = "Os dados da Nova Jornada têm erros; nada foi criado."
         if world is not None and not isinstance(world, dict):
             raise invalid(
                 "criacao_invalida",
                 failed,
-                [{"field": "world", "code": "tipo_invalido", "message": "world deve ser um objeto com content."}],
+                [{"field": "world", "code": "tipo_invalido", "message": "world deve ser um objeto com content ou id."}],
             )
         world = world or {}
-        extra = [k for k in world if k != "content"]
+        extra = [k for k in world if k not in ("content", "seed", "id")]
         if extra:
             raise invalid("criacao_invalida", failed, unknown_fields("world.", extra))
         try:
@@ -659,9 +683,12 @@ def create_app(
                 create_journey_with_character,
                 store,
                 world_content=world.get("content"),
+                world_id=world.get("id"),
+                world_seed=world.get("seed"),
                 start_place_id=body.get("start_place_id"),
                 character=body.get("character"),
                 name=body.get("name"),
+                description=body.get("description"),
                 rng=rng,
             )
         except JourneyCreationInvalid as exc:

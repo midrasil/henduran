@@ -10,6 +10,7 @@ import type {
   CharacterSheet,
   JourneySnapshot,
   JourneySummary,
+  SavedWorld,
   WorldContent,
 } from "../api/journeys";
 import { jsonResponse } from "./fakeFetch";
@@ -153,7 +154,34 @@ export function fakeValidateWorld(content: WorldContent): { valid: boolean; erro
   return { valid: errors.length === 0, errors, content: errors.length ? null : content };
 }
 
+/** Mundo salvo de exemplo (`GET /worlds`), com o conteúdo de `GET /worlds/{id}`. */
+export function savedWorld(patch: Partial<SavedWorld> = {}, content: WorldContent = WORLD): { world: SavedWorld; content: WorldContent } {
+  return {
+    world: {
+      id: WORLD_ID,
+      name: content.name,
+      created_at: "2026-11-20T10:00:00+00:00",
+      versions: [1],
+      latest_version: 1,
+      schema_version: 2,
+      status: "ok",
+      error_code: null,
+      error_message: null,
+      seed: WORLD_SEED,
+      era: content.era.name,
+      tone: content.tone.name,
+      journey_count: 1,
+      ...patch,
+    },
+    content,
+  };
+}
+
 export interface FakeGameOptions extends FakeScreenOptions {
+  /** Mundos salvos (`GET /worlds` e `GET /worlds/{id}`). */
+  savedWorlds?: { world: SavedWorld; content: WorldContent }[];
+  /** Erro de `GET /worlds`. */
+  worldsError?: boolean;
   journeys?: JourneySummary[];
   lastJourneyId?: string | null;
   backups?: BackupInfo[];
@@ -199,6 +227,17 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
       content.name = `${WORLD.name} ${seed}`;
       return jsonResponse({ seed, content });
     }
+    if (method === "GET" && path === "/worlds") {
+      if (options.worldsError) return jsonResponse({ detail: { code: "storage_unavailable", message: "Indisponível." } }, 503);
+      return jsonResponse({ worlds: (options.savedWorlds ?? []).map((w) => w.world) });
+    }
+    const worldRoute = /^\/worlds\/([^/]+)$/.exec(path);
+    if (method === "GET" && worldRoute && worldRoute[1] !== "schema") {
+      record();
+      const found = options.savedWorlds?.find((w) => w.world.id === decodeURIComponent(worldRoute[1]!));
+      if (!found) return jsonResponse({ detail: { code: "mundo_nao_encontrado", message: "Mundo não encontrado." } }, 404);
+      return jsonResponse({ world: found.world, content: found.content });
+    }
     if (method === "POST" && path === "/worlds/validate") {
       return jsonResponse(fakeValidateWorld((body as { content: WorldContent }).content));
     }
@@ -211,12 +250,14 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
     if (method === "POST" && path === "/journeys") {
       record();
       if (options.createResponse) return options.createResponse();
-      const b = body as { name?: string; character: CharacterDraft; start_place_id: string };
+      const b = body as { name?: string; description?: string; character: CharacterDraft; start_place_id: string; world: { id?: string } };
       const created = summary({
         id: "33333333-3333-4333-8333-333333333333",
         name: b.name ?? `A Jornada de ${b.character.name}`,
         character_name: b.character.name,
         day_period: "amanhecer",
+        world_id: b.world.id ?? WORLD_ID,
+        description: b.description ?? null,
       });
       state.journeys.unshift(created);
       return jsonResponse({ journey: created }, 201);

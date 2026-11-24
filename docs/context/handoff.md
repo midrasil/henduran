@@ -1,19 +1,24 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu inicial).
-
-- Elaborado por: opencode
+Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 1).
 
 ## Estado
 
-- Tarefa: dois ajustes pequenos no menu inicial, sem nova tela e sem mudança de regra.
-  1. O indicador do modelo no rodapé passou a espelhar o tratamento visual da versão à esquerda: LED + `Conectado · <detalhe> · Modelos ▸`, sem caixa, com o mesmo `aria-label` de antes (`Conectado, <detalhe>. Abrir Modelos`).
-  2. O cartão "Última Jornada" deixou de aparecer quando a lista carregou sem Jornadas; o texto "Sua primeira Jornada" / "Ainda não há nenhuma Jornada..." foi removido. Os estados de serviço iniciando, carregando, erro e Jornada danificada continuam com painel.
-- Decisões do responsável: indicador **sem caixa**, mantendo a palavra **Conectado**; cartão de primeira vez **não deve existir**; sincronizar `docs/ui-ux/11-menu-inicial.md` e `docs/ui-ux/prototipos/menu-inicial.html`.
-- Artefatos alterados: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
-- Validações: em worktree temporário limpo, com somente as mudanças desta tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal havia mudanças concorrentes da Nova Jornada (`App.tsx`, `newJourney/`, `api/`, `ui/`, backend), que quebram o typecheck e um teste de `model.ts`; elas **não** fazem parte deste commit.
-- Não verificado: layout real do menu sem cartão em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
-- Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
+- Tarefa: implementação da Nova Jornada aprovada (`docs/ui-ux/12-nova-jornada.md`, protótipo `prototipos/nova-jornada.html`, ADR-077), **rodada 1** de 2. O responsável testou no app e validou.
+- Interface: assistente com trilho de 3 passos e a tela **Iniciar Jornada** (nome e descrição); Mundo com lista de Mundos salvos (somente leitura, Duplicar e editar), semente, Gerar mundo e Criar do zero; Protagonista em abas (Identidade, História, Objetivos, Status) com retrato e recorte; Revisão em abas; Avançar por abas incompletas, sem lista de pendências. `HistoryEditor` (`app/src/ui/HistoryEditor/`) é um editor **provisório** com contenteditable, com espaço `toolbarExtra` para os botões do Narrador.
+- Backend: `richtext.py` (sanitizador de HTML só com `html.parser`, lista permitida, texto puro derivado); `history_html` na criação e na ficha; descrição da Jornada em `journey_meta` (até 2.000 caracteres, entra no contexto do Narrador); criação com `world_id` (Mundo salvo, só leitura para a Jornada); semente do Mundo em `world_meta.seed` (a pedida só vale se gera exatamente o conteúdo enviado; senão o serviço atribui uma nova); `GET /worlds` (catálogo com semente, era, tom e número de Jornadas), `GET /worlds/{id}`; migrações `journey/0005_description_history.sql` e `world/0002_seed.sql`.
+- Validações: `npm run typecheck` sem erros; `npm run test` 303/303 (reconfirmado depois de levar as alterações para a `main` atualizada); `pytest` 638 passando e 1 pulado (relatado pelo dev; não reexecutado depois do rebase, que só trouxe o PR #29, do menu).
+- Não verificado: app Tauri real em DPI de 125% a 200%, leitor de tela, reflow a 320 px, movimento reduzido, comandos de formatação do editor em outros navegadores.
+- Diferenças em relação ao protótipo (seção 9 do doc 12): selos das abas contam erros do servidor; **aparência continua obrigatória** (o banco exige 1 caractere); sem botões do Narrador; trocar de Mundo zera o lugar inicial (ids `lugar-N` se repetem); moldura sem cantos em pixel e trilho só com o céu; zoom do retrato até 4 (o serviço aceita até 8).
+- Ocorrência: no meio do trabalho a pasta principal foi trocada para `fix/rodape-menu-modelo` (PR #29, mergeado); as alterações do dev foram levadas para `feat/nova-jornada` em cima da `main` atualizada, sem conflito.
+- Branch: `feat/nova-jornada`; PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial e Nova Jornada.
+
+## Decisões de 2026-11-24 para a rodada 2 e depois
+
+- **Rodada 2** (dev): instalar o **TipTap** (aprovado; MIT; medir o bundle e desligar `link`, `code` e `codeBlock` do StarterKit) no lugar do editor provisório; **rota do Narrador que preenche dados** e os botões (Sugerir, Preencher o que falta, Escrever, Continuar, Desfazer), conforme ADR-077; **aparência opcional** (migração que reconstrói a tabela `character`); **aviso na tela** quando o envio do retrato falha depois da criação.
+- **Tela de Mundos no menu inicial**: botão no menu que leva a uma lista dos Mundos salvos, com criação de Mundo lá dentro. Tela nova: **precisa de protótipo aprovado** antes do dev. Ao projetá-la, decidir também a exclusão: hoje excluir a última Jornada de um Mundo apaga o Mundo (`delete_journey_and_orphan_world`), o que não combina com Mundos como itens salvos; proposta: o Mundo só é excluído pela lista de Mundos, de forma explícita.
+- Editar nome e descrição **dentro** da Jornada (não existe rota de edição do resumo): a decidir.
 
 ## Decisões vigentes
 
@@ -45,4 +50,4 @@ Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu in
 
 ## Próximo passo recomendado
 
-⭐ Revisar e fazer merge do PR destes ajustes do menu; em seguida continuar a **Nova Jornada** conforme `docs/ui-ux/12-nova-jornada.md`, o ADR-077 e o topo de `docs/backlog.md`. Em paralelo, conferir no app real o menu sem cartão e a Jornada com modelo local.
+⭐ Rodada 2 da Nova Jornada pelo dev (Narrador, TipTap, aparência opcional, aviso do retrato), em branch empilhada sobre a da rodada 1 ou depois do merge do PR da rodada 1. Em paralelo, prototipar a tela de **Mundos** (lista, criar Mundo, exclusão explícita), depois **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`.

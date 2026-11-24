@@ -1,7 +1,7 @@
 # 12 — Nova Jornada (assistente)
 
 **Data:** 2026-11-23
-**Estado:** **aprovado pelo responsável em 2026-11-23** depois de várias rodadas do protótipo. Ainda **não implementado**: o app continua com o assistente atual (`app/src/screens/newJourney/`) até a tarefa de implementação.
+**Estado:** **aprovado pelo responsável em 2026-11-23** depois de várias rodadas do protótipo. **Rodada 1 implementada** em `app/src/screens/newJourney/` (seção 9); a rodada 2 (Narrador que preenche dados e editor TipTap) está pendente.
 **Protótipo de referência:** [`prototipos/nova-jornada.html`](prototipos/nova-jornada.html) (botão **Protótipo**: passo, estado do Mundo, do Protagonista, pendências, criação e diálogos). Processo em [`10-prototipagem.md`](10-prototipagem.md).
 **Substitui:** a Nova Jornada em `esbocos/ANALISE-ESBOCOS.md` (seção 2.2, assistente de 5 passos) e o layout atual do assistente (formulário em coluna única).
 **Relacionados:** `09-tela-da-jornada.md` e `11-menu-inicial.md` (mesma linguagem visual), `ESCOPO-MVP.md` (itens 1 a 3), ADR-075 e ADR-076 (Mundo gerado, Cena inicial).
@@ -93,3 +93,23 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 - Reaproveitar `app/src/ui/` (Button, Panel, Tabs, Dialog, FieldGroup, RadioGroup, TrailBoxes) e criar o que faltar (valores em botões, moldura com cantos); nada do HTML do protótipo vai para `app/src/`.
 - Manter `GET /rules/creation` e `GET /worlds/schema` como fonte de verdade; o protótipo codifica os valores só para exemplo.
 - Verificar leitor de tela (abas, grupos de botões), foco ao clicar numa pendência, DPI de 125% a 200% e reflow a 320 px.
+
+## 9. Implementação (rodada 1)
+
+**Data:** 2026-11-24. Código em `app/src/screens/newJourney/` (`NewJourneyWizard`, `WorldStep`, `CharacterStep`, `ReviewStep`, `StartStep`, `parts`, `NewJourney.css`) e `app/src/ui/HistoryEditor/`; serviço em `backend/henduran/richtext.py`, `services/journey_creation.py`, `storage/worlds.py` e nas migrações `journey/0005` e `world/0002`.
+
+**Feito:** trilho com os 3 passos e o item Iniciar Jornada; cartão de pergaminho com abas e altura total; Avançar que vai à próxima aba incompleta (e fica na atual, mostrando os erros, quando ela está incompleta); selos nas abas e "Faltam: …" no rodapé; lista de Mundos salvos (`GET /worlds`) com o Mundo novo em edição, semente, Gerar mundo e Criar do zero; Mundos salvos somente leitura com Duplicar e editar; lugar inicial no cartão do lugar; Protagonista em 4 abas com retrato (recorte local, enviado depois de criar a Jornada), Trilhas, Atributos em botões de valor e Perícias com quatro quadradinhos; Revisão em 2 abas; tela Iniciar Jornada com nome e descrição; descrição da Jornada e História formatada no serviço.
+
+**Diferenças em relação ao protótipo, e por quê:**
+
+- **Sem lista de pendências** no topo (seções 1 e 4 do texto ainda a citam): ficou como no protótipo final, com selos nas abas, campos em vermelho depois da primeira tentativa e "Faltam: …" no rodapé. Os selos contam os **erros do servidor** de cada aba (`POST /worlds/validate` e `POST /characters/validate`), não as seções do protótipo; por isso o número pode ser maior (por exemplo, um erro por Atributo sem valor).
+- **Aparência continua obrigatória**: o protótipo a marca como opcional, mas o servidor e o `journey.db` exigem o texto (`CHECK length(appearance) >= 1`). Torná-la opcional pede uma migração que reconstrói a tabela `character`; fica para decisão.
+- **Editor da História provisório**: `contenteditable` com `execCommand` atrás do componente `HistoryEditor` (mesma interface que o TipTap vai usar). Colar e soltar inserem só texto. O TipTap espera a aprovação da dependência.
+- **Botões do Narrador** (Sugerir, Preencher o que falta, Escrever, Continuar, Sugerir Atributos e Perícias, Sugerir nome e descrição): não entram nesta rodada. A barra do editor tem o espaço deles (`toolbarExtra`), e os botões de Sortear ficam na linha do texto de ajuda, onde o Sugerir vai entrar.
+- **Trocar de Mundo zera o lugar inicial** (o protótipo mantinha o mesmo id se ele existisse no outro Mundo): os ids `lugar-N` se repetem entre Mundos, e manter a escolha levaria a um lugar que o jogador não escolheu.
+- **Mundos salvos ilegíveis** (danificados ou de versão mais nova) não aparecem na lista; um aviso diz quantos são.
+- **Retrato**: o recorte usa o diálogo da tela da Jornada (`PortraitDialog`, em modo local), com aproximação até 4 (o serviço aceita até 8). O arquivo é conferido já no assistente (tamanho e bytes iniciais) e de novo pelo serviço, ao enviar com a Jornada aberta. Se o envio falhar, a Jornada abre sem retrato (sem aviso na tela; ver pendências).
+- **Moldura**: borda dourada simples, sem os cantos em pixel do protótipo; paisagem do trilho com o céu do `SkyBackdrop` (entardecer), sem os castelos.
+- **Limite da descrição** (2.000) está também no cliente (`maxLength`), porque o serviço ainda não o expõe numa rota.
+
+**Pendências desta rodada:** rota e botões do Narrador que preenche dados (ADR-077, item 3) e o editor TipTap (rodada 2); edição do nome e da descrição dentro da Jornada (não há rota de edição do resumo hoje; a descrição só é gravada na criação); aparência opcional; aviso na tela da Jornada quando o retrato não puder ser enviado; leitor de tela, DPI de 125% a 200% e reflow a 320 px não verificados.

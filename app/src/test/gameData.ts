@@ -350,7 +350,8 @@ export const RULES: CreationRules = {
     "age",
     "height",
     "origin",
-    "personality"
+    "personality",
+    "history_html"
   ]
 };
 

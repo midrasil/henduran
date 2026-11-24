@@ -213,8 +213,12 @@ def test_criar_jornada_invalida_responde_422_por_campo(srv):
     assert {(e["field"], e["code"]) for e in r.json()["detail"]["errors"]} == {("start_place_id", "lugar_desconhecido")}
     r = call(srv, "POST", "/journeys", json=new_journey_body(world="x"))
     assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world"
-    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "id": 1}))
-    assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world.id"
+    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "extra": 1}))
+    assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world.extra"
+    # Mundo novo e salvo ao mesmo tempo: ambíguo.
+    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "id": "x"}))
+    found = {(e["field"], e["code"]) for e in r.json()["detail"]["errors"]}
+    assert r.status_code == 422 and ("world", "mundo_ambiguo") in found
     r = call(srv, "POST", "/journeys", json=new_journey_body(extra=True))
     assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "extra"
     assert call(srv, "POST", "/journeys", json={}).status_code == 422
