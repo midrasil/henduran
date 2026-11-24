@@ -323,3 +323,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Pendências: confirmar os itens ⏳, definir os campos do Quadro e da ficha de NPC, prototipar o painel "Estado da Cena" na tela da Jornada, esquema de dados e teste de continuidade (item no backlog).
 - Arquivos: `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/main/05-narrador-ia.md`, `docs/backlog.md`.
 - Entrega: PR [#35](https://github.com/midrasil/henduran/pull/35) aberto contra `main`.
+
+## 2026-11-24 — `prototipo-modelos` (Modelos e Skills)
+
+- Rota: conversa com o planejador → protótipo em várias rodadas (artifact privado, mesmo link) → aprovação da versão 5 → Entrega. Só documentação.
+- Resultado: `14-modelos.md` e `prototipos/modelos.html` aprovados. Tela Modelos com cabeçalho de estado (Este PC, Motor de IA, Narrador) e abas Modelos, Skills, Procurar neste PC e Downloads.
+- Decisões do responsável: o cabeçalho que dizia o que é a tela virou as informações de Este PC, Motor de IA e Narrador; Meus modelos e Buscar viraram **uma aba só**, com filtros em tags (Todos, Meus modelos, Para baixar); a tela precisa de uma aba de **Skills**, com as do sistema (vindas do Caliope) e uma forma de adicionar novas, talvez importando do skills.sh.
+- Decisão do planejador, aprovada: um campo de busca que filtra os modelos próprios e alimenta o botão Buscar online. Skills: limite de 3 ativas (como no Caliope), importação com prévia, aviso, confirmação e entrada desativada; scripts nunca executados.
+- Ocorrências: no publicado, o trilho da Nova Jornada apareceu na tela Modelos (ordem dos estilos mudou fora do navegador local); corrigido com estilos no fim do corpo e `!important`; uma edição apagou parte do protótipo e foi refeita do original. O skills.sh não tem API pública conhecida (pesquisa na web): a importação usa repositórios públicos do GitHub.
+- Em aberto: padrão do filtro +18, licenças das skills do acervo (81 de 520 declaram), API e termos do skills.sh, ativação por Jornada e por Cena (ADR-078).
+- Arquivos: `docs/ui-ux/14-modelos.md`, `docs/ui-ux/prototipos/modelos.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/context/handoff.md`.

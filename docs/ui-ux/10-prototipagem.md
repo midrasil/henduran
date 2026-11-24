@@ -36,7 +36,7 @@ Ajustes pequenos numa tela já aprovada (um botão, um texto, um espaçamento) n
 | Nova Jornada (assistente) | `12-nova-jornada.md` | `prototipos/nova-jornada.html` | Aprovado em 2026-11-23; implementação no backlog |
 | Jornadas (lista) | — | — | Idem |
 | Mundos (lista e criação) | `13-mundos.md` | `prototipos/mundos.html` | **Aprovado em 2026-11-24 como está**: o protótipo é o registro da tela já implementada |
-| Modelos (no nível do Caliope) | backlog | — | **A prototipar** antes do redesenho |
+| Modelos e Skills (no nível do Caliope) | `14-modelos.md` | `prototipos/modelos.html` | Aprovado em 2026-11-24; implementação no backlog |
 | Mundo e registro de lugares | `09`, item 2.1 | — | **A prototipar** quando passar de diálogo simples |
 | Configurações | — | — | **A prototipar** |
 | Mapa, Inventário, Diário | fora do MVP | — | **A prototipar** quando entrarem |
