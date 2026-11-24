@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após `ajustes-ficha-jornada`. Branch de trabalho: `feat/ajustes-ficha-jornada`. PR será aberto contra `main`.
+Atualizado em 2026-11-24 após `ajustes-ficha-jornada`. Branch de trabalho: `feat/ajustes-ficha-jornada`. PR [#46](https://github.com/midrasil/henduran/pull/46) aberto contra `main`.
 - Elaborado por: opencode
 
 ## Estado

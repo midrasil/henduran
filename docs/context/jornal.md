@@ -10,7 +10,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: `FullSheetDialog` passou a ter as abas Visão geral, Convicções e Descrição; as 22 Perícias ficam na Visão geral; Objetivos aparecem acima das Convicções; o conteúdo rola dentro de uma ficha com altura, mínimo e máximo fixos.
 - Arquivos: `app/src/screens/journey/FullSheetDialog.tsx`, `app/src/screens/journey/JourneyScreen.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/context/handoff.md`, `docs/context/jornal.md`.
 - Validações: `npm run typecheck`, teste específico da Jornada (17/17), suíte frontend (37 arquivos, 330/330) e `git diff --check` passaram.
-- Entrega: branch `feat/ajustes-ficha-jornada`; PR será aberto contra `main`.
+- Entrega: branch `feat/ajustes-ficha-jornada`; PR [#46](https://github.com/midrasil/henduran/pull/46) aberto contra `main`.
 
 ## 2026-11-24 — `rodape-modelos-status` (opencode)
 
