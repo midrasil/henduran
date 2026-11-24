@@ -46,13 +46,15 @@ const card = () => screen.getByRole("region", { name: "Última Jornada" });
 const indicator = () => screen.getByRole("button", { name: /Abrir Modelos$/ });
 
 describe("Menu inicial", () => {
-  it("primeira vez: convida a criar, Continuar desativado, sem Modelos entre os botões", async () => {
+  it("primeira vez: sem cartão de Última Jornada, Continuar desativado, sem Modelos entre os botões", async () => {
     stubGame();
     await renderMenu();
     expect(screen.getByRole("heading", { level: 1, name: "Henduran" })).toBeInTheDocument();
     expect(screen.getByText("Jornada solo de fantasia com Narrador IA")).toBeInTheDocument();
-    const first = await screen.findByRole("region", { name: "Sua primeira Jornada" });
-    expect(first).toHaveTextContent(/Ainda não há nenhuma Jornada/);
+    await waitFor(() => expect(screen.queryByText("Carregando…")).not.toBeInTheDocument());
+    expect(screen.queryByRole("region", { name: "Sua primeira Jornada" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Última Jornada" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Ainda não há nenhuma Jornada/)).not.toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Menu inicial" });
     expect(within(nav).getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
     for (const name of ["Nova Jornada", "Jornadas"]) expect(within(nav).getByRole("button", { name })).toBeEnabled();
@@ -172,6 +174,7 @@ describe("Menu inicial", () => {
     await renderMenu();
     await waitFor(() => expect(indicator()).toHaveAccessibleName("Conectado, provedor fake pronto. Abrir Modelos"));
     expect(indicator()).toHaveAttribute("data-light", "ok");
+    expect(indicator()).toHaveTextContent("Modelos ▸");
     await user.click(indicator());
     expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
   });

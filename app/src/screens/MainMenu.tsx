@@ -194,25 +194,7 @@ function LastJourneyCard({ backend, info, list, listError, journey, onJourneys }
       </Panel>
     );
   }
-  if (!journey) {
-    return (
-      <Panel
-        title={
-          <>
-            <PixelIcon name="scroll" className="last-journey__title-icon" /> Sua primeira Jornada
-          </>
-        }
-        titleLevel={2}
-        variant="parchment"
-        className="last-journey last-journey--message"
-      >
-        <p>
-          Ainda não há nenhuma Jornada. Em <b>Nova Jornada</b>, o jogo sorteia um Mundo, você cria o protagonista e o Narrador
-          começa a história.
-        </p>
-      </Panel>
-    );
-  }
+  if (!journey) return null;
   return <JourneyCard info={info} journey={journey} onJourneys={onJourneys} />;
 }
 
@@ -346,7 +328,13 @@ function ServiceIndicator({ backend, engine, onModels }: { backend: BackendStatu
       <button type="button" className="menu__service-btn" data-light={light} onClick={onModels} aria-label={`${main}, ${detail}. Abrir Modelos`}>
         <span className="menu__led" aria-hidden="true" />
         <span>{main}</span>
+        <span className="menu__service-sep" aria-hidden="true">
+          ·
+        </span>
         <small className="menu__service-detail">{detail}</small>
+        <span className="menu__service-sep" aria-hidden="true">
+          ·
+        </span>
         <span className="menu__service-go" aria-hidden="true">
           Modelos ▸
         </span>
