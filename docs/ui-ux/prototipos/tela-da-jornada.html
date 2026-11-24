@@ -486,6 +486,14 @@ svg.px { shape-rendering: crispEdges; display: block; }
 [data-view="margem"] .msg .body .fala, [data-view="margem"] .msg .body .acao { color: var(--ivory-400); }
 .fmthelp .fala, .fmthelp .acao { color: var(--ivory-100); font-style: italic; font-weight: 400; } .fmthelp .acao::before { content: none; } .fmthelp .spk { display: table; margin-bottom: 4px; }
 
+
+.ptlead { margin: 0 0 10px; font-size: var(--fs-sm); } .pthint { margin: 6px 0 10px; font-size: var(--fs-xs); color: var(--muted); }
+.ptnew { display: flex; gap: 8px; } .ptnew input, .ptedit input { flex: 1; min-width: 0; background: var(--ink-950); color: var(--ivory-100); border: 3px solid var(--ink-600); padding: 8px 10px; font: inherit; } .ptnew input:focus, .ptedit input:focus { border-color: var(--gold-400); outline: none; }
+.ptlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ptrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--ink-900); border: 3px solid var(--ink-600); padding: 8px 10px; } .ptrow.man { border-left: 6px solid var(--purple-500); }
+.ptmain { display: grid; gap: 3px; min-width: 0; flex: 1; } .ptmain b { font-family: var(--font-serif); font-size: 1.15rem; color: var(--gold-200); font-weight: 600; } .ptmeta { font-size: var(--fs-xs); color: var(--muted); }
+.ptedit { display: flex; gap: 6px; } .ptacts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex: none; }
+.dtag2 { font: 600 10px/1 var(--font-pixel); font-style: normal; padding: 3px 6px; border: 2px solid var(--ink-600); background: var(--ink-950); color: var(--ivory-100); } .dtag2.man { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); }
 </style>
 
 <header class="top" id="top">
@@ -1321,5 +1329,68 @@ $("#cogmenu").insertAdjacentHTML("afterbegin", `<button role="menuitem" data-c="
   d.innerHTML = `Dúvida de continuidade <span class="seg"><button data-c="dset" data-v="aberta">Aberta</button><button data-c="dset" data-v="respondida">Respondida</button><button data-c="dset" data-v="reaberta">Respondida e reaberta</button></span>`;
   box.prepend(d);
 }
+/* ---------------------------------------------------------- Pontos de retorno (salvamentos manuais e automáticos) */
+const PT_MAX = 20, PT_AUTO = 5;
+S.pts = [
+  { id: 1, k: "auto", n: "Início da Cena “A carta da garça”", w: "hoje, 19:42", at: "Taverna do Corvo Manco · Noite, dia 1", m: 14 },
+  { id: 2, k: "man", n: "Antes de abrir a carta", w: "hoje, 19:10", at: "Taverna do Corvo Manco · Noite, dia 1", m: 9 },
+  { id: 3, k: "auto", n: "Fim da Cena “Costas para o cais”", w: "ontem, 22:05", at: "Cais de Norilunde · Fim de tarde, dia 1", m: 31 },
+  { id: 4, k: "man", n: "Chegada à taverna", w: "ontem, 21:30", at: "Taverna do Corvo Manco · Noite, dia 1", m: 22 },
+  { id: 5, k: "auto", n: "Início da Jornada", w: "20/11, 18:00", at: "Os portões de Norilunde · Manhã, dia 1", m: 0 },
+];
+S.ptName = ""; S.ptEdit = null; S.ptConf = null; S.ptNext = 6;
+const ptEsc = (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+function ptsDialog() {
+  const man = S.pts.filter((x) => x.k === "man").length, full = man >= PT_MAX, c = S.ptConf, hit = c && S.pts.find((x) => x.id === c.id);
+  if (c) {
+    const T = { load: ["Carregar este ponto?", `Você volta para <b>${ptEsc(hit.n)}</b> (${hit.w}): o chat, a Ficha, o Estado da Cena e o Diário voltam como estavam. O estado de agora é guardado antes num ponto automático, <b>“Antes de carregar”</b>, então dá para desfazer.`, "Carregar", "primary"],
+      over: ["Salvar por cima?", `O ponto <b>${ptEsc(hit.n)}</b> passa a guardar o estado de agora. O conteúdo antigo desse ponto se perde.`, "Salvar por cima", "primary"],
+      del: ["Excluir este ponto?", `<b>${ptEsc(hit.n)}</b> é apagado do disco e não pode ser desfeito. A Jornada atual não muda.`, "Excluir", "danger"] }[c.a];
+    return dialog(T[0], `<p style="margin:0">${T[1]}</p>`, `<button class="btn" data-pt="cancel" id="ptkeep">Cancelar</button><button class="btn ${T[3]}" data-pt="do">${T[2]}</button>`);
+  }
+  const rows = S.pts.map((x) => {
+    const ed = S.ptEdit === x.id;
+    return `<li class="ptrow ${x.k}"><div class="ptmain">${ed ? `<form data-ptform="${x.id}" class="ptedit"><input value="${ptEsc(x.n)}" maxlength="60" aria-label="Novo nome do ponto"><button class="btn sm primary">OK</button><button type="button" class="btn sm" data-pt="rencancel">Cancelar</button></form>` : `<b>${ptEsc(x.n)}</b>`}
+      <span class="ptmeta"><i class="dtag2 ${x.k}">${x.k === "man" ? "Manual" : "Automático"}</i> ${x.w} · ${ptEsc(x.at)}${x.m ? ` · ${x.m} mensagens` : ""}</span></div>
+      <div class="ptacts"><button class="btn sm primary" data-pt="load" data-id="${x.id}">Carregar</button>
+      ${x.k === "man" ? `<button class="btn sm" data-pt="over" data-id="${x.id}" data-tip="Guardar o estado de agora neste ponto">Salvar por cima</button><button class="btn sm" data-pt="ren" data-id="${x.id}">Renomear</button><button class="btn sm danger" data-pt="del" data-id="${x.id}" aria-label="Excluir ${ptEsc(x.n)}">Excluir</button>` : ""}</div></li>`;
+  }).join("");
+  dialog("Pontos de retorno", `<p class="ptlead">Guarde o momento da Jornada e volte a ele quando quiser. O Henduran também guarda pontos sozinho, no início de cada Cena e no fim; os automáticos mais antigos saem (ficam os ${PT_AUTO} últimos).</p>
+    <form class="ptnew" data-ptform="new"><label class="sr" for="ptn">Nome do novo ponto</label><input id="ptn" value="${ptEsc(S.ptName)}" maxlength="60" placeholder="${full ? "Limite de pontos manuais atingido" : "Nome do ponto (opcional)"}" ${full ? "disabled" : ""} autocomplete="off"><button class="btn primary" ${full ? "disabled" : ""}>Salvar agora</button></form>
+    <p class="pthint">${man} de ${PT_MAX} pontos manuais${full ? ". Exclua um para criar outro." : "."}</p>
+    <ul class="ptlist">${rows}</ul>`, `<button class="btn" data-dlg="close">Fechar</button>`, true);
+  const i = $("#ptn"); if (i && !S.ptEdit) i.focus();
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-pt]"); if (!t) return; e.stopPropagation(); e.preventDefault();
+  const a = t.dataset.pt, id = Number(t.dataset.id);
+  if (a === "demo") { S.pts = S.pts.filter((x) => x.k === "auto"); for (let q = 1; q <= PT_MAX; q++) S.pts.push({ id: S.ptNext++, k: "man", n: "Ponto " + q, w: "hoje", at: "Taverna do Corvo Manco", m: q }); S.ptConf = null; ptsDialog(); }
+  else if (a === "open") { closeCog(); S.ptConf = null; S.ptEdit = null; S.ptName = ""; ptsDialog(); }
+  else if (a === "load" || a === "over" || a === "del") { S.ptConf = { a, id }; ptsDialog(); const k = $("#ptkeep"); if (k) k.focus(); }
+  else if (a === "cancel") { S.ptConf = null; ptsDialog(); }
+  else if (a === "ren") { S.ptEdit = id; ptsDialog(); const i = $(".ptedit input"); if (i) { i.focus(); i.select(); } }
+  else if (a === "rencancel") { S.ptEdit = null; ptsDialog(); }
+  else if (a === "do") {
+    const c = S.ptConf, hit = S.pts.find((x) => x.id === c.id); S.ptConf = null;
+    if (c.a === "del") { S.pts = S.pts.filter((x) => x.id !== c.id); toast("Ponto excluído."); }
+    else if (c.a === "over") { hit.w = "agora"; hit.m = 18; toast(`“${hit.n}” agora guarda o estado de agora.`); S.pts = [hit, ...S.pts.filter((x) => x !== hit)]; }
+    else { const au = { id: S.ptNext++, k: "auto", n: "Antes de carregar", w: "agora", at: "Taverna do Corvo Manco · Noite, dia 1", m: 18 }; S.pts = [au, ...S.pts]; const autos = S.pts.filter((x) => x.k === "auto"); if (autos.length > PT_AUTO) S.pts = S.pts.filter((x) => x !== autos[autos.length - 1]); toast(`Voltou para “${hit.n}”.`); }
+    ptsDialog();
+  }
+}, true);
+document.addEventListener("submit", (e) => {
+  const f = e.target.closest("[data-ptform]"); if (!f) return; e.preventDefault(); e.stopPropagation();
+  const v = f.querySelector("input").value.trim();
+  if (f.dataset.ptform === "new") {
+    if (S.pts.filter((x) => x.k === "man").length >= PT_MAX) return;
+    S.pts = [{ id: S.ptNext++, k: "man", n: v || `Ponto de retorno ${S.ptNext}`, w: "agora", at: "Taverna do Corvo Manco · Noite, dia 1", m: 18 }, ...S.pts]; S.ptName = ""; toast("Ponto salvo."); ptsDialog();
+  } else { if (!v) return; S.pts.find((x) => x.id === Number(f.dataset.ptform)).n = v; S.ptEdit = null; ptsDialog(); }
+}, true);
+document.addEventListener("input", (e) => { if (e.target.id === "ptn") S.ptName = e.target.value; });
+$("#cogmenu").insertAdjacentHTML("afterbegin", `<button role="menuitem" data-pt="open">Pontos de retorno<small>Salvar e voltar a um momento</small></button>`);
+{
+  const box = $("#protobox"), pp = document.createElement("span"); pp.innerHTML = `Pontos de retorno <span class="seg"><button data-pt="open">Abrir</button><button data-pt="demo">Limite manual</button></span>`; box.prepend(pp);
+}
+
 render();
 </script>
