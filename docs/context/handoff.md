@@ -1,66 +1,48 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `prototipo-nova-jornada` (prototipagem da Nova Jornada).
+Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu inicial).
+
+- Elaborado por: opencode
 
 ## Estado
 
-- Tarefa: protótipo navegável e documento da **Nova Jornada**, aprovados pelo responsável depois de várias rodadas. Só documentação; o app continua com o assistente antigo (`app/src/screens/newJourney/`).
-- Artefatos: `docs/ui-ux/12-nova-jornada.md` e `docs/ui-ux/prototipos/nova-jornada.html` (botão **Protótipo** com todos os estados).
-- Resumo do desenho: trilho com 3 passos (Mundo, Protagonista, Revisão) e a tela **Iniciar Jornada**; todos em cartão de pergaminho com abas e altura total. **Mundo:** lista de Mundos salvos (somente leitura, com Duplicar e editar), semente, Gerar mundo e Criar do zero, abas Visão geral, Calendário, Religiões e Lugares; semente "gerada ao criar" para Mundos editados à mão. **Protagonista:** retrato (a própria área é o botão, com recorte), abas Identidade, História (a aba é um editor de texto), Objetivos e Status (Atributos e Perícias), botões do Narrador para preencher dados (Sugerir por campo e Preencher o que falta) com Desfazer. **Revisão:** abas Mundo e Personagem. **Iniciar Jornada:** nome e descrição da Jornada, opcionais, com Sugerir do Narrador. **Avançar** vai à próxima aba incompleta quando a atual está completa.
-- Processo: o dev ficou em outro worktree/branch; o menu inicial (PR #27) foi entregue e mergeado em paralelo.
-- Validações: o protótipo foi conferido com testes de fluxo em jsdom e capturas no Edge headless (1280×800 e 1024×768); o responsável revisou o protótipo publicado. Não verificado: leitor de tela, DPI de 125% a 200%, o editor de texto com formatação real em outros navegadores (usa `execCommand`, só protótipo).
-- Branch: `docs/prototipo-nova-jornada`; PR [#28](https://github.com/midrasil/henduran/pull/28) aberto contra `main`.
-- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial (implementado) e Nova Jornada. Ajustes pequenos podem ir direto ao código.
+- Tarefa: dois ajustes pequenos no menu inicial, sem nova tela e sem mudança de regra.
+  1. O indicador do modelo no rodapé passou a espelhar o tratamento visual da versão à esquerda: LED + `Conectado · <detalhe> · Modelos ▸`, sem caixa, com o mesmo `aria-label` de antes (`Conectado, <detalhe>. Abrir Modelos`).
+  2. O cartão "Última Jornada" deixou de aparecer quando a lista carregou sem Jornadas; o texto "Sua primeira Jornada" / "Ainda não há nenhuma Jornada..." foi removido. Os estados de serviço iniciando, carregando, erro e Jornada danificada continuam com painel.
+- Decisões do responsável: indicador **sem caixa**, mantendo a palavra **Conectado**; cartão de primeira vez **não deve existir**; sincronizar `docs/ui-ux/11-menu-inicial.md` e `docs/ui-ux/prototipos/menu-inicial.html`.
+- Artefatos alterados: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
+- Validações: em worktree temporário limpo, com somente as mudanças desta tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal havia mudanças concorrentes da Nova Jornada (`App.tsx`, `newJourney/`, `api/`, `ui/`, backend), que quebram o typecheck e um teste de `model.ts`; elas **não** fazem parte deste commit.
+- Não verificado: layout real do menu sem cartão em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
+- Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
 
 ## Decisões vigentes
 
-- **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows. Scaffolding exige instrução explícita.
-- **UI (ADR-069):** pixel art em CSS com tokens próprios; ADR-068 para resolução e acessibilidade; ambiente de dia e noite em código (`docs/ui-ux/07-ambiente-dia-noite.md`).
-- **Armazenamento (ADR-075):** banco do app (`henduran.db`), `journeys\<id>\journey.db` com todas as ramificações dentro (passado comum por referência), `worlds\<id>\world.db` só leitura para a Jornada e anexado em leitura; o sistema de arquivos é o catálogo (`journey_meta` em cada Jornada); `synchronous=FULL` nos bancos de jogo; nunca recriar um banco de Jornada em silêncio; o Mundo gerado do MVP também fica num `world.db`.
-- **IA local (ADR-070 a 072):** `llama-server` + GGUF, local primeiro e API paga depois; `NarratorProvider`; HTTP com SSE.
-- **Caliope:** uso autorizado pelo autor; ordem de importação `llm.py`, `runtime.py` + `hardware.py`, `modelhub.py`; todas as skills entram.
-- **MVP (`docs/main/planejamento/ESCOPO-MVP.md`):** chatbot sobre o loop de gameplay, dois Narradores (o Geral, **Aduran**, abre as Cenas), gerador de mundo e regras do Astra em três fatias: (1) chat, ficha, testes, Vontade, Convicções e Descanso; (2) equipamento, Carga e Progressão; (3) combate sem mapa e NPCs por orçamento sem Capacidades.
-- **Dia do Mundo (ADR-073):** limitador de benefícios, começando no Amanhecer; o gatilho continua sendo o acontecimento validado (ADR-010, 012, 013). Ambição e Desejo podem ser trocados quando deixarem de fazer sentido, sem recompensa pela troca.
-- **Cena inicial e ciclo de Cena (ADR-076):** Jornada começa Em Cena no lugar inicial, em período sorteado pelo motor; tempo em períodos, sem horas; abertura na primeira abertura da Jornada; 6 tons com peso igual; proposta (motivo e participantes) em JSON validada antes da narração; Cena e abertura gravadas juntas no fim; nada de mensagem do jogador antes da abertura; encerramento pelo jogador ou proposto e confirmado, com resumo; resumos das Cenas encerradas no contexto.
-- **Fatia 1:** 22 Perícias de mundo medieval (sem Dirigir, Pilotar e Conhecimento Específico); sem dano de Vida, Tratamento e Condições; rerrolagem gratuita por Convicção excluída (ADR-013); testes fora de combate com confirmação do jogador (ADR-006).
+- **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows na fase inicial. Não iniciar scaffolding ou prova de conceito sem instrução explícita.
+- **UI:** pixel art em CSS com tokens próprios (ADR-069), resolução/acessibilidade em ADR-068, ambiente de dia/noite em `docs/ui-ux/07-ambiente-dia-noite.md`. Telas novas ou redesenhos grandes exigem protótipo navegável aprovado (`docs/ui-ux/10-prototipagem.md`); ajustes pequenos podem ir direto ao código.
+- **IA local:** llama.cpp/`llama-server` + GGUF, local primeiro e API paga depois (ADR-070 a 072), interface `NarratorProvider` e HTTP local com SSE.
+- **Armazenamento (ADR-075):** banco do app, `journeys\<id>\journey.db`, `worlds\<id>\world.db` anexado em leitura; nunca recriar banco de Jornada em silêncio.
+- **Regras:** MVP em `docs/main/planejamento/ESCOPO-MVP.md`; Cena inicial e ciclo de Cena em ADR-076; Dia do Mundo em ADR-073; editor da Nova Jornada em ADR-077 (História em HTML saneado, descrição da Jornada, Narrador que preenche dados).
+- **Caliope:** uso autorizado pelo autor; não copiar código sem conferir licença e fronteiras. Registro em `docs/main/importacoes-caliope.md`.
 
 ## Código existente
 
-- `backend/henduran/`: `providers/` (`NarratorProvider`, `FakeNarratorProvider`, `LocalLlamaProvider`), `ai/` (`llm_client.py`, `engine.py`, `hardware.py`, adaptados do Caliope), `paths.py` (dados em `%LOCALAPPDATA%\Henduran`), `settings.py` (sobre o banco), `db/` (conexão, migrações por conjunto, backup), `storage/` (`WorldStore`, `JourneyStore`, bloqueio, leitura sem migrar, `character.py`), `rules/` (fatia 1 em código), `worldgen/` (gerador e esquema do Mundo v1), `services/` (criação atômica e sessão da Jornada aberta). Modelo de dados em `docs/main/modelo-de-dados-jogo.md`, `api/app.py` (chat em SSE, `/hardware`, `/models`, `/engine/*`, Bearer obrigatório) e `__main__.py` (`HENDURAN_PROVIDER=fake|local`).
-- `app/src/`: navegação por telas (`navigation.ts`): `menu`, `jornadas`, `nova-jornada`, `modelos` e `jornada` (abas Chat, Ficha, Mundo, Objetivos). Telas em `screens/` (`MainMenu`, `JourneysScreen`, `newJourney/`, `journey/`), cliente de API em `api/journeys.ts`, validação do servidor em `hooks/useServerValidation.ts`, componentes novos em `ui/` (`Select`, `RadioGroup`, `FieldGroup`, `Stepper`, `TrailBoxes`), tudo na galeria. A interface não duplica regras: vem de `GET /rules/creation`. O fixture de testes `app/src/test/gameData.ts` é gerado do backend e precisa ser regerado se as regras mudarem. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
-- Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
-- `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
-- Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`; `npm run typecheck` também passou nesta tarefa.
-- Formato do evento `done` provisório (`reason`: completed ou cancelled); ADR-072 segue aberto nesse ponto.
-- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens. As mensagens da Jornada usam `.msgs`/`.msg` em `app/src/screens/journey/JourneyScreen.css`, não o `ChatBubble` da galeria; desde esta tarefa ocupam 100% da coluna.
+- `app/src/`: navegação em `navigation.ts`; telas em `screens/`; cliente de API em `api/`; componentes base em `ui/` e estilos em `styles/`. O menu usa `MainMenu.tsx` + `screens/menu/MainMenu.css`; o indicador reusa os mesmos tokens das outras telas.
+- `backend/henduran/`: providers, runtime local, migrações por conjunto, storage, regras da fatia 1, worldgen, serviços de criação e API SSE. Rodar com `HENDURAN_PROVIDER=fake|local`.
+- Comandos: `cd app; npm run tauri dev`; testes `npm run test` e `backend\.venv\Scripts\python -m pytest`; checagem `npm run typecheck`.
+- As mensagens da Jornada usam `.msgs`/`.msg` em `app/src/screens/journey/JourneyScreen.css`, com largura total da coluna desde o PR #25.
 
 ## Pendências relevantes
 
-- Conferir visualmente a largura das mensagens no app real (1024×768 e maximizado), com narração longa, fala curta e longa do jogador, ações, rolagem e streaming.
-- Testar com modelo local real: se o Aduran usa a marcação `[[propor_cena]]` só quando a ação pede Cena e se não resolve ações incertas; revisar as instruções em `backend/henduran/narrative/context.py`.
-- A rolagem da coluna da Ficha apareceu fora do topo numa captura do dev, sem reprodução (provável efeito da emulação de largura); ficou só `overflow-anchor: none`. Reavaliar se acontecer no uso real.
-- Backups da Jornada não incluem `assets\` (retrato); o backend não expõe o estado das trilhas nem o máximo de Fraturas (a interface usa `FRACTURE_SLOTS = 2`). Ambos no backlog.
-- Em aberto no ADR-076: formato da proposta de encerramento pelo Narrador no chat, Cena seguida de outra sem passar pelo Aduran, quando trocar mensagens recentes por resumos. Passagem de tempo em períodos vai para ADR próprio (backlog).
-- Pequenos ajustes da interface: a Jornada só guarda o local atual, então a aba Mundo marca "Você está aqui" em vez do lugar inicial (gravar o id do lugar inicial); o máximo de Fraturas não vem no catálogo de regras; o passo 1 fica longo com mundos grandes (seções recolhíveis). Não verificados: restaurar backup no app real, leitor de tela, DPI de 125% a 200% e reflow a 320 px.
-- O esquema de jogo além do personagem (estado, eventos, memória, salvamentos, ramificações) ainda não existe. Objetivos têm status `ativo`, `concluido`, `abandonado`, `impossivel` e `sem_sentido`; a troca e o histórico (ADR-073) ainda não foram implementados.
-- Gerador de mundo: os nomes de lugar de um mesmo mundo repetem raízes (por exemplo Lumícia, Lumais e Lumanor) e as descrições são repetitivas; melhorar a variedade. Os textos ficam em `backend/henduran/worldgen/data.py`.
-- Pendências da infraestrutura: a lista não roda `quick_check` (dano em outras páginas só aparece ao abrir); `delete_journey` pode deixar a pasta parcialmente apagada se um arquivo estiver preso; corrida teórica entre `world_in_use` e a exclusão do Mundo.
-- Em aberto no ADR-075: retenção dos backups automáticos por Jornada, cache do catálogo, anexos grandes e o anexo do Mundo com FTS5 e vetores.
-- **Visual abaixo dos esboços** (feedback do responsável): faltam ornamentos de canto, mais riqueza nas áreas de conversa e de listas, tooltip, ícones, controle de escala de texto no jogo; verificar DPI de 125% a 200%, reflow a 320 px e leitor de tela. O céu cobre só uma faixa no topo; as cores dos períodos estão em `sky.ts`, fora dos tokens.
-- **Aba Modelos no nível do Caliope** (feedback do responsável): abas separadas, escolha de pasta pelo Windows, notas de qualidade por quantização, sugestões de busca, ocultar modelos, tela inicial sem modelo e ajustes de contexto e camadas da GPU. Detalhes no backlog.
-- Decisões da Tarefa B em aberto: remover modelo de pasta extra é sempre recusado; download sem SHA-256 publicado só avisa no log; um download por vez, sem fila.
+- Conferir visualmente o menu sem cartão e o rodapé no app real (1280×800, 1024×768, estreito), com modelo carregado, sem modelo e serviço iniciando.
+- Conferir visualmente a Jornada com modelo local real: largura das mensagens, abertura/encerramento de Cena e marcação `[[propor_cena]]`.
+- A implementação da Nova Jornada está em andamento em paralelo; há alterações não commitadas no worktree principal. Antes de instalar o TipTap, conferir licença das extensões e tamanho do pacote e pedir aprovação.
+- Restaurar backup no app real, leitor de tela, DPI de 125% a 200%, reflow a 320 px.
+- Backups da Jornada não incluem `assets\`; limites de Fraturas e estado das trilhas não vêm do backend.
+- ARO/ADR em aberto: formato da proposta de encerramento no chat, Cena seguida de outra sem passar pelo Aduran, passagem de tempo em períodos, retenção de backups e anexos em ADR-075.
+- Gerador de mundo: reduzir repetição de raízes de nomes e de descrições.
 - Excluir `app/src-tauri/target/` e `node_modules/` da sincronização do OneDrive.
-- `aria-live` cobre o log inteiro: reavaliar quando a interface real for montada. Dependências transitivas do Python não estão travadas.
-- Limiares do indicador de compatibilidade (`fit`) são proposta a validar; variante do motor por hardware e comportamento sem GPU seguem em aberto (ADR-070); confirmar a licença do `llama-server` antes de distribuir; sem limite de `max_tokens`.
-
-- Pendentes de regra: faixa de Dificuldade proposta pelo Narrador; critério de "progresso significativo" e de "defender" uma Convicção; política de avanço de tempo e definição de Amanhecer; testes de equilíbrio dos tetos por Dia.
-- Fatias 2 e 3 do Astra: ler e adaptar (equipamento, Carga, Progressão; Cena Tática sem mapa, Ações, dano, NPCs por orçamento, Condições necessárias).
-- Telas sem decisão: Mundos no menu, Mapa, Inventário; histórico do painel do Aduran; marcas de escrita do chat.
-- Confirmar *arandu* com dicionário ou falante de guarani.
-- Reconciliar `docs/ui-ux/03-mapa-de-telas.md` e `04-wireframes.md`; revisar exemplos do ferreiro em 01, 02 e GDD.
-- Registrar a autorização do Caliope por escrito e pedir `LICENSE`.
 - Backlog autoritativo: `docs/backlog.md`.
 
 ## Próximo passo recomendado
 
-⭐ Mandar o dev implementar a **Nova Jornada** (item no topo do backlog), conforme `12-nova-jornada.md` e o **ADR-077** (editor TipTap, História em HTML saneado, rota do Narrador que preenche dados, descrição da Jornada). Antes de instalar o TipTap, o dev confere a licença das extensões e a medida do pacote e pede a sua aprovação. Depois, prototipar **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado.
+⭐ Revisar e fazer merge do PR destes ajustes do menu; em seguida continuar a **Nova Jornada** conforme `docs/ui-ux/12-nova-jornada.md`, o ADR-077 e o topo de `docs/backlog.md`. Em paralelo, conferir no app real o menu sem cartão e a Jornada com modelo local.

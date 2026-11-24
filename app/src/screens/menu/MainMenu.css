@@ -486,19 +486,17 @@
 .menu__service-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-1);
   max-width: 100%;
-  min-height: 36px;
-  padding: 4px 12px;
-  border: var(--border-thin) solid var(--px-ink-600);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
   font: inherit;
   cursor: pointer;
 }
 
-.menu__service-btn > span:not(.menu__led),
+.menu__service-btn > span:not(.menu__led):not(.menu__service-sep),
 .menu__service-detail {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -506,7 +504,11 @@
 }
 
 .menu__service-btn:hover {
-  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.menu__service-btn:hover .menu__service-go {
+  text-decoration: underline;
 }
 
 .menu__service-btn:focus-visible {
@@ -545,9 +547,15 @@
   color: var(--color-text-muted);
 }
 
+.menu__service-sep {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
 .menu__service-go {
   flex: none;
   color: var(--color-accent-light);
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------- telas estreitas */

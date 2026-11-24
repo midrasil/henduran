@@ -114,15 +114,17 @@ svg.px { shape-rendering: crispEdges; display: block; }
 .foot-bar .ver { color: var(--ivory-400); display: flex; gap: 8px; align-items: center; }
 .foot-bar .ver svg { width: 16px; height: 16px; }
 .foot-bar .mid svg { width: 18px; height: 18px; }
-.status { justify-self: end; display: flex; align-items: center; gap: 10px; background: var(--ink-800); border: 2px solid var(--ink-600); padding: 4px 12px; min-height: 36px; }
-.status:hover { border-color: var(--gold-400); }
+.status { justify-self: end; display: flex; align-items: center; gap: 8px; color: var(--ivory-400); background: transparent; border: 0; padding: 0; min-height: 0; }
+.status:hover { color: var(--ivory-100); }
+.status:hover .go { text-decoration: underline; }
 .status .led { width: 10px; height: 10px; box-shadow: 0 0 0 2px var(--ink-950); }
 .status[data-s="ok"] .led { background: var(--green-300); }
 .status[data-s="warn"] .led { background: var(--amber-300); animation: blink 1.2s steps(1) infinite; }
 .status[data-s="off"] .led { background: var(--red-400); }
 @keyframes blink { 50% { opacity: .3; } }
 .status small { color: var(--ivory-400); }
-.status .go { color: var(--gold-200); }
+.status .sep { color: var(--ivory-400); }
+.status .go { color: var(--gold-200); white-space: nowrap; }
 
 /* controles do protótipo */
 .proto { position: fixed; z-index: 20; left: 16px; bottom: 60px; }
@@ -290,9 +292,10 @@ function render() {
     <button class="mbtn" ${ready ? "" : "disabled"} data-a="jornadas">${IC.book}<span>Jornadas</span><span></span></button>
     <button class="mbtn" data-a="sair">${IC.door}<span>Sair</span><span></span></button>`;
   const card = $("#card");
-  if (!ready) { card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2><div class="body">Preparando o serviço local…</div>`; }
-  else if (!has) { card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Sua primeira Jornada</h2><div class="body">Ainda não há nenhuma Jornada. Em <b>Nova Jornada</b>, o jogo sorteia um Mundo, você cria o protagonista e o Narrador começa a história.</div>`; }
+  if (!ready) { card.hidden = false; card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2><div class="body">Preparando o serviço local…</div>`; }
+  else if (!has) { card.hidden = true; card.className = "card"; card.innerHTML = ""; }
   else {
+    card.hidden = false;
     card.className = "card";
     card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2>
       <div class="body"><div class="portrait"><span class="ring"></span><span class="ring2"></span><span class="pic">${portrait(S.sit === "retrato")}</span></div>
@@ -306,14 +309,14 @@ function render() {
     drawFace();
   }
   const st = $("#status"); const map = { ok: ["ok", "Conectado", "Qwen 2.5 7B pronto"], sem: ["off", "Conectado", "nenhum modelo carregado"], ini: ["warn", "Iniciando o serviço", "aguarde"] };
-  const [s, a, b] = map[S.svc]; st.dataset.s = s; st.innerHTML = `<span class="led" aria-hidden="true"></span><span>${a}</span><small>${b}</small><span class="go">Modelos ▸</span>`;
+  const [s, a, b] = map[S.svc]; st.dataset.s = s; st.innerHTML = `<span class="led" aria-hidden="true"></span><span>${a}</span><span class="sep" aria-hidden="true">·</span><small>${b}</small><span class="sep" aria-hidden="true">·</span><span class="go">Modelos ▸</span>`;
   st.setAttribute("aria-label", `${a}, ${b}. Abrir Modelos`);
 }
 function setup() {
   ["#c1", "#c2", "#c3", "#c4"].forEach((s) => ($(s).innerHTML = CORNER));
   $("#b1").innerHTML = bannerSVG("#6b1420", "#4a0d16"); $("#b2").innerHTML = bannerSVG("#45186a", "#2e1048");
   $("#m1").innerHTML = MARK; $("#m2").innerHTML = MARK; $("#d1").innerHTML = IC.dia; $("#mid").innerHTML = IC.dia;
-  $("#ver").innerHTML = `${IC.star.replace("currentColor", "#f0c050")}<span>Henduran · Alpha 0.4</span>`;
+  $("#ver").innerHTML = `${IC.star.replace("currentColor", "#f0c050")}<span>Henduran · v0.0.1</span>`;
   $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v="${p}">${PLABEL[p]}</button>`).join("");
 }
 document.addEventListener("click", (e) => {
