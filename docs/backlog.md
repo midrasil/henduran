@@ -1,5 +1,6 @@
 # Backlog
 
+- [ ] ⭐ design: confirmar o ADR-078 (memória e contexto do Narrador: Quadro da Cena, Cânone, fichas de NPC, compactação, skills por Jornada e por Cena, pergunta de continuidade) e prototipar o painel "Estado da Cena" na tela da Jornada; depois, esquema de dados e teste de continuidade — origem: problema de continuidade do Caliope relatado pelo responsável
 - [x] design: tela de Mundos — o responsável aprovou a implementação feita pelo dev como está (2026-11-24); `prototipos/mundos.html` registra a tela e não pede mudanças; a nota "Tela provisória" do cabeçalho foi removida
 
 - [ ] ⭐ design: implementar a Nova Jornada conforme `docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html` (aprovado em 2026-11-23): trilho com 3 passos e tela Iniciar Jornada, lista de Mundos salvos (somente leitura, Duplicar e editar), Protagonista em abas com retrato (recorte), Revisão em abas — decisões aprovadas no ADR-077 (editor TipTap, História em HTML saneado com texto puro derivado, rota do Narrador que preenche dados, descrição da Jornada em `journey_meta`); antes de instalar o editor, conferir a licença e a medida do pacote e pedir aprovação — origem: prototipagem da Nova Jornada

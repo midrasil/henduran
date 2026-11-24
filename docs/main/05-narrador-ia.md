@@ -66,5 +66,5 @@ Implementado em 2026-11-24 (ADR-077, item 3): `POST /narrator/fill` (contrato em
 - Contratos e schemas de ferramentas.
 - Roteamento de contexto, memória, resumos e possíveis embeddings.
 - Suspender e reabrir Cenas. A abertura (inclusive a Cena inicial da Jornada) e o encerramento no MVP estão no ADR-076.
-- Estratégia para minimizar alucinações em modelos locais menores.
+- Estratégia para minimizar alucinações em modelos locais menores: **proposta no ADR-078** (Quadro da Cena, Cânone, fichas de NPC, compactação, orçamento de tokens e pergunta de continuidade), aguardando confirmação.
 - Extensão do suporte a serviços de API que não implementam ferramentas de forma uniforme.
