@@ -6,12 +6,10 @@ import { Button, CrackIcon, Dialog, PixelIcon, Portrait, TabPanel, Tabs, type Pi
 import { plural } from "./journeyText";
 import { AttributePlates, SheetTracks, SkillRows } from "./SheetSummary";
 
-type SheetTab = "geral" | "pericias" | "objetivos" | "conviccoes" | "descricao";
+type SheetTab = "geral" | "conviccoes" | "descricao";
 
 const TABS: { id: SheetTab; label: string; icon: PixelIconName }[] = [
   { id: "geral", label: "Visão geral", icon: "tab-sheet" },
-  { id: "pericias", label: "Perícias", icon: "tab-skills" },
-  { id: "objetivos", label: "Objetivos", icon: "tab-goal" },
   { id: "conviccoes", label: "Convicções", icon: "tab-conviction" },
   { id: "descricao", label: "Descrição", icon: "tab-description" },
 ];
@@ -96,17 +94,13 @@ export function FullSheetDialog({ open, onClose, character, rules, arcs, portrai
                     <SheetTracks character={character} rules={rules} />
                     <h4 className="sheet-sec__title">Atributos</h4>
                     {rules ? <AttributePlates character={character} rules={rules} /> : <p className="hint">Carregando as regras…</p>}
+                    <h4 className="sheet-sec__title">Perícias</h4>
+                    {rules ? <SkillRows character={character} rules={rules} all columns={2} /> : <p className="hint">Carregando as regras…</p>}
                   </>
                 ) : null}
-                {t.id === "pericias" ? (
-                  rules ? (
-                    <SkillRows character={character} rules={rules} all columns={2} />
-                  ) : (
-                    <p className="hint">Carregando as regras…</p>
-                  )
-                ) : null}
-                {t.id === "objetivos" ? (
+                {t.id === "conviccoes" ? (
                   <>
+                    <h4 className="sheet-sec__title">Objetivos</h4>
                     <div className="goalcard">
                       <small>Ambição · longo prazo</small>
                       <p>{character.ambition?.text ?? "Nenhuma Ambição ativa."}</p>
@@ -120,20 +114,19 @@ export function FullSheetDialog({ open, onClose, character, rules, arcs, portrai
                       <small>Desejo · curto prazo</small>
                       <p>{character.desire?.text ?? "Nenhum Desejo ativo."}</p>
                     </div>
+                    <h4 className="sheet-sec__title">Convicções</h4>
+                    <ol className="convcards">
+                      {character.convictions.map((c) => (
+                        <li key={c.position} className="convcard">
+                          <p className="convcard__text">{c.text}</p>
+                          <Fractures count={c.fractures} />
+                          <p className="convcard__pillar">
+                            Pilar: {c.pillar} · {fractureText(c.fractures)}
+                          </p>
+                        </li>
+                      ))}
+                    </ol>
                   </>
-                ) : null}
-                {t.id === "conviccoes" ? (
-                  <ol className="convcards">
-                    {character.convictions.map((c) => (
-                      <li key={c.position} className="convcard">
-                        <p className="convcard__text">{c.text}</p>
-                        <Fractures count={c.fractures} />
-                        <p className="convcard__pillar">
-                          Pilar: {c.pillar} · {fractureText(c.fractures)}
-                        </p>
-                      </li>
-                    ))}
-                  </ol>
                 ) : null}
                 {t.id === "descricao" ? (
                   <>
