@@ -263,6 +263,25 @@ describe("App — tela da Jornada e modelo", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "O Selo de Elmora" })).toBeInTheDocument();
   });
 
+  it("na Nova Jornada, o rodapé do sistema tem Entardecer à esquerda e Modelos à direita; voltar preserva o preenchimento", async () => {
+    stubFetch({ other: modelsRoutes });
+    const user = userEvent.setup();
+    await renderConnected();
+    await user.click(screen.getByRole("button", { name: "Nova Jornada" }));
+    expect(await screen.findByRole("heading", { name: /Passo 1 de 3/ })).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Semente" }), "476");
+    const bar = document.querySelector(".status-bar") as HTMLElement;
+    expect(bar.firstElementChild).toHaveClass("status-bar__period");
+    expect(bar.firstElementChild).toHaveTextContent(/Período do dia:/);
+    const indicator = await within(bar).findByRole("button", { name: /Abrir Modelos$/ });
+    expect(bar.lastElementChild).toContainElement(indicator);
+    await user.click(indicator);
+    expect(await screen.findByRole("heading", { name: "Modelos" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Voltar à criação" }));
+    expect(await screen.findByRole("heading", { name: /Passo 1 de 3/ })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Semente" })).toHaveValue("476");
+  });
+
   it.each([
     ["no_model", "Nenhum modelo de IA escolhido. Abra a tela Modelos e escolha um modelo."],
     ["engine_not_installed", "O motor de IA ainda não foi baixado. Abra a tela Modelos para baixá-lo."],

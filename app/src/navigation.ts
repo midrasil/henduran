@@ -8,7 +8,7 @@ export interface NavState {
   /** Jornada aberta no serviço (somente leitura na interface). */
   journey: JourneySnapshot | null;
   /** Para onde "Voltar" leva a partir de Modelos. */
-  modelsBack: "menu" | "jornada";
+  modelsBack: "menu" | "jornada" | "nova-jornada";
   /** Aviso a mostrar na tela de destino. */
   notice: string | null;
 }
@@ -27,7 +27,16 @@ export function navReducer(state: NavState, action: NavAction): NavState {
     case "go": {
       // A tela da Jornada só existe com uma Jornada aberta.
       if (action.screen === "jornada" && !state.journey) return { ...state, screen: "menu", notice: null };
-      const modelsBack = action.screen === "modelos" ? (state.screen === "jornada" ? "jornada" : "menu") : state.modelsBack;
+      const modelsBack =
+        action.screen !== "modelos"
+          ? state.modelsBack
+          : state.screen === "modelos"
+            ? state.modelsBack
+            : state.screen === "jornada"
+              ? "jornada"
+              : state.screen === "nova-jornada"
+                ? "nova-jornada"
+                : "menu";
       return { ...state, screen: action.screen, modelsBack, notice: action.notice ?? null };
     }
     case "opened":

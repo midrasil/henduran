@@ -1,0 +1,89 @@
+.service-indicator {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.service-indicator__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.service-indicator__btn > span:not(.service-indicator__led):not(.service-indicator__sep),
+.service-indicator__detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-indicator__btn:hover {
+  color: var(--color-text);
+}
+
+.service-indicator__btn:hover .service-indicator__go {
+  text-decoration: underline;
+}
+
+.service-indicator__btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.service-indicator__led {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--color-outline);
+}
+
+.service-indicator__btn[data-light="ok"] .service-indicator__led {
+  background: var(--color-success-text);
+}
+
+.service-indicator__btn[data-light="busy"] .service-indicator__led {
+  background: var(--color-warn-text);
+  animation: service-indicator-blink 1.2s steps(1) infinite;
+}
+
+.service-indicator__btn[data-light="off"] .service-indicator__led {
+  background: var(--px-red-400);
+}
+
+@keyframes service-indicator-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.service-indicator__detail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.service-indicator__sep {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.service-indicator__go {
+  flex: none;
+  color: var(--color-accent-light);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-indicator__btn .service-indicator__led {
+    animation: none !important;
+  }
+}
+
+.motion-reduced .service-indicator__btn .service-indicator__led {
+  animation: none !important;
+}

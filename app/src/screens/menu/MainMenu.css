@@ -484,81 +484,6 @@
   max-width: 100%;
 }
 
-.menu__service-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.menu__service-btn > span:not(.menu__led):not(.menu__service-sep),
-.menu__service-detail {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.menu__service-btn:hover {
-  color: var(--color-text);
-}
-
-.menu__service-btn:hover .menu__service-go {
-  text-decoration: underline;
-}
-
-.menu__service-btn:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
-.menu__led {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  box-shadow: 0 0 0 2px var(--color-outline);
-}
-
-.menu__service-btn[data-light="ok"] .menu__led {
-  background: var(--color-success-text);
-}
-
-.menu__service-btn[data-light="busy"] .menu__led {
-  background: var(--color-warn-text);
-  animation: menu-blink 1.2s steps(1) infinite;
-}
-
-.menu__service-btn[data-light="off"] .menu__led {
-  background: var(--px-red-400);
-}
-
-@keyframes menu-blink {
-  50% {
-    opacity: 0.3;
-  }
-}
-
-.menu__service-detail {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.menu__service-sep {
-  flex: none;
-  color: var(--color-text-muted);
-}
-
-.menu__service-go {
-  flex: none;
-  color: var(--color-accent-light);
-  white-space: nowrap;
-}
-
 /* --------------------------------------------------------- telas estreitas */
 
 @media (max-width: 1179.98px) {
@@ -611,8 +536,7 @@
 /* Movimento reduzido (ADR-068): estandartes, brilho e luz parados. */
 @media (prefers-reduced-motion: reduce) {
   .menu-banner__sway,
-  .menu__mark,
-  .menu__service-btn .menu__led {
+  .menu__mark {
     animation: none !important;
   }
 
@@ -622,7 +546,6 @@
 }
 
 .motion-reduced .menu-banner__sway,
-.motion-reduced .menu__mark,
-.motion-reduced .menu__service-btn .menu__led {
+.motion-reduced .menu__mark {
   animation: none !important;
 }

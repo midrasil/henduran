@@ -7,11 +7,13 @@ import type { BackendStatus } from "../hooks/useBackend";
 import { formatSavedAgo, formatSavedAt, STATUS_NOTICE, toPeriod } from "../lib/format";
 import { Button, Panel, PERIOD_LABEL, PeriodIcon, PixelIcon, Portrait } from "../ui";
 import { calendarText } from "./journey/journeyText";
-import { modelReady } from "./journey/JourneyTopBar";
 import { MenuLandscape } from "./menu/MenuLandscape";
 import { Banner, BookIcon, CompassMark, Diamond, FrameCorner } from "./menu/menuArt";
+import { ServiceIndicator } from "./ServiceIndicator";
 
 import "./menu/MainMenu.css";
+
+export { serviceState } from "./ServiceIndicator";
 
 /** A última Jornada jogada (`last_journey_id`); sem ela, a salva mais recentemente. */
 export function pickLastJourney(list: JourneyList | null): JourneySummary | null {
@@ -157,7 +159,7 @@ export function MainMenu({
         <span className="menu__foot-mid" aria-hidden="true">
           <Diamond width={18} />
         </span>
-        <ServiceIndicator backend={backend} engine={engine} onModels={onModels} />
+        <ServiceIndicator className="menu__service" backend={backend} engine={engine} onModels={onModels} />
       </footer>
     </div>
   );
@@ -309,45 +311,5 @@ function JourneyCard({ info, journey, onJourneys }: { info: BackendInfo | null; 
         </Button>
       </div>
     </Panel>
-  );
-}
-
-/* ------------------------------------------------------- indicador do rodapé */
-
-type Light = "ok" | "busy" | "off";
-
-/** Luz e textos do indicador: serviço, depois o modelo (o texto não depende só da cor). */
-export function serviceState(backend: BackendStatus, engine: EngineStatus | null): { light: Light; main: string; detail: string } {
-  if (backend.kind === "starting") return { light: "busy", main: "Iniciando o serviço", detail: "aguarde" };
-  if (backend.kind === "error") return { light: "off", main: `Erro: ${backend.message}`, detail: "o serviço local não respondeu" };
-  if (engine === null) return { light: "busy", main: "Conectado", detail: "consultando o modelo…" };
-  if (modelReady(engine)) {
-    const name = engine.active_model_name ?? (engine.provider !== "local" ? `provedor ${engine.provider}` : "modelo");
-    return { light: "ok", main: "Conectado", detail: `${name} pronto` };
-  }
-  if (engine.state === "starting") return { light: "busy", main: "Conectado", detail: "carregando o modelo…" };
-  if (engine.state === "downloading") return { light: "busy", main: "Conectado", detail: "baixando o motor de IA…" };
-  return { light: "off", main: "Conectado", detail: "nenhum modelo carregado" };
-}
-
-function ServiceIndicator({ backend, engine, onModels }: { backend: BackendStatus; engine: EngineStatus | null; onModels: () => void }) {
-  const { light, main, detail } = serviceState(backend, engine);
-  return (
-    <div className="menu__service" role="status">
-      <button type="button" className="menu__service-btn" data-light={light} onClick={onModels} aria-label={`${main}, ${detail}. Abrir Modelos`}>
-        <span className="menu__led" aria-hidden="true" />
-        <span>{main}</span>
-        <span className="menu__service-sep" aria-hidden="true">
-          ·
-        </span>
-        <small className="menu__service-detail">{detail}</small>
-        <span className="menu__service-sep" aria-hidden="true">
-          ·
-        </span>
-        <span className="menu__service-go" aria-hidden="true">
-          Modelos ▸
-        </span>
-      </button>
-    </div>
   );
 }

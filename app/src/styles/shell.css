@@ -98,6 +98,17 @@
   display: none;
 }
 
+.app__wizard {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app__wizard[hidden] {
+  display: none !important;
+}
+
 /* Rolagem com folga para a moldura em pixel (que fica fora da caixa). */
 .app__panel--scroll {
   flex-direction: column;
@@ -132,6 +143,11 @@
   gap: 4px;
   font-family: var(--font-pixel);
   font-size: var(--font-size-sm);
+}
+
+.status-bar__service .service-indicator__btn {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
 }
 
 .status-bar__icon {

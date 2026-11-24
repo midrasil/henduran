@@ -2,6 +2,18 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-24 — `rodape-modelos-status` (opencode)
+
+- Executor: opencode
+- Rota: planejador → ajuste direto → Entrega.
+- Pedido do responsável: no rodapé do sistema da criação de Jornada, transformar o `Conectado` da esquerda em botão de acesso à tela Modelos, passar o período do dia para a esquerda e replicar o comportamento do botão do menu inicial.
+- Correção de interpretação: a primeira implementação mexeu no rodapé de ações do assistente (`Cancelar`, `Voltar`, `Avançar`). O responsável esclareceu que o alvo era o rodapé global do sistema; por isso o wizard, o quadro `Narrador`, o CSS do assistente e o protótipo foram revertidos ao estado anterior.
+- Decisão mantida: o indicador compartilhado do menu (`ServiceIndicator`) agora também aparece na barra de status, com LED, `Conectado · <detalhe> · Modelos ▸` e o mesmo `aria-label`; ao abrir Modelos a partir da Nova Jornada, o cabeçalho mostra `Voltar à criação` e o wizard fica montado, oculto, com o preenchimento preservado.
+- Resultado: período à esquerda e indicador/modelo à direita nas telas com barra de status; menu inicial inalterado; rodapé de ações do assistente inalterado. Documentação da decisão em `docs/ui-ux/12-nova-jornada.md`, seção 11.
+- Validações: em `app/`, `npm run typecheck` sem erros, `npm run test` 37 arquivos/330 testes passando e `npm run build` ok, todos reexecutados pelo planejador. Conferência visual no app real fica com o responsável.
+- Arquivos: `app/src/App.tsx`, `app/src/styles/shell.css`, `app/src/navigation.ts`, `app/src/navigation.test.ts`, `app/src/screens/ServiceIndicator.tsx`, `app/src/screens/ServiceIndicator.css`, `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/App.test.tsx`, `docs/ui-ux/12-nova-jornada.md`, `docs/context/handoff.md`, `docs/context/jornal.md`.
+- Entrega: branch `feat/rodape-modelos-status`; PR a ser aberto nesta entrega (link adicionado após a criação).
+
 ## 2026-11-23 — `rodape-menu-modelo` (opencode)
 
 - Executor: opencode
