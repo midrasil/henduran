@@ -13,10 +13,11 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de 
 - **Excluir Jornada não apaga mais o Mundo** (`services/journey_deletion.delete_journey`, resposta `{deleted, world_id}`).
 - **Tela de Mundos** (implementada sem protótipo, por decisão do responsável em 2026-11-24, e depois **aprovada como está**; o protótipo `docs/ui-ux/prototipos/mundos.html` foi feito só como registro): botão **Mundos** no menu, `app/src/screens/WorldsScreen.tsx` (reaproveita `WorldStep` em modo `library`), `POST /worlds`, `DELETE /worlds/{id}` (409 `mundo_em_uso` ou `uso_indeterminado`; exclusão atômica por renomeação). Documento `docs/ui-ux/13-mundos.md`. A nota "Tela provisória" do cabeçalho foi removida.
 - **Editar Jornada**: `PATCH /journeys/current` (nome e descrição, regras da criação; 422 `resumo_invalido`) e "Editar Jornada" no menu ⚙ da Jornada.
-- Validações: `npm run typecheck` sem erros; `npm run test` 320/320 (reexecutado pelo planejador); `pytest` 662 passando e 1 pulado, `npm run build` ok (relatados pelo dev; não reexecutados pelo planejador).
+- Validações: `npm run typecheck` sem erros; `npm run test` 320/320 (reexecutado pelo planejador); `pytest` 662 passando e 1 pulado, `npm run build` ok (relatados pelo dev; não reexecutados pelo planejador). Após o merge da `main` no PR #31, revalidado no worktree do PR: `npm run typecheck` OK, `npm run test -- src/screens/MainMenu.test.tsx` 17/17 e `npm run test` 321/321.
 - Não verificado: app Tauri real, TipTap em navegador real (digitar, atalhos, colar do Word), leitor de tela, DPI de 125% a 200%, reflow a 320 px, qualidade das sugestões com modelo local real e se o `llama-server` aceita os esquemas com `const` e `enum` (se recusar, o cliente repete sem esquema e o motor valida).
 - Aprovado pelo responsável: editor sob demanda, remoção do `character-count`, `world/0002` intacta, comportamento de Sugerir Atributos e Perícias e os limites (ideia 500 caracteres, 120 s, 2 novas tentativas), na opção recomendada.
 - Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial, Nova Jornada e Mundos (registro).
+- Ajustes do menu em paralelo (PR #29 merged): rodapé sem caixa com `Conectado · <detalhe> · Modelos ▸`, cartão de primeira vez removido, gap dos botões centrais de 12 px para 16 px (`--space-2`) e sombra externa removida; seguem no PR [#31](https://github.com/midrasil/henduran/pull/31), aberto contra `main` após resolução de conflitos com a `main` atual.
 
 ## Decisões vigentes
 
