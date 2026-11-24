@@ -238,3 +238,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Pendência para a implementação: o resumo da Jornada (`GET /journeys`) precisa trazer retrato, data no calendário do Mundo e título da Cena em andamento. Configurações e Créditos entram quando existirem.
 - Arquivos: `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/context/handoff.md`.
 - Entrega: PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.
+
+## 2026-11-23 — `icone-do-jogo`
+
+- Rota: conversa com o planejador → Entrega. Ícone gerado em outra máquina (pausa na prototipagem de telas); os tokens acabaram antes do registro e o responsável fez um commit provisório com o opencode.
+- Resultado: ícone em pixel art (rosa dos ventos dourada, pontas roxas, medalhão escuro, aro dourado) gerado por `docs/ui-ux/icone/gerar_icone.py`; ícones do Tauri regenerados (`icon.ico` com 16, 24, 32, 48, 64 e 256 px); favicon para o navegador (`app/public/favicon.png` e `app/index.html`).
+- Ocorrência e causa: o Windows seguia mostrando o quadrado azul porque o `henduran.exe` de debug não foi relinkado após a troca dos arquivos; `touch app/src-tauri/build.rs` e `cargo build` resolveram, e o ícone embutido foi conferido por extração do exe. O responsável confirmou no app.
+- Decisão: não adicionar `cargo:rerun-if-changed=icons` ao `build.rs` por enquanto; registrado no handoff.
+- Não testado: ícone no instalador (`npm run tauri build`).
+- Arquivos: `app/src-tauri/icons/*`, `docs/ui-ux/icone/*`, `app/index.html`, `app/public/favicon.png`, `docs/context/handoff.md`.
+- Entrega: PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.

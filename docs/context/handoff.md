@@ -1,15 +1,16 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `largura-mensagens-chat` (ajuste de UI na Jornada).
+Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
 
 ## Estado
 
-- Tarefa: as mensagens do Narrador e do jogador paravam em cerca de metade da coluna e quebravam linha cedo. Causa: `.msg` usava `max-width: 68ch`, medido na Pixelify Sans de 16 px herdada de `.jscreen`, enquanto o texto usa Crimson Pro de 20 px.
-- Resultado: as mensagens passam a usar a largura disponível da coluna (`max-width: 100%`). As falas do jogador continuam à direita, com balão ajustado ao texto e teto de 100%. Regras equivalentes aplicadas ao protótipo aprovado e nota acrescentada à especificação da tela.
-- Decisão do responsável: largura 100% disponível, em vez de limite de ~80 caracteres ou versão híbrida; protótipo e documento atualizados junto com o código.
-- Validações: `npm run test` (275/275) e `npm run typecheck` passaram. A conferência visual no app real ainda não foi feita; jsdom não calcula layout.
-- Branch: `fix/largura-mensagens-chat`. PR [#25](https://github.com/midrasil/henduran/pull/25) aberto contra `main`.
-- Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23) e o protótipo do menu inicial foi aprovado (PR #24). Por enquanto as telas existentes são só prototipadas e documentadas, uma por vez; ajustes pequenos como este podem ir direto ao código.
+- Tarefa: ícone padrão do jogo (janela, barra de tarefas, Alt+Tab, `.exe` e favicon). Rosa dos ventos dourada em pixel art, pontas roxas, medalhão escuro e aro dourado, com as cores dos tokens de `app/src/styles/tokens.css`.
+- Resultado: `app/src-tauri/icons/` regenerado (`32x32`, `128x128`, `128x128@2x`, `icon.png`, `icon.ico` com 16 a 256 px); `docs/ui-ux/icone/gerar_icone.py` e `icone-1024.png` guardam a fonte; `app/public/favicon.png` e `<link rel="icon">` em `app/index.html` para o navegador. O `tauri.conf.json` já apontava para os arquivos.
+- Ocorrência: o ícone não aparecia no Windows porque o `henduran.exe` de debug tinha sido compilado antes e o Cargo não refaz o recurso do Windows só porque os PNG/ICO mudaram. Resolvido com `touch app/src-tauri/build.rs` e `cargo build`; o responsável confirmou no app. Se trocar o ícone de novo, repetir o `touch`; alternativa permanente: `println!("cargo:rerun-if-changed=icons")` no `build.rs` (não feito).
+- Validações: `cargo check` e `cargo build` passaram; ícone embutido no exe conferido por extração; o responsável conferiu a janela e a barra de tarefas. `npm run tauri build` (ícone do instalador) não foi testado.
+- Branch: `chore/icone-do-jogo`; PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.
+- Antes disso: PR #25 (largura das mensagens da Jornada) mergeado, junto com #23 (tela da Jornada) e #24 (protótipo do menu). O commit provisório do ícone foi feito pelo responsável com o opencode, em outra máquina, quando acabaram os tokens.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos prontos: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
 
 ## Decisões vigentes
 
@@ -62,4 +63,4 @@ Atualizado em 2026-11-23 após a tarefa `largura-mensagens-chat` (ajuste de UI n
 
 ## Próximo passo recomendado
 
-⭐ Revisar o PR #25 e conferir a largura das mensagens no app em 1024×768 e maximizado; se aprovado, fazer o merge. Depois, retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
+⭐ Retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir a largura das mensagens. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups. Opcional: testar `npm run tauri build` para ver o ícone no instalador.
