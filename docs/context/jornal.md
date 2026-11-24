@@ -322,3 +322,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisão do responsável: incluir a **pergunta de continuidade**, com o modo "só em contradição clara" como padrão. As demais decisões do ADR (⏳) são recomendações do planejador, aguardando confirmação.
 - Pendências: confirmar os itens ⏳, definir os campos do Quadro e da ficha de NPC, prototipar o painel "Estado da Cena" na tela da Jornada, esquema de dados e teste de continuidade (item no backlog).
 - Arquivos: `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/main/05-narrador-ia.md`, `docs/backlog.md`.
+- Entrega: PR [#35](https://github.com/midrasil/henduran/pull/35) aberto contra `main`.
