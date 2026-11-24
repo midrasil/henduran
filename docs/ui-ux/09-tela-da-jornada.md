@@ -99,13 +99,44 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
   - **Skills desta Cena** (n de 3): o Aduran pode sugerir uma skill de situação, que só entra se o jogador **aceitar** (ADR-078, item 7).
   - **Dúvidas de continuidade**: histórico das perguntas e respostas (da Cena e das anteriores), com **Ver no chat**.
   - Um texto explica que é memória narrativa, **não regra de jogo** (Vida, Vontade e testes continuam com o motor).
-- **Sobre "Sabe" e os NPCs**: o campo mostra o que a personagem **sabe nesta Cena**. O conhecimento duradouro de um NPC (o que sabe, lembra, segredos, personalidade) virá da **ficha do NPC**, que **ainda não foi desenhada** (ADR-078, item 6). Até lá, "Sabe" é um espaço provisório.
+- **"Sabe" não é um campo do Quadro**: em cada NPC em Cena, a linha mostra só o link **ver na ficha** (e, no cartão do jogador, **ver no diário**). O conhecimento do NPC vem **da ficha dele**, a única fonte; o que ele aprende na Cena entra na ficha com a Cena de origem, e o jogador corrige lá (ADR-078, item 6). O cartão de cada NPC também tem o botão **ver ficha** no cabeçalho.
 - **Dúvida de continuidade no chat**: quando o Narrador precisa de um fato ou o motor acha uma contradição (modo padrão "só em contradição clara"), aparece um **cartão que ocupa toda a largura do chat**, como uma mensagem, apenas com um destaque (borda roxa) e o rótulo "Dúvida de continuidade". O texto traz a pergunta e o que o Narrador acha. **Não há botões de escolha**, só **Você decide** (o Narrador escolhe a hipótese dele).
   - **A próxima mensagem digitada pelo jogador responde ao cartão e não vai para o chat**: o campo de escrita mostra "Responda à dúvida do Narrador…", fica destacado e a dica avisa isso. A resposta fica **dentro do cartão**, que se recolhe, para não encher o chat.
   - **Reabrir**: na mensagem do Narrador à qual a dúvida pertence, um ícone **"?"** entre as ações que aparecem ao passar o mouse (junto com Copiar etc.) reabre o cartão, logo abaixo dela, com a pergunta e a resposta; há **Fechar**.
   - **Registro**: a resposta entra no **Log da Cena** como "Continuidade", atualiza o Estado da Cena e fica no histórico de dúvidas da aba.
 - **Menu ⚙ > Continuidade**: **Sempre perguntar**, **Só em contradição clara** (padrão) e **Nunca** (o Narrador escolhe e segue); no máximo uma pergunta a cada 6 turnos.
 - **A decidir**: enquanto a dúvida está aberta, a mensagem seguinte sempre a responde; falta definir se haverá um jeito de **adiar** a resposta e agir na Cena antes (por exemplo, "Responder depois").
+
+### 2.9 Diário (anotações, o que sei e NPCs)
+
+**Estado:** protótipo aprovado em 2026-11-24 (acréscimo ao protótipo da tela; ADR-078).
+
+- **Entrada**: botão **Diário** no cabeçalho da Ficha, **à esquerda do botão de expandir a ficha**. Abre uma janela larga, no formato da Ficha completa, com três abas na lateral. No Estado da Cena, o botão **ver ficha** de cada NPC abre o Diário já na ficha dele.
+- **Anotações**: só do jogador; salvar, editar e apagar, cada uma com o momento. O Narrador não as lê, a menos que o jogador as comente no chat.
+- **O que sei**: o que a **personagem** descobriu, agrupado por assunto, com a **origem** de cada informação (viu pessoalmente, ouviu dizer, suspeita) e a Cena. O Narrador pode saber mais.
+- **NPCs que conheço**: lista com filtros **Todos**, **Nesta Cena** e **Fora da Cena** e a ficha ao lado. Os NPCs são **criados pelo Narrador** conforme a história (a IA propõe, o motor valida); o jogador pode corrigir e anotar. O **Aduran**, o narrador geral, tem acesso a todas as fichas, inclusive aos segredos e aos stats; o Narrador da Cena recebe só as fichas de quem está presente.
+- **Ficha do NPC, duas abas**:
+  - **Narrativa**: identidade (aparência, onde costuma estar); personalidade e voz (3 traços, trejeitos, fala de exemplo, o que nunca faria); motivações (quer, teme) e **segredos**; o que sabe e lembra (conhecimentos com origem e confiança; lembranças do jogador com a Cena); relações e atitude com o jogador; estado atual (onde, humor, o que carrega, situação); **anotações do jogador** sobre o NPC.
+  - **Stats**: patamar, atributos, perícias e trilhas (Vida e Vontade). **Escondidos do jogador até ele descobrir**: o que foi descoberto aparece com o valor e a origem; o resto, como "?". Um texto diz quantas informações foram descobertas. **Os valores do protótipo são de exemplo**: a ficha de regras (sem Capacidades) vem da fatia 3 do Astra.
+  - Um NPC pouco conhecido mostra "Você ainda não sabe" nos campos que o jogador não descobriu.
+- **Segredos e stats escondidos**: cada bloco tem um botão **só de ícone** (olho) com dica; revelar abre um popup **"Tem certeza?"** (revelar é spoiler e não dá para desler) com **Cancelar** (foco inicial) e **Revelar mesmo assim**. O olho riscado esconde de novo, sem confirmação. Esc e o fundo fecham só o popup.
+
+### 2.10 Formatação do texto do chat (narração, fala, ação e pensamento)
+
+**Estado:** protótipo aprovado em 2026-11-24 (estilo "A · Simples"), com a aparência de livro de RPG. Vale para o chat da Cena e para o do Aduran.
+
+- **Convenção de marcas**, a mesma para o Narrador e para o jogador (as marcas são o que o modelo escreve e o jogador digita; a conversão para o visual é só da interface):
+  - **Narração**: sem marca, serifa normal.
+  - **Fala**: entre aspas, `"assim"`. Aparece **com travessão (—)**, em **itálico**, no mesmo estilo da ação, e **sem aspas**.
+  - **Ação**: entre asteriscos, `*assim*`. Aparece em **itálico**, na mesma cor e estilo da fala, sem marcador.
+  - **Pensamento**: entre sublinhados, `_assim_`. Aparece em itálico roxo, **entre parênteses** e com um fundo suave.
+- **Quem fala**: quando o texto começa com um nome conhecido seguido de dois pontos e uma fala (`Osvaldo: "…"`), a interface mostra um **chip roxo com o nome** (pixel, borda dourada) **acima da fala, sem recuo**, e o chip **abre a ficha do NPC no Diário**. Sem esse prefixo (ou para um nome desconhecido), a fala aparece só com o travessão.
+- **No campo de escrita**: uma barra com **Fala**, **Ação** e **Pensamento** aplica a marca ao texto selecionado (ou insere o par de marcas com o cursor dentro) e um botão **?** abre a legenda com exemplos. **Texto sem marca que o jogador escreve conta como ação.**
+- **O pensamento é privado**: o pensamento do personagem do jogador **não é conhecido pelos NPCs**; o contexto do Narrador deve marcá-lo assim, e o extrator do Estado da Cena e as fichas dos NPCs não o tratam como algo dito.
+- **Segurança**: o texto vindo do modelo é **escapado** antes de aplicar as marcas; HTML solto nunca é interpretado.
+- **Acessibilidade**: o destaque não depende só de cor (ADR-068); cada tipo difere pela forma (travessão, itálico, parênteses, chip).
+- **Se o modelo esquecer as marcas**, o trecho aparece como narração comum, sem erro; o teste de continuidade pode medir a aderência à convenção.
+- Estilos descartados no protótipo: faixa lateral, placa de nome (card) e duas colunas.
 
 ## 3. Estados
 
@@ -117,4 +148,4 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
 
 - Reflow a 320 px e DPI de 125% a 200% (ADR-068), a verificar na implementação.
 - `@Aduran` dentro do chat da Cena (entrega 3b).
-- Ficha do NPC e sua relação com o campo "Sabe" do Estado da Cena (ADR-078, item 6).
+- Como o jogador **descobre** os stats de um NPC na história (observação, testes, informações): não definido; a ficha de regras do NPC só será definida na fatia 3 do Astra (os valores do protótipo são de exemplo).
