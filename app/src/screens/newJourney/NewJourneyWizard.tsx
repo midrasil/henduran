@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { BackendError, type BackendInfo, type FieldError } from "../../api/backend";
 import { chatErrorMessage, isAbortError, StreamError } from "../../api/chatStream";
@@ -119,6 +119,8 @@ export interface NewJourneyWizardProps {
   validationDelayMs?: number;
   /** Estado do motor de IA: sem modelo pronto, os botões do Narrador ficam desabilitados. */
   engine?: EngineStatus | null;
+  /** Conteúdo da tela Modelos, aberto num diálogo na tela Iniciar Jornada (sem sair do assistente). */
+  modelsPanel?: ReactNode;
 }
 
 interface SubmitErrors {
@@ -151,7 +153,9 @@ export function NewJourneyWizard({
   makeSeed = randomSeed,
   validationDelayMs,
   engine = null,
+  modelsPanel,
 }: NewJourneyWizardProps) {
+  const [modelsOpen, setModelsOpen] = useState(false);
   const [step, setStep] = useState(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
@@ -820,6 +824,8 @@ export function NewJourneyWizard({
                 }}
                 disabled={creating}
                 narrator={narrator}
+                engine={engine}
+                {...(modelsPanel ? { onConfigureModel: () => setModelsOpen(true) } : {})}
               />
             </>
           ) : null}
@@ -848,6 +854,12 @@ export function NewJourneyWizard({
       </section>
 
       {aiNotice ? <AiToast notice={aiNotice} onUndo={undoFill} onClose={() => setAiNotice(null)} /> : null}
+
+      {modelsPanel ? (
+        <Dialog open={modelsOpen} size="wide" title="Modelos" onClose={() => setModelsOpen(false)} actions={<Button onClick={() => setModelsOpen(false)}>Voltar à criação</Button>}>
+          <div className="nj-models">{modelsPanel}</div>
+        </Dialog>
+      ) : null}
 
       <PortraitDialog
         open={portraitOpen}

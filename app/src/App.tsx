@@ -248,6 +248,16 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               schema={rules.schema}
               onCreated={onCreated}
               engine={engine.status}
+              modelsPanel={
+                <ModelsView
+                  info={info}
+                  engine={engine.status}
+                  engineError={engine.error}
+                  onEngineChange={engine.setStatus}
+                  refreshEngine={engine.refresh}
+                  {...(copyText ? { copyText } : {})}
+                />
+              }
               onCancel={() => dispatch({ type: "go", screen: "menu" })}
             />
           ) : (

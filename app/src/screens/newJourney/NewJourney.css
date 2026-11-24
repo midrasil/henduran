@@ -1633,3 +1633,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Narrador na tela Iniciar Jornada e a tela Modelos dentro de um diálogo */
+.nj-model__status { font-size: var(--fs-xs); line-height: 1.35; color: var(--muted); }
+.nj-models { max-height: 62vh; overflow: auto; padding-right: 4px; }

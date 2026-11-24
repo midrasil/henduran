@@ -76,6 +76,7 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 
 - **Esquerda**: retrato, nome e Conceito do personagem e o quadro **Onde tudo começa** (Mundo, lugar inicial e "Em Cena, em um período sorteado pelo jogo", ADR-076).
 - **Direita, cartão**: **Nome da Jornada** (opcional; padrão "A Jornada de <nome>" no *placeholder* e na dica) e **Descrição** (opcional, até 2.000 caracteres), cada um com o botão **Sugerir** do Narrador (que usa o Mundo, o lugar inicial e o personagem). O texto de ajuda diz que o Narrador lê a descrição e que os dois podem ser mudados depois, dentro da Jornada. Um aviso lembra que, ao iniciar, o Mundo e o personagem são gravados e o Aduran abre a primeira Cena.
+- **Narrador e modelo (2026-11-24)**: na lateral esquerda, o quadro **Narrador** mostra se o modelo está pronto (ou o aviso do motor) e o botão **Configurar modelo**, que abre a tela **Modelos** num diálogo, **sem sair da criação**: o que já foi preenchido não se perde, e o estado do modelo se atualiza ao voltar (**Voltar à criação**).
 - **Rodapé**: Cancelar, **Voltar** (à Revisão) e **Iniciar Jornada**. "Criando…" desabilita tudo; em erro, aviso vermelho dizendo que nada foi gravado pela metade e que os dados continuam no assistente; em sucesso, abre a tela da Jornada em Cena no lugar inicial.
 - **Dado novo (proposta)**: a **descrição da Jornada** não existe hoje no modelo de dados. Proposta: guardá-la em `journey_meta` (ADR-075) e incluí-la no contexto do Narrador. Precisa de aprovação.
 

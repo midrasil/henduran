@@ -301,3 +301,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Pendências: protótipo de Mundos; teste do Narrador com modelo local real; TipTap em navegador real.
 - Arquivos principais: `app/src/ui/HistoryEditor/*`, `app/src/screens/newJourney/narrator.tsx`, `app/src/screens/WorldsScreen.tsx`, `app/src/screens/journey/EditJourneyDialog.tsx`, `backend/henduran/narrative/fill.py`, `backend/henduran/services/{fill,journey_edit,world_library,journey_deletion}.py`, migração `journey/0006`, `docs/ui-ux/13-mundos.md`.
 - Entrega: PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.
+- Acréscimo (2026-11-24): botão **Configurar modelo** na tela Iniciar Jornada, abrindo Modelos num diálogo sem sair da criação (pedido do responsável); `App.tsx`, `NewJourneyWizard.tsx`, `StartStep.tsx`; 321 testes passando.

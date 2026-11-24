@@ -1,5 +1,7 @@
 import type { WorldContent } from "../../api/journeys";
-import { Portrait, TextArea, TextField } from "../../ui";
+import type { EngineStatus } from "../../api/engine";
+import { engineNoticeText } from "../../components/EngineNotice";
+import { Button, PixelIcon, Portrait, TextArea, TextField } from "../../ui";
 import type { PortraitDraft } from "./CharacterStep";
 import type { CharacterForm } from "./model";
 import { SuggestButton, type NarratorControls } from "./narrator";
@@ -22,6 +24,18 @@ export interface StartStepProps {
   disabled: boolean;
   /** Sugerir do Narrador no nome e na descrição (usa o Mundo, o lugar inicial e o personagem). */
   narrator: NarratorControls;
+  /** Estado do motor de IA, para mostrar se o Narrador está pronto. */
+  engine?: EngineStatus | null;
+  /** Abre a configuração do modelo sem sair da criação (o que já foi preenchido não se perde). */
+  onConfigureModel?: () => void;
+}
+
+/** Texto curto do estado do Narrador na tela Iniciar Jornada. */
+export function modelStatusText(engine: EngineStatus | null): string {
+  if (engine && engine.provider !== "local") return "Provedor de teste pronto.";
+  const notice = engineNoticeText(engine);
+  if (notice === null) return engine?.active_model_name ? `Modelo pronto: ${engine.active_model_name}.` : "Modelo pronto.";
+  return notice;
 }
 
 /** Tela Iniciar Jornada: nome e descrição da Jornada (os dois opcionais). */
@@ -49,6 +63,17 @@ export function StartStep(props: StartStepProps) {
             <dd>Em Cena, em um período sorteado pelo jogo</dd>
           </dl>
         </div>
+        {props.onConfigureModel ? (
+          <div className="nj-box" data-testid="nj-model-box">
+            <h4 className="nj-box__title">Narrador</h4>
+            <p className="nj-model__status" role="status">
+              {modelStatusText(props.engine ?? null)}
+            </p>
+            <Button size="sm" onClick={props.onConfigureModel} disabled={props.disabled}>
+              <PixelIcon name="cog" /> Configurar modelo
+            </Button>
+          </div>
+        ) : null}
       </aside>
       <div className="nj-main">
         <section className="nj-card surface-parchment" aria-labelledby="nj-start-title">
