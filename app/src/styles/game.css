@@ -1,4 +1,4 @@
-/* Telas de jogo: menu inicial, Jornadas, assistente de Nova Jornada e Jornada aberta. Só tokens. */
+/* Telas de jogo: Jornadas, assistente de Nova Jornada e Jornada aberta. Só tokens. */
 
 /* ------------------------------------------------------------ comuns */
 
@@ -117,121 +117,7 @@ h3[tabindex="-1"]:focus,
   flex: 1 1 12rem;
 }
 
-/* --------------------------------------------------------- menu inicial */
-
-.menu {
-  /* contém os .visually-hidden dentro da rolagem */
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  max-width: 1100px;
-  min-height: 0;
-  padding: var(--space-3) 4px var(--space-2);
-  overflow-y: auto;
-}
-
-.menu__title-plate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: var(--space-2) var(--space-4);
-  text-align: center;
-  background: var(--color-surface);
-  --frame-inner: var(--color-frame);
-  --frame-hi: var(--color-surface-raised);
-  --frame-lo: var(--color-outline);
-}
-
-.menu__title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: calc(3.5rem * var(--text-scale));
-  color: var(--color-accent);
-}
-
-.menu__title:focus-visible {
-  outline-offset: 6px;
-}
-
-.menu__mark {
-  color: var(--color-accent);
-}
-
-.menu__subtitle {
-  font-size: var(--font-size-lg);
-  font-style: italic;
-  color: var(--color-text);
-}
-
-.menu__body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--space-3);
-  width: 100%;
-}
-
-.menu__buttons {
-  display: flex;
-  flex: 0 1 320px;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: 4px;
-}
-
-.menu__button {
-  justify-content: flex-start;
-  width: 100%;
-  min-height: 52px;
-  font-size: var(--font-size-lg);
-}
-
-.menu__button--main {
-  min-height: 60px;
-}
-
-.menu__side {
-  display: flex;
-  flex: 1 1 320px;
-  flex-direction: column;
-  gap: var(--space-2);
-  max-width: 480px;
-  padding: 4px;
-}
-
-.menu__error {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  background: var(--color-surface);
-}
-
-.last-journey__name {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-}
-
-.last-journey__facts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.last-journey__facts li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
+/* Menu inicial: estilos em src/screens/menu/MainMenu.css. */
 
 /* -------------------------------------------------------------- Jornadas */
 
@@ -481,24 +367,5 @@ h3[tabindex="-1"]:focus,
 
   .wizard__footer {
     grid-column: 1;
-  }
-}
-
-@media (max-height: 720px) {
-  .menu {
-    gap: var(--space-2);
-    padding-top: var(--space-2);
-  }
-
-  .menu__title {
-    font-size: calc(2.5rem * var(--text-scale));
-  }
-
-  .menu__button {
-    min-height: var(--target-primary);
-  }
-
-  .menu__button--main {
-    min-height: 52px;
   }
 }

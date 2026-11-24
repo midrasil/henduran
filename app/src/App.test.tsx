@@ -100,10 +100,10 @@ afterEach(() => {
 });
 
 describe("App", () => {
-  it("mostra Iniciando serviço… e depois Conectado", async () => {
+  it("mostra Iniciando o serviço e depois Conectado", async () => {
     stubFetch({});
     render(<App backendOptions={{ attempts: 2, retryDelayMs: 1 }} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Iniciando serviço…");
+    expect(screen.getByRole("status")).toHaveTextContent("Iniciando o serviço");
     expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeDisabled();
     await screen.findByText("Conectado");
     expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeEnabled();

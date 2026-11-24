@@ -25,6 +25,26 @@ export function formatSavedAt(iso: string | null | undefined, now: Date = new Da
   return `${day}, ${time}`;
 }
 
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Há quanto tempo foi o salvamento (ISO 8601), para o cartão do menu: "Salvo agora há
+ * pouco", "Salvo há 5 minutos", "Salvo há 2 horas", "Salvo há 3 dias". Depois de 30 dias
+ * (ou com o relógio atrasado), a data de `formatSavedAt`: "Salvo: 23 de nov. de 2026, 14:27".
+ */
+export function formatSavedAgo(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return "Nunca salvo";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return `Salvo: ${iso}`;
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+  if (minutes < 0 || minutes >= 30 * 24 * 60) return `Salvo: ${formatSavedAt(iso, now)}`;
+  if (minutes < 1) return "Salvo agora há pouco";
+  if (minutes < 60) return `Salvo há ${plural(minutes, "minuto", "minutos")}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Salvo há ${plural(hours, "hora", "horas")}`;
+  return `Salvo há ${plural(Math.floor(hours / 24), "dia", "dias")}`;
+}
+
 /** Data de um backup (`AAAAMMDD-HHMMSS`, já em hora local) como "23/11/2026 às 14:27:05". */
 export function formatBackupDate(stamp: string): string {
   const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(stamp);

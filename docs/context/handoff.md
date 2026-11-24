@@ -1,16 +1,18 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
+Atualizado em 2026-11-23 após a tarefa `menu-inicial` (implementação do redesenho aprovado).
 
 ## Estado
 
-- Tarefa: ícone padrão do jogo (janela, barra de tarefas, Alt+Tab, `.exe` e favicon). Rosa dos ventos dourada em pixel art, pontas roxas, medalhão escuro e aro dourado, com as cores dos tokens de `app/src/styles/tokens.css`.
-- Resultado: `app/src-tauri/icons/` regenerado (`32x32`, `128x128`, `128x128@2x`, `icon.png`, `icon.ico` com 16 a 256 px); `docs/ui-ux/icone/gerar_icone.py` e `icone-1024.png` guardam a fonte; `app/public/favicon.png` e `<link rel="icon">` em `app/index.html` para o navegador. O `tauri.conf.json` já apontava para os arquivos.
-- Ocorrência: o ícone não aparecia no Windows porque o `henduran.exe` de debug tinha sido compilado antes e o Cargo não refaz o recurso do Windows só porque os PNG/ICO mudaram. Resolvido com `touch app/src-tauri/build.rs` e `cargo build`; o responsável confirmou no app. Se trocar o ícone de novo, repetir o `touch`; alternativa permanente: `println!("cargo:rerun-if-changed=icons")` no `build.rs` (não feito).
-- Validações: `cargo check` e `cargo build` passaram; ícone embutido no exe conferido por extração; o responsável conferiu a janela e a barra de tarefas. `npm run tauri build` (ícone do instalador) não foi testado.
-- Branch: `chore/icone-do-jogo`; PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.
-- Antes disso: PR #25 (largura das mensagens da Jornada) mergeado, junto com #23 (tela da Jornada) e #24 (protótipo do menu). O commit provisório do ícone foi feito pelo responsável com o opencode, em outra máquina, quando acabaram os tokens.
-- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos prontos: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
+- Tarefa: implementação do menu inicial conforme `docs/ui-ux/11-menu-inicial.md` e `prototipos/menu-inicial.html`: paisagem animada em canvas (castelos simétricos, estandartes, cantos dourados), título com rosa dos ventos, botões no eixo central (Modelos fora dos botões), cartão "Última Jornada" (retrato ou iniciais, lugar e Mundo, período e data do calendário, Cena em andamento, "Salvo há…") e rodapé com versão e indicador clicável de serviço e modelo.
+- Backend: `GET /journeys` ganhou `calendar`, `current_scene_title` e `portrait` (opcionais, só com status `ok`, leitura sem migrar, `null` se não puder ler) e a rota `GET /journeys/{id}/portrait` (token obrigatório, `no-store`; 404 `jornada_nao_encontrada` e `retrato_ausente`, 422 `id_invalido`).
+- Ajuste visual do fundo: castelos fora do cartão e com a base no chão (`castlePlacement` em `MenuLandscape.tsx`), astros longe do título e do cartão.
+- Diferenças em relação ao protótipo (registradas em `11-menu-inicial.md`, seção 5): rodapé "Henduran · v<versão>", estados extras do indicador (carregando o modelo, baixando o motor, erro do serviço), retrato de 64 px, estado de primeira vez sem botão "Criar a primeira Jornada", Sair só no Tauri.
+- Validações: `npm run typecheck` sem erros; `npm run test` 285/285; `pytest` 591 passando, 1 pulado e 1 falha em `test_storage.py::test_bloqueio_contra_outro_processo_e_liberado_ao_matar` na execução completa (teste de bloqueio entre processos, arquivo não alterado nesta tarefa), que passou isolado; `vite build` sem erro (relatado pelo dev). O responsável validou o menu no app.
+- Não verificado: animação em movimento em todos os períodos, DPI de 125% a 200%, leitor de tela, hover e foco dos botões em detalhe, 1024×768 do Tauri com barra de título.
+- Branch: `feat/menu-inicial`; PR [#27](https://github.com/midrasil/henduran/pull/27) aberto contra `main`.
+- **Em paralelo, ainda não entregue:** o protótipo da **Nova Jornada** (`docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html`) está em revisão (Mundo e Protagonista revisados; falta a Revisão) num worktree separado, `../henduran-proto`, branch `docs/prototipo-nova-jornada`, sem commit. Decisões em aberto dele: formato da História (hoje texto simples de 4.000 caracteres; o editor produz formatação) e a rota do Narrador para preencher dados.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
 
 ## Decisões vigentes
 
@@ -63,4 +65,4 @@ Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
 
 ## Próximo passo recomendado
 
-⭐ Retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir a largura das mensagens. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups. Opcional: testar `npm run tauri build` para ver o ícone no instalador.
+⭐ Concluir a revisão do protótipo da **Nova Jornada** (falta a tela de Revisão), entregá-lo (PR de documentação) e só então mandar o dev implementar. Depois, prototipar **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado. Pendente de decisão antes da implementação da Nova Jornada: formato da História e rota do Narrador para preencher dados.

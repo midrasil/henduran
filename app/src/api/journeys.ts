@@ -6,7 +6,7 @@
  * definitiva é a do servidor. Erros chegam como `BackendError` (código, mensagem
  * e, nas validações, erros por campo).
  */
-import type { BackendInfo, FieldError } from "./backend";
+import { authHeaders, baseUrl, errorFromResponse, type BackendInfo, type FieldError } from "./backend";
 import { request } from "./engine";
 
 /* ------------------------------------------------------------------ regras */
@@ -191,6 +191,12 @@ export interface JourneySummary {
   error_code: string | null;
   error_message: string | null;
   rules_version: string | null;
+  /** Cartão "Última Jornada" do menu (só com `status` `ok`; ausentes em respostas antigas). */
+  calendar?: CalendarDate | null;
+  /** Título da Cena em andamento; `null` Fora de Cena. */
+  current_scene_title?: string | null;
+  /** Retrato servido sem abrir a Jornada (`url_path` = `/journeys/<id>/portrait`). */
+  portrait?: PortraitInfo | null;
 }
 
 export interface JourneyList {
@@ -402,6 +408,20 @@ export const deleteJourney = (info: BackendInfo, id: string) =>
 
 export const listBackups = (info: BackendInfo, id: string) =>
   request<{ backups: BackupInfo[] }>(info, `${journeyPath(id)}/backups`);
+
+/**
+ * Imagem de um retrato pela rota do serviço (`portrait.url_path`); exige o token, por
+ * isso não vai direto num `<img src>`. `null` sem retrato (404).
+ */
+export async function fetchPortraitAt(info: BackendInfo, urlPath: string, signal?: AbortSignal): Promise<Blob | null> {
+  if (!urlPath.startsWith("/journeys/")) return null;
+  const init: RequestInit = { headers: authHeaders(info) };
+  if (signal) init.signal = signal;
+  const response = await fetch(`${baseUrl(info)}${urlPath}`, init);
+  if (response.status === 404) return null;
+  if (!response.ok) throw await errorFromResponse(response);
+  return response.blob();
+}
 
 export const restoreBackup = (info: BackendInfo, id: string, backup: string) =>
   request<{ restored_from: string; preserved_as: string | null }>(info, `${journeyPath(id)}/restore`, {

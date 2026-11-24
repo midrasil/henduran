@@ -24,18 +24,29 @@ Regras:
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
 import shutil
+import sqlite3
 import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from henduran.db.connection import SIDE_FILES, Database, DatabaseError, Transaction, timestamp, utc_now_iso
+from henduran.db.connection import (
+    SIDE_FILES,
+    Database,
+    DatabaseError,
+    Transaction,
+    connect_readonly,
+    timestamp,
+    utc_now_iso,
+)
 from henduran.db.migrations import MigrationError, latest_version, list_backup_files, migrate
+from henduran.narrative.calendar import date_view
 from henduran.paths import DataPaths, InvalidIdError, new_id, validate_id
 from henduran.storage import character as character_store
 from henduran.storage.errors import JourneyDamaged, StorageError, WorldDamaged
@@ -95,9 +106,57 @@ class JourneySummary:
     error_code: str | None = None
     error_message: str | None = None
     rules_version: str | None = None  # versão das regras aplicada (migração 0002); None se ilegível
+    # Cartão "Última Jornada" do menu (docs/ui-ux/11-menu-inicial.md); só com status ``ok``, senão None.
+    calendar: dict[str, Any] | None = None  # data no calendário do Mundo (narrative.calendar.date_view)
+    current_scene_title: str | None = None  # título da Cena em andamento; None Fora de Cena
+    portrait: dict[str, Any] | None = None  # {"crop", "url_path"}: o retrato servido sem abrir a Jornada
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def journey_portrait_url_path(journey_id: str) -> str:
+    """Rota do retrato de uma Jornada **sem abri-la** (``GET /journeys/{id}/portrait``)."""
+    return f"/journeys/{journey_id}/portrait"
+
+
+def _read_world_content(path: Path, version: Any) -> Any:
+    """Conteúdo (JSON) de uma versão do Mundo, lido em modo somente leitura; ``None`` se não houver."""
+    conn = connect_readonly(path)
+    try:
+        row = conn.execute("SELECT content FROM world_versions WHERE version = ?", (version,)).fetchone()
+    finally:
+        conn.close()
+    return None if row is None else json.loads(row["content"])
+
+
+def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}  # nomes fixos, nunca de fora
+
+
+def _read_open_scene_title(conn: sqlite3.Connection) -> str | None:
+    """Título da Cena aberta ("Cena N" sem título); ``None`` sem Cena aberta ou em bancos antigos."""
+    from henduran.narrative.scene import scene_title  # importação tardia: narrative.scene importa storage
+
+    columns = _columns(conn, "scenes")
+    if "status" not in columns:
+        return None
+    title = "title" if "title" in columns else "NULL AS title"
+    row = conn.execute(
+        f"SELECT id, {title}, (SELECT COUNT(*) FROM scenes s2 WHERE s2.id <= scenes.id) AS number "
+        "FROM scenes WHERE status = 'aberta'"
+    ).fetchone()
+    return None if row is None else scene_title(dict(row))
+
+
+def _read_portrait_row(conn: sqlite3.Connection) -> tuple[str, str] | None:
+    """``(arquivo, enquadramento JSON)`` do retrato gravado na ficha, ou ``None``."""
+    if not {"portrait_file", "portrait_crop"} <= _columns(conn, "character"):
+        return None
+    row = conn.execute("SELECT portrait_file, portrait_crop FROM character WHERE id = 1").fetchone()
+    if row is None or row["portrait_file"] not in character_store.PORTRAIT_FILES or not row["portrait_crop"]:
+        return None
+    return row["portrait_file"], row["portrait_crop"]
 
 
 @dataclass
@@ -398,7 +457,65 @@ class JourneyStore:
             return mark("sem_mundo", "mundo_danificado", world.error_message or "O Mundo desta Jornada não pode ser lido.")
         if world_version not in world.versions:
             return mark("sem_mundo", "versao_ausente", f"O Mundo não tem a versão {world_version} usada pela Jornada.")
+        self._fill_card(summary, meta)
         return summary
+
+    def _fill_card(self, summary: JourneySummary, meta: dict[str, Any]) -> None:
+        """Dados do cartão "Última Jornada" do menu: data no calendário, Cena em andamento e retrato.
+
+        Tudo em modo somente leitura e sem migrar; se algo não puder ser lido, o campo fica
+        ``None`` e a lista continua (o cartão mostra o que houver).
+        """
+        jid = summary.id
+        try:
+            world = _read_world_content(self.paths.world_db_file(str(summary.world_id)), summary.world_version)
+            summary.calendar = date_view(
+                world, meta.get("calendar_year"), meta.get("calendar_month"), meta.get("calendar_day")
+            )
+        except (sqlite3.Error, ValueError, TypeError, KeyError) as exc:
+            log.warning("data da jornada %s ilegível: %s", jid, exc)
+        try:
+            conn = connect_readonly(self.paths.journey_db_file(jid))
+            try:
+                summary.current_scene_title = _read_open_scene_title(conn)
+                portrait = _read_portrait_row(conn)
+            finally:
+                conn.close()
+        except (sqlite3.Error, ValueError, TypeError) as exc:
+            log.warning("cena ou retrato da jornada %s ilegível: %s", jid, exc)
+            return
+        if portrait is None or not (self.paths.journey_assets_dir(jid) / portrait[0]).is_file():
+            return
+        try:
+            crop = json.loads(portrait[1])
+        except ValueError:
+            return
+        summary.portrait = {"crop": crop, "url_path": journey_portrait_url_path(jid)}
+
+    def portrait_file(self, journey_id: str) -> tuple[Path, str]:
+        """Caminho e ``Content-Type`` do retrato de uma Jornada **sem abri-la** (somente leitura).
+
+        Levanta :class:`StorageError` ``jornada_nao_encontrada`` ou ``retrato_ausente``
+        (também quando o banco não pode ser lido: o menu mostra as iniciais).
+        """
+        jid = checked_id(journey_id)
+        if not self.paths.journey_dir(jid).is_dir():
+            raise StorageError("jornada_nao_encontrada", "Jornada não encontrada.")
+        db_file = self.paths.journey_db_file(jid)
+        row = None
+        if db_file.is_file():
+            try:
+                conn = connect_readonly(db_file)
+                try:
+                    row = _read_portrait_row(conn)
+                finally:
+                    conn.close()
+            except sqlite3.Error:
+                row = None
+        path = None if row is None else self.paths.journey_assets_dir(jid) / row[0]
+        if path is None or not path.is_file():
+            raise StorageError("retrato_ausente", "O personagem não tem retrato.")
+        return path, character_store.PORTRAIT_FILES[row[0]]
 
     def list_journeys(self) -> list[JourneySummary]:
         """Resumo de todas as Jornadas, do último salvamento mais recente ao mais antigo.

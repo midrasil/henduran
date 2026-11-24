@@ -71,9 +71,9 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
     if (nav.screen === "menu" || nav.screen === "jornadas") void reloadJourneys();
   }, [nav.screen, reloadJourneys]);
 
-  // Na Jornada, confere de novo o estado do motor.
+  // Na Jornada e ao voltar ao menu (indicador do rodapé), confere de novo o estado do motor.
   useEffect(() => {
-    if (nav.screen === "jornada") void refresh();
+    if (nav.screen === "jornada" || nav.screen === "menu") void refresh();
   }, [nav.screen, refresh]);
 
   const open = useCallback(
@@ -161,12 +161,15 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
         </header>
       ) : null}
 
-      {screen !== "jornada" ? <SkyBackdrop period={period} className={`app__sky app__sky--${screen}`} /> : null}
+      {/* No menu, a paisagem viva é do próprio menu; na Jornada, o céu fica na barra. */}
+      {screen !== "jornada" && screen !== "menu" ? <SkyBackdrop period={period} className={`app__sky app__sky--${screen}`} /> : null}
 
       <main ref={mainRef} className={`app__main app__main--${screen}`}>
         {screen === "menu" ? (
           <MainMenu
-            connected={info !== null}
+            backend={status}
+            engine={engine.status}
+            version={APP_VERSION}
             list={journeys.data}
             listError={journeys.error}
             opening={opening !== null}
@@ -256,18 +259,13 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
         ) : null}
       </main>
 
-      {screen !== "jornada" ? (
-      <footer className="status-bar">
-        <StatusIndicator status={status} />
-        <p className="status-bar__item">
-          <PeriodLabel period={period} />
-        </p>
-        {screen === "menu" ? (
-          <p className="status-bar__item status-bar__tagline">
-            Henduran v{APP_VERSION} · RPG solo guiado por IA
+      {screen !== "jornada" && screen !== "menu" ? (
+        <footer className="status-bar">
+          <StatusIndicator status={status} />
+          <p className="status-bar__item">
+            <PeriodLabel period={period} />
           </p>
-        ) : null}
-      </footer>
+        </footer>
       ) : null}
     </div>
   );
