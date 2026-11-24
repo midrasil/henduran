@@ -15,7 +15,7 @@ Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu in
 - Validações: em worktree temporário limpo, com somente as mudanças desta tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal havia mudanças concorrentes da Nova Jornada (`App.tsx`, `newJourney/`, `api/`, `ui/`, backend), que quebram o typecheck e um teste de `model.ts`; elas **não** fazem parte deste commit.
 - Revalidado após o ajuste de gap/sombra: 15/15 no teste do menu, 285/285 na suíte e `typecheck` OK no worktree do PR.
 - Não verificado: layout real do menu sem cartão e sem o "quadrado" da sombra em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
-- Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
+- Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) foi merged; o ajuste posterior de gap e sombra segue no PR [#31](https://github.com/midrasil/henduran/pull/31), aberto contra `main`.
 
 ## Decisões vigentes
 

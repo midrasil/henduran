@@ -12,7 +12,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ajuste posterior no mesmo PR: responsável pediu mais respiro entre os botões (12 → 16 px, `var(--space-2)`); o afastamento revelou um "quadrado" causado pela sombra externa, que foi removida, mantendo moldura e bisel em pixel.
 - Validações: em worktree temporário com apenas as mudanças da tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal, mudanças concorrentes da Nova Jornada causaram falhas fora deste escopo (`App.tsx` importa `CreatedExtras` inexistente; `model.test.ts` espera `history_html`); foram deixadas de fora do commit. Conferência visual no app real fica com o responsável. Revalidado após o ajuste de gap/sombra: 15/15, 285/285 e `typecheck` OK no worktree do PR.
 - Arquivos: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
-- Entrega: branch `fix/rodape-menu-modelo`; PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
+- Entrega: branch `fix/rodape-menu-modelo`; PR [#29](https://github.com/midrasil/henduran/pull/29) foi merged; o ajuste posterior de gap e sombra foi entregue no PR [#31](https://github.com/midrasil/henduran/pull/31).
 
 ## 2026-11-23 — `largura-mensagens-chat`
 
