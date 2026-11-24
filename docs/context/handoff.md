@@ -11,7 +11,7 @@ Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 1).
 - Não verificado: app Tauri real em DPI de 125% a 200%, leitor de tela, reflow a 320 px, movimento reduzido, comandos de formatação do editor em outros navegadores.
 - Diferenças em relação ao protótipo (seção 9 do doc 12): selos das abas contam erros do servidor; **aparência continua obrigatória** (o banco exige 1 caractere); sem botões do Narrador; trocar de Mundo zera o lugar inicial (ids `lugar-N` se repetem); moldura sem cantos em pixel e trilho só com o céu; zoom do retrato até 4 (o serviço aceita até 8).
 - Ocorrência: no meio do trabalho a pasta principal foi trocada para `fix/rodape-menu-modelo` (PR #29, mergeado); as alterações do dev foram levadas para `feat/nova-jornada` em cima da `main` atualizada, sem conflito.
-- Branch: `feat/nova-jornada`; PR aberto contra `main` (link no jornal).
+- Branch: `feat/nova-jornada`; PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
 - Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial e Nova Jornada.
 
 ## Decisões de 2026-11-24 para a rodada 2 e depois

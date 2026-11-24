@@ -289,3 +289,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - TipTap (só consultado): licença MIT nos pacotes que entrariam; `@tiptap/core` com 3,3 MB descompactado no npm; o StarterKit v3 traz `link` e `code`, que serão desligados.
 - Ocorrência: troca de branch da pasta principal durante o trabalho (PR #29); alterações recolocadas em `feat/nova-jornada` sem conflito. O dev deixou um backend de teste na porta 8765, que pode ser fechado.
 - Arquivos principais: `app/src/screens/newJourney/*`, `app/src/ui/HistoryEditor/*`, `backend/henduran/richtext.py`, `backend/henduran/services/journey_creation.py`, `backend/henduran/storage/{worlds,character,journeys}.py`, `backend/henduran/api/app.py`, migrações `journey/0005` e `world/0002`, `docs/ui-ux/12-nova-jornada.md`.
+- Entrega: PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
