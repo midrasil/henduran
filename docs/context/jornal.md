@@ -333,3 +333,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrências: no publicado, o trilho da Nova Jornada apareceu na tela Modelos (ordem dos estilos mudou fora do navegador local); corrigido com estilos no fim do corpo e `!important`; uma edição apagou parte do protótipo e foi refeita do original. O skills.sh não tem API pública conhecida (pesquisa na web): a importação usa repositórios públicos do GitHub.
 - Em aberto: padrão do filtro +18, licenças das skills do acervo (81 de 520 declaram), API e termos do skills.sh, ativação por Jornada e por Cena (ADR-078).
 - Arquivos: `docs/ui-ux/14-modelos.md`, `docs/ui-ux/prototipos/modelos.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/context/handoff.md`.
+
+## 2026-11-24 — `prototipo-estado-cena`
+
+- Rota: conversa com o planejador → protótipo em duas rodadas (artifact privado, mesmo link) → aprovação → Entrega. Só documentação.
+- Resultado: acréscimo ao protótipo da tela da Jornada (`09`, item 2.8): aba **Estado da Cena** no chat e **dúvida de continuidade** como cartão. ADR-078 atualizado (parcialmente confirmado).
+- Decisões do responsável: o Estado da Cena é **uma aba do chat** e a **Ficha fica como era** (a primeira versão pôs o painel numa aba da Ficha); o cartão de dúvida **ocupa toda a largura do chat como uma mensagem**, é só um destaque, **sem botões de escolha** (no máximo "Você decide"); a **próxima mensagem digitada responde ao cartão e fica nele, fora do chat**; depois vira um botão para reaparecer, entre as ações da mensagem ao passar o mouse, e fica no Log e num histórico no painel.
+- Observação do responsável: o contexto de um NPC vem principalmente da **ficha** dele (o que sabe etc.), não da Cena; como a ficha ainda não foi montada, o mapeamento do campo "Sabe" ficou provisório e virou item no backlog.
+- Ocorrências: a primeira versão pôs o painel na coluna da Ficha e com botões de resposta, e foi refeita conforme o pedido. No teste automatizado, o estado Fora de Cena não rodou na primeira vez por falta de `matchMedia` no jsdom.
+- Em aberto: ficha do NPC; confirmar os ⏳ restantes do ADR-078; adiar a resposta à dúvida.
+- Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`, `docs/context/handoff.md`.

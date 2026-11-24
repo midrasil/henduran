@@ -425,6 +425,24 @@ svg.px { shape-rendering: crispEdges; display: block; }
   .fsheet, .crop { grid-template-columns: minmax(0,1fr); }
   .fs-main .skills.two { grid-template-columns: 1fr; }
 }
+
+/* ---------------------------------------- Estado da Cena e dúvida de continuidade (ADR-078, proposta) */
+.stp { background: var(--ink-800); border: 3px solid var(--ink-600); padding: 8px 10px; display: grid; gap: 3px; align-content: start; } .stp-h { display: flex; align-items: center; gap: 8px; font-family: var(--font-serif); font-size: var(--fs-lg); color: var(--gold-200); }
+.stgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 10px; } .stcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 20px; }
+.stag { font: 600 11px/1 var(--font-pixel); background: var(--purple-600); padding: 3px 6px; color: var(--ivory-100); }
+.str { display: grid; grid-template-columns: 5.2em minmax(0, 1fr) auto; gap: 6px; align-items: start; padding: 2px 0; border-top: 1px dashed var(--ink-600); font-size: var(--fs-xs); } .str.chg { background: rgba(240,192,80,.08); }
+.stk { color: var(--muted); } .stv { font-family: var(--font-serif); font-size: var(--fs-md); line-height: 1.25; color: var(--ivory-100); } .stnew, .stfix { font: 600 10px/1 var(--font-pixel); font-style: normal; padding: 2px 5px; margin-left: 4px; } .stnew { background: var(--gold-400); color: var(--ink-950); } .stfix { background: var(--green-700); color: var(--ivory-100); }
+.stedit { grid-column: 2 / 4; display: flex; gap: 4px; } .stedit input { flex: 1; min-width: 0; background: var(--ink-950); border: 3px solid var(--gold-400); padding: 2px 8px; color: var(--ivory-100); font-family: var(--font-serif); font-size: var(--fs-md); min-height: 34px; } .stedit .mini.ok { color: var(--green-300); }
+.stwhere { display: grid; gap: 2px; font-size: var(--fs-xs); color: var(--muted); } .stwhere span:first-child { color: var(--ivory-100); font-family: var(--font-serif); font-size: var(--fs-md); display: flex; align-items: center; gap: 6px; } .stwhere svg { width: 14px; height: 14px; }
+.stopen { margin: 0; padding-left: 1.1em; font-family: var(--font-serif); font-size: var(--fs-md); display: grid; gap: 3px; } .stsk { display: flex; gap: 6px; flex-wrap: wrap; } .skchip { background: var(--purple-800); border: 2px solid var(--purple-500); padding: 3px 8px; font-size: var(--fs-xs); display: inline-flex; gap: 6px; align-items: center; } .skchip.pend { border-style: dashed; background: transparent; } .skchip .mini { width: auto; padding: 0 6px; font-size: 11px; }
+.stfoot, .stsub, .stempty { color: var(--muted); font-size: var(--fs-xs); line-height: 1.4; padding: var(--s1) 0; margin: 0; } .stnote { background: rgba(47,122,60,.25); border: 2px solid var(--green-300); padding: 6px 10px; margin: 0 0 8px; font-size: var(--fs-xs); }
+.scroll > .stfoot, .scroll > .stnote { margin-left: var(--s2); margin-right: var(--s2); } .scroll > .stfoot { padding-top: var(--s2); }
+.stdb { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .sec .stdb, .sec .stgrid, .sec .stwhere { margin-top: 2px; }
+.stdb li { background: var(--ink-800); border: 3px solid var(--ink-600); padding: 8px 12px; display: grid; gap: 3px; justify-items: start; } .stdb li.open { border-color: var(--gold-400); } .stdb b { font-family: var(--font-serif); font-size: var(--fs-md); font-weight: 600; } .stdb span { color: var(--muted); font-size: var(--fs-xs); }
+.msg.cont { border: 3px solid var(--purple-600); background: var(--parch-100); box-shadow: var(--shadow); padding: 10px 14px 12px; margin: 14px 0; max-width: 100%; } .msg.cont .who { color: var(--purple-800); } .msg.cont .contask { font-size: var(--fs-md); color: var(--brown-700); } .msg.cont.done { border-style: dashed; }
+.controw { display: flex; gap: 8px; margin-top: 8px; } .msg.cont .btn { background: var(--parch-300); color: var(--brown-900); border: 3px solid var(--parch-500); } .msg.cont .btn.ghost { background: none; border-color: transparent; text-decoration: underline dotted; }
+.field.answering { box-shadow: 0 0 0 3px var(--purple-500); }
+.contfs { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; } .contop { display: flex; gap: 10px; align-items: flex-start; background: var(--ink-800); border: 3px solid var(--ink-600); padding: 8px 12px; } .contop span { display: grid; gap: 2px; } .contop small { color: var(--muted); font-size: var(--fs-xs); } .contop i { color: var(--gold-200); font-style: normal; }
 </style>
 
 <header class="top" id="top">
@@ -615,7 +633,7 @@ const arc = () => S.arcs.find((a) => a.status === "ativa");
 function msgHTML(m, i, list, o = {}) {
   const lastNarr = m.r === "n" && list.slice(i + 1).every((x) => x.r !== "n");
   const a = (act, icon, tip) => `<button data-act="${act}" data-tip="${tip}" aria-label="${tip}">${icon}</button>`;
-  const acts = a("copy", IC.copy, "Copiar") + (!o.readonly && lastNarr && !S.streaming ? a("regen", IC.regen, "Regenerar") : "") + (!o.readonly && m.cut ? a("cont", IC.cont, "Continuar") : "");
+  const acts = (m.doubt && S.dbt && S.dbt.status !== "aberta" ? a("doubt", IC.doubt, "Ver a dúvida de continuidade") : "") + a("copy", IC.copy, "Copiar") + (!o.readonly && lastNarr && !S.streaming ? a("regen", IC.regen, "Regenerar") : "") + (!o.readonly && m.cut ? a("cont", IC.cont, "Continuar") : "");
   return `<article class="msg ${m.r === "p" ? "player" : "narr"} ${i === 0 && m.r === "n" ? "first" : ""} ${m.cut ? "cut" : ""}">
     <div class="actions" role="group" aria-label="Ações da mensagem">${acts}</div>
     <div class="who">${m.r === "p" ? "Ilsa" : o.aduran ? "Aduran" : "Narrador"}</div><div class="body ${m.typing ? "typing" : ""}">${m.t.map((p) => `<p>${p}</p>`).join("")}</div>
@@ -657,6 +675,7 @@ function tools(kind) {
   return `<div class="head-tools">
     ${kind !== "cena" ? b("cena", IC.back, "Voltar à Cena", false) : ""}
     ${b("aduran", IC.quill, "Aduran (não entra na Cena)", kind === "aduran", S.unread && kind !== "aduran" ? `<span class="badge">${S.unread}</span>` : "")}
+    ${b("estado", IC.tabSheet, "Estado da Cena", kind === "estado", S.dbt && S.dbt.status === "aberta" && kind !== "estado" ? `<span class="badge">1</span>` : "")}
     ${b("log", IC.scroll, "Log desta Cena", kind === "log")}
     <span class="sep" aria-hidden="true"></span>
     <button class="icon-btn danger" data-act="close" data-tip="Encerrar Cena" aria-label="Encerrar Cena">${IC.close}</button></div>`;
@@ -698,6 +717,9 @@ function renderStage() {
       view = "margem";
       st.innerHTML = head(`Durante a Cena · ${s.title}`, "Aduran", "Dúvidas e regras. O que você fala aqui não entra na Cena.", tools("aduran"), false) +
         `<div class="log" id="mainlog">${S.aduran.slice(0, 2).map((m, i, l) => msgHTML(m, i, l, { aduran: true })).join("")}</div>` + composer("Pergunte ao Aduran…");
+    } else if (S.center === "estado") {
+      view = "margem";
+      st.innerHTML = head(`Cena · ${s.title}`, "Estado da Cena", "O que o Narrador tem como verdade agora. Corrija o que estiver errado.", tools("estado"), false) + `<div class="scroll">${estadoHTML()}</div>`;
     } else {
       view = "margem";
       st.innerHTML = head(`Cena · ${s.title}`, "Log da Cena", "Só o que aconteceu nesta Cena. Depois, também rolagens e memórias.", tools("log"), false) + `<div class="scroll">${logHTML(s.n)}</div>`;
@@ -943,5 +965,122 @@ document.addEventListener("click", async (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("#layer").innerHTML = ""; closeCog(); } });
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderTop(); renderStage(); }, 120); });
 $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v="${p}">${PLABEL[p]}</button>`).join("");
+
+/* ====================================================== Estado da Cena e dúvida de continuidade (ADR-078, proposta) */
+const esc2 = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+IC.doubt = L(["..####..", ".#....#.", "......#.", "....##..", "...#....", "........", "...#....", "........"]);
+S.contMode = "contradicao"; S.stEdit = null; S.stNote = null;
+S.sc = {
+  place: "Taverna do Corvo Manco", moment: "Noite · Dia 1", weather: "chuva forte lá fora",
+  people: [
+    { id: "ilsa", name: "Ilsa de Vel", you: true, f: { Postura: "sentada à mesa", Posição: "mesa do canto, de frente para a porta", Segura: "a carta lacrada", Humor: "desconfiada", Sabe: "o selo é o da garça do irmão" }, changed: [] },
+    { id: "rapaz", name: "Rapaz da carta", f: { Postura: "sentado", Posição: "à mesa de Ilsa", Segura: "tigela de caldo", Humor: "assustado", Sabe: "quem o mandou, mas não diz" }, changed: ["Segura"] },
+    { id: "tab", name: "Taberneiro", f: { Postura: "de pé", Posição: "atrás do balcão", Segura: "um pano úmido", Humor: "resmungão", Sabe: "que Ilsa chegou ontem" }, changed: [] },
+  ],
+  open: ["De quem é a carta com o selo da garça?", "Quem são os homens de capa cinzenta?", "Ilsa vai pagar o caldo do rapaz?"],
+  skills: [{ n: "Estilo noir", ok: true }, { n: "Diálogos de taverna", ok: false }],
+};
+/* a dúvida de continuidade fica ancorada na última mensagem do Narrador */
+const sc3 = () => S.scenes.find((x) => x.n === 3);
+sc3().msgs.filter((m) => m.r === "n").at(-1).doubt = true;
+S.dbt = { status: "aberta", show: false, q: "Ilsa está de pé ou sentada?", why: "A narração a deixou junto ao balcão, mas você mandou o rapaz sentar à mesa dela. O Narrador acha que ela está sentada.", hyp: "sentada à mesa", ans: null, by: null };
+S.doubts = [{ scene: 2, q: "O homem de capa cinzenta era o mesmo que perguntou por Ilsa no cais?", ans: "Sim, o mesmo.", by: "jogador", at: "Dia 1 · Entardecer" }];
+const CONTMODE = { sempre: "Sempre perguntar", contradicao: "Só em contradição clara", nunca: "Nunca (o Narrador escolhe e segue)" };
+const nowLabel = () => "Dia 1 · Noite";
+function personHTML(p) {
+  return `<div class="stp"><div class="stp-h"><b>${esc2(p.name)}</b>${p.you ? `<span class="stag">você</span>` : ""}</div>${Object.entries(p.f).map(([k, v]) => {
+    const key = `${p.id}|${k}`, editing = S.stEdit === key, chg = p.changed.includes(k), fixed = (p.fixed || []).includes(k);
+    return `<div class="str ${chg ? "chg" : ""}"><span class="stk">${k}</span>${editing ? `<form class="stedit" data-cform="${key}"><input id="stin" value="${esc2(v)}" maxlength="80" aria-label="${k} de ${esc2(p.name)}"><button class="mini ok" type="submit" aria-label="Salvar">✓</button><button class="mini" type="button" data-c="stcancel" aria-label="Cancelar">✕</button></form>`
+      : `<span class="stv">${esc2(v)}${chg ? ` <i class="stnew">novo</i>` : ""}${fixed ? ` <i class="stfix">corrigido por você</i>` : ""}</span><button class="mini" data-c="stedit" data-key="${key}" data-tip="Isso está errado? Corrija" aria-label="Corrigir ${k} de ${esc2(p.name)}">${IC.pen}</button>`}</div>`;
+  }).join("")}</div>`;
+}
+function doubtsHTML() {
+  const cur = S.dbt.status === "aberta" ? [{ cur: true, scene: 3, q: S.dbt.q, at: nowLabel() }] : S.dbt.ans ? [{ cur3: true, scene: 3, q: S.dbt.q, ans: S.dbt.ans, by: S.dbt.by, at: nowLabel() }] : [];
+  const all = [...cur, ...S.doubts];
+  if (!all.length) return `<p class="stempty">Nenhuma dúvida de continuidade até agora.</p>`;
+  return `<ul class="stdb">${all.map((d) => `<li class="${d.cur ? "open" : ""}"><b>${esc2(d.q)}</b><span>${d.cur ? "Aguardando a sua resposta. Escreva no campo do chat." : `Resposta: ${esc2(d.ans)} · ${d.by === "jogador" ? "você" : "o Narrador decidiu"} · Cena ${d.scene} · ${d.at}`}</span>${d.cur || d.cur3 ? `<button class="btn sm" data-c="seechat">Ver no chat</button>` : ""}</li>`).join("")}</ul>`;
+}
+function estadoHTML() {
+  const c = S.sc;
+  return `${S.stNote ? `<p class="stnote" role="status">${esc2(S.stNote)}</p>` : ""}
+    <p class="stfoot">Memória narrativa, não regra de jogo: o Henduran atualiza depois de cada resposta do Narrador e a envia de volta a ele, para a história não se contradizer. Se algo estiver errado, corrija com o lápis: o Narrador segue o que você disser.</p>
+    <div class="sec"><span class="sec-title">Aqui e agora</span><div class="stwhere"><span>${IC.pin} ${esc2(c.place)}</span><span>${esc2(c.moment)} · ${esc2(c.weather)}</span></div></div>
+    <div class="sec"><span class="sec-title">Quem está presente</span><div class="stgrid">${c.people.map(personHTML).join("")}</div></div>
+    <div class="stcols"><div class="sec"><span class="sec-title">Em aberto</span><ul class="stopen">${c.open.map((o) => `<li>${esc2(o)}</li>`).join("")}</ul></div>
+      <div class="sec"><span class="sec-title">Skills desta Cena (${c.skills.filter((s) => s.ok).length} de 3)</span><div class="stsk">${c.skills.map((s, i) => `<span class="skchip ${s.ok ? "" : "pend"}">${esc2(s.n)}${s.ok ? "" : ` <button class="mini" data-c="skok" data-i="${i}" aria-label="Aceitar a skill ${esc2(s.n)}">aceitar</button><button class="mini" data-c="skno" data-i="${i}" aria-label="Recusar a skill ${esc2(s.n)}">não</button>`}</span>`).join("")}</div>
+      ${c.skills.some((s) => !s.ok) ? `<small class="stsub">O Aduran sugeriu uma skill para esta Cena. Ela só entra se você aceitar.</small>` : ""}</div></div>
+    <div class="sec"><span class="sec-title">Dúvidas de continuidade</span>${doubtsHTML()}</div>`;
+}
+/* cartão da dúvida: ocupa a largura do chat como uma mensagem; é só um destaque */
+function contCard() {
+  const d = S.dbt;
+  if (d.status === "aberta") return `<article class="msg cont" role="group" aria-label="Dúvida de continuidade"><div class="who">Dúvida de continuidade</div><div class="body"><p><b>${esc2(d.q)}</b> ${esc2(d.why)}</p>
+      <p class="contask">Responda no campo de escrita: a sua próxima mensagem responde a esta dúvida e <b>não vai para o chat</b>. Se preferir, deixe o Narrador escolher.</p></div><div class="controw"><button class="btn ghost" data-c="decide">Você decide</button></div></article>`;
+  return `<article class="msg cont done" role="group" aria-label="Dúvida de continuidade respondida"><div class="who">Dúvida de continuidade · respondida</div><div class="body"><p><b>${esc2(d.q)}</b></p>
+      <p>${d.by === "jogador" ? "Sua resposta" : "O Narrador decidiu"}: <q>${esc2(d.ans)}</q>. Registrada no Estado da Cena e no Log.</p></div><div class="controw"><button class="btn ghost" data-c="hidecard">Fechar</button></div></article>`;
+}
+const _renderStage = renderStage;
+renderStage = function () {
+  _renderStage();
+  if (S.state !== "cena" || S.center !== "cena") return;
+  const lg = $("#mainlog"); if (!lg) return;
+  if (S.dbt.status === "aberta") {
+    lg.insertAdjacentHTML("beforeend", contCard()); lg.scrollTop = lg.scrollHeight;
+    const ta = $("#ta"); if (ta) { ta.placeholder = "Responda à dúvida do Narrador…"; ta.closest(".field")?.classList.add("answering"); }
+    const hint = $(".field-hint span"); if (hint) hint.textContent = "Esta mensagem responde à dúvida de continuidade e não aparece no chat.";
+  } else if (S.dbt.show) {
+    const arts = lg.querySelectorAll(":scope > article.msg"); let anchor = null; sc3().msgs.forEach((m, i) => { if (m.doubt) anchor = arts[i]; });
+    (anchor || lg.lastElementChild).insertAdjacentHTML("afterend", contCard());
+  }
+};
+function answerDoubt(raw, by) {
+  const text = raw.charAt(0).toLowerCase() + raw.slice(1);
+  const d = S.dbt; d.status = "respondida"; d.show = false; d.ans = text; d.by = by;
+  const ilsa = S.sc.people[0]; ilsa.f.Postura = text; ilsa.changed = ["Postura"]; ilsa.fixed = by === "jogador" ? ["Postura"] : [];
+  S.stNote = by === "jogador" ? `Anotado: Ilsa está ${text}. O Narrador vai seguir isso.` : `O Narrador decidiu: Ilsa está ${text}. Corrija quando quiser.`;
+  S.log.push({ scene: 3, at: nowLabel(), k: "Continuidade", t: `Dúvida respondida: Ilsa está ${text}` });
+  render(); toast("Dúvida de continuidade respondida");
+}
+LOGICON["Continuidade"] = IC.doubt;
+function contDialog() {
+  dialog("Continuidade", `<p style="margin:0 0 10px">Quando o Narrador não tem certeza de um fato (onde alguém está, o que segura), ele pergunta a você em vez de inventar, num cartão no chat. A sua próxima mensagem responde ao cartão.</p>
+    <fieldset class="contfs"><legend class="sr">Quando perguntar</legend>${Object.entries(CONTMODE).map(([k, l]) => `<label class="contop"><input type="radio" name="contmode" value="${k}" ${S.contMode === k ? "checked" : ""}> <span><b>${l}</b>${k === "contradicao" ? " <i>(padrão)</i>" : ""}<small>${k === "sempre" ? "Pergunta sempre que faltar um fato." : k === "contradicao" ? "Só quando o texto contradiz o que já foi estabelecido." : "Nunca pergunta; você ainda pode corrigir o Estado da Cena a qualquer momento."}</small></span></label>`).join("")}</fieldset>
+    <p style="margin:10px 0 0;font-size:var(--fs-xs);color:var(--muted)">No máximo uma pergunta a cada 6 turnos. Cada dúvida e resposta fica no Log da Cena e na aba Estado da Cena.</p>`);
+}
+/* a próxima mensagem digitada responde à dúvida (em captura, antes do envio normal) */
+function interceptSend(e, ta) {
+  if (S.state !== "cena" || S.center !== "cena" || S.dbt.status !== "aberta") return false;
+  e.preventDefault(); e.stopPropagation(); const v = (ta.value || "").trim(); if (!v) return true;
+  ta.value = ""; answerDoubt(v, "jogador"); return true;
+}
+document.addEventListener("keydown", (e) => { const ta = e.target.closest && e.target.closest("#ta"); if (ta && e.key === "Enter" && !e.shiftKey) interceptSend(e, ta); }, true);
+document.addEventListener("click", (e) => {
+  const send = e.target.closest('[data-act="send"]'); if (send) { const ta = $("#ta"); if (ta && interceptSend(e, ta)) return; }
+  const t = e.target.closest("[data-c], [data-act='doubt']"); if (!t) return;
+  e.stopPropagation(); e.preventDefault(); const a = t.dataset.c || "doubt";
+  if (a === "doubt") { S.dbt.show = true; renderStage(); const c = $(".msg.cont"); if (c) c.scrollIntoView({ block: "center" }); }
+  else if (a === "hidecard") { S.dbt.show = false; renderStage(); }
+  else if (a === "decide") answerDoubt(S.dbt.hyp, "narrador");
+  else if (a === "seechat") { S.center = "cena"; S.viewing = null; if (S.dbt.status !== "aberta") S.dbt.show = true; render(); const c = $(".msg.cont"); if (c) c.scrollIntoView({ block: "center" }); }
+  else if (a === "stedit") { S.stEdit = t.dataset.key; renderStage(); const i = $("#stin"); if (i) { i.focus(); i.select(); } }
+  else if (a === "stcancel") { S.stEdit = null; renderStage(); }
+  else if (a === "skok") { S.sc.skills[Number(t.dataset.i)].ok = true; renderStage(); }
+  else if (a === "skno") { S.sc.skills.splice(Number(t.dataset.i), 1); renderStage(); }
+  else if (a === "contmenu") { closeCog(); contDialog(); }
+  else if (a === "dset") { const v = t.dataset.v; if (v === "aberta") { S.dbt.status = "aberta"; S.dbt.show = false; S.dbt.ans = null; } else if (v === "respondida") { if (S.dbt.status === "aberta") { S.dbt.status = "respondida"; S.dbt.ans = "sentada à mesa"; S.dbt.by = "jogador"; } S.dbt.show = false; } else if (v === "reaberta") { if (S.dbt.status === "aberta") { S.dbt.status = "respondida"; S.dbt.ans = "sentada à mesa"; S.dbt.by = "jogador"; } S.dbt.show = true; S.center = "cena"; } render(); }
+}, true);
+document.addEventListener("submit", (e) => {
+  const f = e.target.closest("[data-cform]"); if (!f) return; e.preventDefault(); e.stopPropagation();
+  const v = f.querySelector("input").value.trim(); if (!v) return;
+  const [id, k] = f.dataset.cform.split("|"), p = S.sc.people.find((x) => x.id === id); p.f[k] = v; p.changed = []; p.fixed = [...(p.fixed || []), k]; S.stEdit = null;
+  S.stNote = `Corrigido: ${k} de ${p.name}. O Narrador vai seguir isso.`; renderStage();
+}, true);
+document.addEventListener("change", (e) => { if (e.target.name === "contmode") S.contMode = e.target.value; });
+$("#cogmenu").insertAdjacentHTML("afterbegin", `<button role="menuitem" data-c="contmenu">Continuidade<small>Perguntas do Narrador: ${CONTMODE.contradicao.toLowerCase()}</small></button>`);
+{
+  const box = $("#protobox"), d = document.createElement("span");
+  d.innerHTML = `Dúvida de continuidade <span class="seg"><button data-c="dset" data-v="aberta">Aberta</button><button data-c="dset" data-v="respondida">Respondida</button><button data-c="dset" data-v="reaberta">Respondida e reaberta</button></span>`;
+  box.prepend(d);
+}
 render();
 </script>
