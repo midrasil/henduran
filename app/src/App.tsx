@@ -5,7 +5,6 @@ import { BackendError, canExitApp, exitApp, type BackendInfo } from "./api/backe
 import { portraitErrorMessage, uploadPortrait } from "./api/journeyScreen";
 import { closeJourney, openJourney, type JourneySnapshot, type JourneySummary } from "./api/journeys";
 import { ModelsView, type ModelsViewProps } from "./components/ModelsView";
-import { StatusIndicator } from "./components/StatusIndicator";
 import { useBackend, type UseBackendOptions } from "./hooks/useBackend";
 import { useEngineStatus } from "./hooks/useEngineStatus";
 import { useCreationRules, useJourneyList } from "./hooks/useGameData";
@@ -15,6 +14,7 @@ import { JourneyScreen, type PortraitRetry } from "./screens/journey/JourneyScre
 import { JourneysScreen } from "./screens/JourneysScreen";
 import { WorldsScreen } from "./screens/WorldsScreen";
 import { MainMenu, pickLastJourney } from "./screens/MainMenu";
+import { ServiceIndicator } from "./screens/ServiceIndicator";
 import { NewJourneyWizard, type CreatedExtras } from "./screens/newJourney/NewJourneyWizard";
 import { Button, PeriodLabel, PixelIcon, SkyBackdrop } from "./ui";
 
@@ -155,6 +155,9 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
   const openModels = () => {
     dispatch({ type: "go", screen: "modelos" });
   };
+  // O assistente fica montado enquanto Modelos está aberto, para não perder o preenchimento.
+  const showWizard =
+    info !== null && (screen === "nova-jornada" || (screen === "modelos" && nav.modelsBack === "nova-jornada"));
 
   return (
     <div className={`app app--${screen}`}>
@@ -166,7 +169,11 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
           </p>
           <div className="app-bar__nav" />
           <div className="app-bar__actions">
-            {screen === "modelos" && nav.modelsBack === "jornada" ? (
+            {screen === "modelos" && nav.modelsBack === "nova-jornada" ? (
+              <Button onClick={() => dispatch({ type: "go", screen: "nova-jornada" })}>
+                <PixelIcon name="back" /> Voltar à criação
+              </Button>
+            ) : screen === "modelos" && nav.modelsBack === "jornada" ? (
               <Button onClick={() => dispatch({ type: "go", screen: "jornada" })}>
                 <PixelIcon name="back" /> Voltar à Jornada
               </Button>
@@ -240,45 +247,6 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
           )
         ) : null}
 
-        {screen === "nova-jornada" && info ? (
-          rules.rules && rules.schema ? (
-            <NewJourneyWizard
-              info={info}
-              rules={rules.rules}
-              schema={rules.schema}
-              onCreated={onCreated}
-              engine={engine.status}
-              modelsPanel={
-                <ModelsView
-                  info={info}
-                  engine={engine.status}
-                  engineError={engine.error}
-                  onEngineChange={engine.setStatus}
-                  refreshEngine={engine.refresh}
-                  {...(copyText ? { copyText } : {})}
-                />
-              }
-              onCancel={() => dispatch({ type: "go", screen: "menu" })}
-            />
-          ) : (
-            <div className="app__panel app__panel--scroll">
-              <h2 className="screen-title">Nova Jornada</h2>
-              {rules.error ? (
-                <div className="callout callout--danger" role="alert">
-                  <p>{rules.error}</p>
-                  <div className="actions">
-                    <Button size="sm" onClick={rules.reload}>
-                      Tentar de novo
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <p className="hint">Carregando as regras de criação…</p>
-              )}
-            </div>
-          )
-        ) : null}
-
         {screen === "modelos" ? (
           <div className="app__panel app__panel--scroll">
             {info ? (
@@ -294,6 +262,47 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               <p className="app__waiting">Esperando o serviço local ficar pronto…</p>
             )}
           </div>
+        ) : null}
+
+        {showWizard && info ? (
+          rules.rules && rules.schema ? (
+            <div className="app__wizard" hidden={screen === "modelos"}>
+              <NewJourneyWizard
+                info={info}
+                rules={rules.rules}
+                schema={rules.schema}
+                onCreated={onCreated}
+                engine={engine.status}
+                modelsPanel={
+                  <ModelsView
+                    info={info}
+                    engine={engine.status}
+                    engineError={engine.error}
+                    onEngineChange={engine.setStatus}
+                    refreshEngine={engine.refresh}
+                    {...(copyText ? { copyText } : {})}
+                  />
+                }
+                onCancel={() => dispatch({ type: "go", screen: "menu" })}
+              />
+            </div>
+          ) : screen === "nova-jornada" ? (
+            <div className="app__panel app__panel--scroll">
+              <h2 className="screen-title">Nova Jornada</h2>
+              {rules.error ? (
+                <div className="callout callout--danger" role="alert">
+                  <p>{rules.error}</p>
+                  <div className="actions">
+                    <Button size="sm" onClick={rules.reload}>
+                      Tentar de novo
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="hint">Carregando as regras de criação…</p>
+              )}
+            </div>
+          ) : null
         ) : null}
 
         {screen === "jornada" && snapshot && info ? (
@@ -318,10 +327,10 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
 
       {screen !== "jornada" && screen !== "menu" ? (
         <footer className="status-bar">
-          <StatusIndicator status={status} />
-          <p className="status-bar__item">
+          <p className="status-bar__item status-bar__period">
             <PeriodLabel period={period} />
           </p>
+          <ServiceIndicator className="status-bar__service" backend={status} engine={engine.status} onModels={openModels} />
         </footer>
       ) : null}
     </div>

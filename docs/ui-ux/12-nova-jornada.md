@@ -134,3 +134,12 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 - **Continuar** fica desabilitado com a História vazia (o protótipo deixava clicar); **Escrever** com texto desenvolve o que está escrito (como na dica do protótipo).
 - **Contador**: palavras e caracteres do texto puro do serviço, sem a extensão de contagem do TipTap.
 - **Sugerir** dos campos fica na linha do rótulo, fora do `<label>` (acessibilidade); o aviso some sozinho depois de 9 s, como no protótipo.
+
+## 11. Rodapé do sistema (2026-11-24)
+
+**Decisão aprovada pelo responsável em 2026-11-24:** nas telas que usam a barra de status do shell (Nova Jornada, Modelos, Jornadas e Mundos), o período do dia fica à esquerda e o estado do serviço/modelo à direita, com o mesmo tratamento do menu inicial.
+
+- O indicador da direita é o mesmo `ServiceIndicator` do menu: LED, `Conectado · <detalhe> · Modelos ▸` e `aria-label` `<estado>, <detalhe>. Abrir Modelos`. O clique abre a tela **Modelos**.
+- Ao abrir Modelos a partir da Nova Jornada, o cabeçalho mostra **Voltar à criação** e o assistente fica montado, oculto, preservando o preenchimento.
+- O rodapé de ações do assistente (Cancelar, status, Voltar e Avançar/Iniciar Jornada) não muda; o quadro **Narrador** da tela Iniciar Jornada continua como estava.
+- Código: `app/src/screens/ServiceIndicator.tsx`/`.css`, `MainMenu.tsx`, `App.tsx`, `navigation.ts` e `styles/shell.css`.
