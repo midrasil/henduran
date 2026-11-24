@@ -313,3 +313,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisão do responsável: remover a nota "Tela provisória" do cabeçalho; feito no app (`WorldsScreen.tsx`) e no protótipo, que reaproveita o desenho do passo Mundo da Nova Jornada, como a implementação.
 - Entrega: PR [#34](https://github.com/midrasil/henduran/pull/34) aberto contra `main`.
 - Arquivos: `docs/ui-ux/prototipos/mundos.html`, `docs/ui-ux/13-mundos.md`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`.
+
+## 2026-11-24 — `adr-memoria-narrador` (ADR-078, proposta)
+
+- Rota: conversa de planejamento com o responsável → ADR → Entrega. Só documentação.
+- Origem: o responsável relatou que, no Caliope, a narrativa perde a continuidade em chats longos (por exemplo, o personagem estava de pé e o Narrador disse que estava deitado) e que os modelos gratuitos têm limite de tokens. Ideias do responsável: cada Cena como chat novo com pontos específicos em memória (como o Dragon Age), reiniciar o contexto de uma Cena longa mantendo o histórico, NPCs com memória e a LLM da Cena consultar o Aduran e, na dúvida, perguntar ao jogador.
+- Resultado: ADR-078 (proposta) com memória em camadas, Quadro da Cena (estado narrativo, visível e editável pelo jogador), compactação a cerca de 70% da janela, Cânone da Jornada, fichas de NPC com memória, skills por Jornada e por Cena (limite de 3), orçamento de tokens proporcional à janela, pergunta de continuidade e teste de continuidade como critério de aceite.
+- Decisão do responsável: incluir a **pergunta de continuidade**, com o modo "só em contradição clara" como padrão. As demais decisões do ADR (⏳) são recomendações do planejador, aguardando confirmação.
+- Pendências: confirmar os itens ⏳, definir os campos do Quadro e da ficha de NPC, prototipar o painel "Estado da Cena" na tela da Jornada, esquema de dados e teste de continuidade (item no backlog).
+- Arquivos: `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/main/05-narrador-ia.md`, `docs/backlog.md`.
+- Entrega: PR [#35](https://github.com/midrasil/henduran/pull/35) aberto contra `main`.
