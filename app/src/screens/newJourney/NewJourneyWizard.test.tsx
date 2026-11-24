@@ -42,6 +42,7 @@ function setup(options: FakeGameOptions = {}) {
       makeSeed={() => 42}
       random={random}
       validationDelayMs={0}
+      modelsPanel={<p>Painel de Modelos de teste</p>}
     />,
   );
   return { api, user, onCreated, onCancel };
@@ -499,6 +500,21 @@ describe("Nova Jornada — Revisão e Iniciar Jornada", () => {
     // O esquema do editor normaliza <b> para <strong>.
     expect(body.character.history_html).toBe("<h3>Origens</h3><p>Cresceu no <strong>porto</strong>.</p>");
     expect(body.character.history).toBe("Origens\nCresceu no porto.");
+  });
+
+  it("Configurar modelo abre a tela Modelos num diálogo e não perde o que foi preenchido", async () => {
+    const { user, api } = setup();
+    await toStart(user);
+    const description = screen.getByRole("textbox", { name: "Descrição (opcional)" });
+    await fill(user, description, "Começa no porto.");
+    await user.click(screen.getByRole("button", { name: /Configurar modelo/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Modelos" });
+    expect(within(dialog).getByText("Painel de Modelos de teste")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Voltar à criação" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Modelos" })).not.toBeInTheDocument());
+    expect(stepTitle()).toHaveTextContent("Pronto para começar");
+    expect(screen.getByRole("textbox", { name: "Descrição (opcional)" })).toHaveValue("Começa no porto.");
+    expect(api.calls.some((c) => c.method === "POST" && c.path === "/journeys")).toBe(false);
   });
 
   it("num Mundo salvo, a criação aponta o id do Mundo", async () => {
