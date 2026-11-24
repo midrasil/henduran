@@ -467,16 +467,14 @@ svg.px { shape-rendering: crispEdges; display: block; }
 
 .str.know { grid-template-columns: 5.2em minmax(0, 1fr); } .stv .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; font-size: var(--fs-xs); } .kitem { display: block; } .kitem + .kitem { margin-top: 2px; } .stfromf { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-family: var(--font-pixel); } .stv .linkish, .stfromf .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; }
 
-/* ---------------------------------------- formatação do texto do chat: fala, ação, pensamento */
+/* ---------------------------------------- formatação do texto do chat: fala e ação */
 .msg .body .fala { font-weight: 600; color: var(--purple-800); } .msg .body .acao { font-style: italic; color: var(--brown-700); } .msg .body .acao::before { content: "▸ "; font-style: normal; color: var(--red-800); }
-.msg .body .pens { font-style: italic; color: var(--purple-600); background: rgba(110,49,151,.12); padding: 0 5px; } .msg .body .pens::before { content: "( "; font-style: normal; } .msg .body .pens::after { content: " )"; font-style: normal; }
-.msg.player .body .fala { color: var(--gold-200); } .msg.player .body .acao { color: var(--ivory-100); } .msg.player .body .acao::before { color: var(--gold-400); } .msg.player .body .pens { color: var(--purple-200); background: rgba(196,155,227,.15); }
-[data-view="margem"] .msg .body .fala { color: var(--gold-200); } [data-view="margem"] .msg .body .acao { color: var(--ivory-400); } [data-view="margem"] .msg .body .pens { color: var(--purple-200); }
+
+.msg.player .body .fala { color: var(--gold-200); } .msg.player .body .acao { color: var(--ivory-100); } .msg.player .body .acao::before { color: var(--gold-400); } 
+[data-view="margem"] .msg .body .fala { color: var(--gold-200); } [data-view="margem"] .msg .body .acao { color: var(--ivory-400); } 
 .spk { font: 600 11px/1 var(--font-pixel); letter-spacing: .06em; text-transform: uppercase; background: var(--purple-600); color: var(--gold-200); border: 2px solid var(--gold-600); padding: 3px 7px; margin-right: 6px; vertical-align: 2px; cursor: pointer; } .spk:hover { background: var(--purple-500); } .spk.me { background: var(--ink-700); border-color: var(--ink-400); cursor: default; }
-.fmtbar { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; } .fmtbar button { display: inline-flex; gap: 6px; align-items: center; min-height: 30px; padding: 2px 10px; font-size: 12px; background: var(--ink-800); border: 2px solid var(--ink-600); color: var(--ivory-100); } .fmtbar button:hover:not(:disabled) { border-color: var(--gold-400); } .fmtbar button:disabled { opacity: .45; } .fmtbar .fi { font-weight: 700; color: var(--gold-200); } .fmtbar .fhelp { margin-left: auto; min-width: 30px; justify-content: center; }
-[data-view="cena"] .fmtbar button { background: var(--parch-300); border-color: var(--parch-500); color: var(--brown-900); } [data-view="cena"] .fmtbar .fi { color: var(--purple-800); }
 .fmthelp { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .fmthelp li { display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 10px; background: var(--ink-800); border: 2px solid var(--ink-600); padding: 8px 12px; font-family: var(--font-serif); font-size: var(--fs-md); } .fmthelp .k { font-family: var(--font-pixel); font-size: var(--fs-xs); color: var(--gold-200); text-transform: uppercase; letter-spacing: .08em; } .fmthelp code { font-family: var(--font-pixel); background: var(--ink-950); padding: 1px 6px; }
-.fmthelp .fala { color: var(--gold-200); font-weight: 600; } .fmthelp .acao { color: var(--ivory-400); font-style: italic; } .fmthelp .acao::before { content: "▸ "; font-style: normal; color: var(--gold-400); } .fmthelp .pens { color: var(--purple-200); font-style: italic; } .fmthelp .pens::before { content: "( "; } .fmthelp .pens::after { content: " )"; }
+.fmthelp .fala { color: var(--gold-200); font-weight: 600; } .fmthelp .acao { color: var(--ivory-400); font-style: italic; } .fmthelp .acao::before { content: "▸ "; font-style: normal; color: var(--gold-400); } 
 
 /* ---------------------------------------- texto do chat: nome acima e recuado, fala e ação no mesmo estilo */
 .msg .body p.dlgp { margin-left: 0; } .msg .body p.dlgp .spk { display: table; margin: 0 0 4px; }
@@ -494,6 +492,18 @@ svg.px { shape-rendering: crispEdges; display: block; }
 .ptmain { display: grid; gap: 3px; min-width: 0; flex: 1; } .ptmain b { font-family: var(--font-serif); font-size: 1.15rem; color: var(--gold-200); font-weight: 600; } .ptmeta { font-size: var(--fs-xs); color: var(--muted); }
 .ptedit { display: flex; gap: 6px; } .ptacts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex: none; }
 .dtag2 { font: 600 10px/1 var(--font-pixel); font-style: normal; padding: 3px 6px; border: 2px solid var(--ink-600); background: var(--ink-950); color: var(--ivory-100); } .dtag2.man { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); }
+
+/* ---------------------------------------- campo de escrita: menu "/" e botão Melhorar texto */
+.composer { position: relative; }
+.slash { position: absolute; left: var(--s2); right: var(--s2); bottom: calc(100% - 6px); z-index: 6; background: var(--ink-900); border: 3px solid var(--frame); box-shadow: var(--shadow); display: grid; } .slash[hidden] { display: none !important; }
+.slash button { display: grid; grid-template-columns: 6em minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; background: transparent; border: 0; color: var(--ivory-100); padding: 8px 12px; min-height: 36px; cursor: pointer; font: inherit; } .slash button b { font-family: var(--font-pixel); font-size: 12px; color: var(--gold-200); } .slash button span { font-size: var(--fs-xs); color: var(--muted); }
+.slash button[aria-selected="true"] { background: var(--purple-600); } .slash button[aria-selected="true"] span { color: var(--ivory-100); }
+[data-view="cena"] .slash { background: var(--parch-100); border-color: var(--brown-700); } [data-view="cena"] .slash button { color: var(--brown-900); } [data-view="cena"] .slash button b { color: var(--purple-800); } [data-view="cena"] .slash button span { color: var(--brown-700); } [data-view="cena"] .slash button[aria-selected="true"] { background: var(--purple-600); } [data-view="cena"] .slash button[aria-selected="true"] b, [data-view="cena"] .slash button[aria-selected="true"] span { color: var(--ivory-100); }
+.send.improve { background: var(--ink-700); box-shadow: inset 2px 2px 0 var(--ink-500), inset -2px -2px 0 var(--ink-900); color: var(--gold-200); } .send.improve:hover { background: var(--ink-600); }
+.send.improve[disabled] { background: var(--ink-800); box-shadow: none; color: var(--ink-500); cursor: not-allowed; }
+[data-view="cena"] .send.improve { background: var(--parch-300); border-color: var(--parch-500); box-shadow: none; color: var(--purple-800); } [data-view="cena"] .send.improve:hover { background: var(--parch-400, var(--parch-500)); } [data-view="cena"] .send.improve[disabled] { color: var(--parch-500); background: var(--parch-200, var(--parch-300)); }
+@media (prefers-reduced-motion: no-preference) { .send.improve.busy svg { animation: impulse .8s steps(4) infinite; } } @keyframes impulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } 100% { opacity: 1; transform: scale(1); } }
+.field-hint .link { background: none; border: 0; padding: 0 2px; color: var(--gold-200); text-decoration: underline; cursor: pointer; font: inherit; } [data-view="cena"] .field-hint .link { color: var(--purple-800); }
 </style>
 
 <header class="top" id="top">
@@ -662,7 +672,7 @@ const S = {
     { n: 3, arc: 1, title: "A carta da garça", place: "Taverna do Corvo Manco", period: "noite", motive: "Um mensageiro procura Ilsa com uma carta lacrada", status: "aberta",
       msgs: [
         { r: "n", t: ["A chuva bate nas janelas do Corvo Manco quando a porta se abre e deixa entrar o frio do cais. Um rapaz magro, encharcado até os ossos, varre o salão com os olhos e para em você.", "Tibo: “Ilsa de Vel?” *Ele aperta contra o peito um envelope selado com cera negra.* “Me pagaram para entregar isto só nas suas mãos.”"] },
-        { r: "p", t: ["Faço sinal para ele sentar e peço um caldo quente para o garoto antes de pegar a carta. “Senta, garoto. Come primeiro.” _Ele não parece mentir, mas está com medo._"] },
+        { r: "p", t: ["Faço sinal para ele sentar e peço um caldo quente para o garoto antes de pegar a carta. “Senta, garoto. Come primeiro.” *Ele não parece mentir, mas está com medo.*"] },
         { r: "n", t: ["O taberneiro resmunga, mas traz a tigela. O rapaz come como quem não vê comida há dias. Quando você vira o envelope, reconhece o selo: a garça de três penas, a mesma que seu irmão usava nas cartas da guarnição.", "Osvaldo: “Aqui ninguém come de graça, moça. Mas hoje eu deixo passar.” *Ele volta a limpar o mesmo copo.*", "Do outro lado do salão, dois homens de capa cinzenta param de conversar"], cut: true } ] },
   ],
   aduran: [
@@ -681,22 +691,22 @@ const openScene = () => S.scenes.find((x) => x.status === "aberta");
 const arc = () => S.arcs.find((a) => a.status === "ativa");
 
 /* ---------------------------------------------------------- mensagens */
-/* Formatação do texto do chat (proposta): "fala", *ação*, _pensamento_; o resto é narração.
+/* Formatação do texto do chat (proposta): "fala" e *ação*; o resto é narração. A fala abre com travessão e fecha com travessão se houver mais texto depois dela.
    Um nome conhecido seguido de dois pontos antes de uma fala vira o rótulo de quem fala. */
 const SPEAKERS = { Tibo: "rapaz", Osvaldo: "tab", Maro: "maro", Ilsa: null };
 function fmt(text) {
   let rest = String(text), spk = "";
-  const m = rest.match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*_])/);
+  const m = rest.match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*])/);
   if (m && m[1] in SPEAKERS) {
     const id = SPEAKERS[m[1]];
     spk = id ? `<button class="spk" data-d="npc" data-id="${id}" data-tip="Ver a ficha" aria-label="Ver a ficha de ${m[1]}">${m[1]}</button>` : `<span class="spk me">${m[1]}</span>`;
     rest = rest.slice(m[0].length);
   }
   const safe = rest.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const body = safe.replace(/"([^"]+)"|“([^”]+)”|\*([^*]+)\*|_([^_]+)_/g, (all, a, b, c, d) => (a || b) ? `<span class="fala">— ${a || b}</span>` : c ? `<em class="acao">${c}</em>` : `<em class="pens">${d}</em>`);
+  const body = safe.replace(/"([^"]+)"|“([^”]+)”|\*([^*]+)\*/g, (all, a, b, c, off, str) => (a || b) ? `<span class="fala">— ${a || b}${str.slice(off + all.length).trim() ? " —" : ""}</span>` : `<em class="acao">${c}</em>`);
   return spk ? spk + `<span class="dtxt">${body}</span>` : body;
 }
-const fmtP = (text) => { const m = String(text).match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*_])/); return m && m[1] in SPEAKERS ? ' class="dlgp"' : ""; };
+const fmtP = (text) => { const m = String(text).match(/^([A-ZÀ-Ý][\wÀ-ÿ-]{1,24}):\s+(?=["“*])/); return m && m[1] in SPEAKERS ? ' class="dlgp"' : ""; };
 function msgHTML(m, i, list, o = {}) {
   const lastNarr = m.r === "n" && list.slice(i + 1).every((x) => x.r !== "n");
   const a = (act, icon, tip) => `<button data-act="${act}" data-tip="${tip}" aria-label="${tip}">${icon}</button>`;
@@ -706,15 +716,14 @@ function msgHTML(m, i, list, o = {}) {
     <div class="who">${m.r === "p" ? "Ilsa" : o.aduran ? "Aduran" : "Narrador"}</div><div class="body ${m.typing ? "typing" : ""}">${m.t.map((p) => `<p${fmtP(p)}>${fmt(p)}</p>`).join("")}</div>
     ${m.cut ? `<div class="cutnote">Resposta interrompida.</div>` : ""}</article>`;
 }
-const fmtbar = (disabled) => `<div class="fmtbar" role="toolbar" aria-label="Formatar o texto">
-  <button type="button" data-f="fala" ${disabled ? "disabled" : ""} data-tip="Fala (aspas)" aria-label="Marcar como fala"><span class="fi">“ ”</span> Fala</button>
-  <button type="button" data-f="acao" ${disabled ? "disabled" : ""} data-tip="Ação (itálico)" aria-label="Marcar como ação"><span class="fi">*</span> Ação</button>
-  <button type="button" data-f="pens" ${disabled ? "disabled" : ""} data-tip="Pensamento (só seu)" aria-label="Marcar como pensamento"><span class="fi">_</span> Pensamento</button>
-  <button type="button" class="fhelp" data-f="help" data-tip="Como funciona" aria-label="Como funciona a formatação do texto">?</button></div>`;
+const HINT = "Enter envia · Shift+Enter pula linha · / para formatar";
+IC.wand = L(["...#....", "...#....", "..###...", "#######.", "..###...", "...#..#.", "...#.###", "......#."]);
 function composer(placeholder, disabled = false) {
-  return `<div class="composer"><div class="field ${disabled ? "off" : ""}"><textarea id="ta" rows="1" placeholder="${placeholder}" ${disabled ? "disabled" : ""} aria-label="Mensagem"></textarea>
+  return `<div class="composer"><div class="slash" id="slash" role="listbox" aria-label="Formatar o texto" hidden></div>
+    <div class="field ${disabled ? "off" : ""}"><textarea id="ta" rows="1" placeholder="${placeholder}" ${disabled ? "disabled" : ""} aria-label="Mensagem" aria-controls="slash" aria-haspopup="listbox"></textarea>
+    <button class="send improve" data-act="improve" data-tip="Escreva algo para melhorar" aria-label="Escreva algo para melhorar" disabled>${IC.wand}</button>
     ${S.streaming ? `<button class="send" data-act="stop" data-tip="Parar" aria-label="Parar">${IC.stop}</button>` : `<button class="send" data-act="send" data-tip="Enviar" aria-label="Enviar" ${disabled ? "disabled" : ""}>${IC.send}</button>`}</div>
-    ${fmtbar(disabled)}<div class="field-hint"><span>${disabled ? "" : "Enter envia · Shift+Enter pula linha"}</span></div></div>`;
+    <div class="field-hint"><span id="fhint" aria-live="polite">${disabled ? "" : HINT}</span></div></div>`;
 }
 function logHTML(sceneN) {
   const items = sceneN == null ? S.log : S.log.filter((e) => e.scene === sceneN);
@@ -932,8 +941,11 @@ function closeCog() { $("#cogmenu").hidden = true; $("#cog").setAttribute("aria-
 function grow(ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 190) + "px"; }
 function wireComposer() {
   const ta = $("#ta"); if (!ta) return;
-  ta.addEventListener("input", () => grow(ta));
+  ta.addEventListener("input", () => { grow(ta); if (S.imp != null && !S.improving) { S.imp = null; const h = $("#fhint"); if (h) h.textContent = HINT; } slashUpdate(ta); syncImprove(); });
+  ta.addEventListener("keydown", slashKeys, true);
+  ta.addEventListener("blur", () => setTimeout(slashClose, 120));
   ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  syncImprove();
 }
 function currentList() { if (S.state === "cena" && S.center === "cena") return openScene().msgs; if (S.center === "aduran" || S.state === "fora") return S.aduran; return null; }
 function send() {
@@ -1040,24 +1052,76 @@ $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v
 
 
 
-/* ---------------- formatação do texto: botões do campo de escrita e legenda */
-document.addEventListener("mousedown", (e) => { if (e.target.closest(".fmtbar button")) e.preventDefault(); });
+/* ---------------- formatação do texto: menu "/" no campo de escrita, legenda e Melhorar texto */
+function fmtHelp() {
+  dialog("Formatação do texto", `<p style="margin:0">O texto do chat usa três estilos. O Narrador segue a mesma convenção; o que você escreve também.</p>
+    <ul class="fmthelp"><li><span class="k">Narração</span><span>Sem marca. Descreve o mundo e o que acontece.</span></li>
+    <li><span class="k">Fala</span><span><code>"assim"</code> entre aspas; no chat aparece com travessão e em itálico, no mesmo estilo da ação. O travessão abre a fala e a fecha quando ainda há texto depois dela. ${fmt('Eu pego uma maçã e digo "Tu é feio." Em seguida jogo a maçã nele.')} ${fmt('Tibo: "Eu só entrego, moça."')}</span></li>
+    <li><span class="k">Ação</span><span><code>*assim*</code> entre asteriscos; aparece em itálico, no mesmo estilo da fala. ${fmt("*Você pega o envelope.*")}</span></li></ul>
+    <p style="margin:0;font-size:var(--fs-xs);color:var(--muted)">No campo de escrita, digite <b>/</b> para inserir as marcas de <b>fala</b> ou <b>ação</b>. Texto sem marca que você escreve conta como ação. O destaque nunca depende só de cor.</p>`);
+}
+const SLASH = [
+  { n: "fala", d: "Aspas: aparece com travessão", o: '"', c: '"' },
+  { n: "ação", d: "Asteriscos: aparece em itálico", o: "*", c: "*" },
+  { n: "ajuda", d: "Como funciona a formatação" },
+];
+const slashState = { open: false, i: 0, from: 0, items: [] };
+const nz = (x) => String(x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function slashClose() { slashState.open = false; const m = $("#slash"), ta = $("#ta"); if (m) m.hidden = true; if (ta) { ta.removeAttribute("aria-activedescendant"); ta.setAttribute("aria-expanded", "false"); } }
+function slashDraw() {
+  const m = $("#slash"), ta = $("#ta"); if (!m || !ta) return;
+  m.innerHTML = slashState.items.map((x, i) => `<button type="button" role="option" id="slash-${i}" data-sl="${i}" aria-selected="${i === slashState.i}"><b>/${x.n}</b><span>${x.d}</span></button>`).join("");
+  m.hidden = false; ta.setAttribute("aria-expanded", "true"); ta.setAttribute("aria-activedescendant", `slash-${slashState.i}`);
+}
+function slashUpdate(ta) {
+  const before = ta.value.slice(0, ta.selectionStart), m = before.match(/(^|\s)\/([A-Za-zÀ-ÿ]*)$/);
+  if (!m) return slashClose();
+  const items = SLASH.filter((x) => nz(x.n).startsWith(nz(m[2])));
+  if (!items.length) return slashClose();
+  slashState.open = true; slashState.items = items; slashState.i = Math.min(slashState.i, items.length - 1); slashState.from = before.length - m[2].length - 1; slashDraw();
+}
+function slashPick(i) {
+  const ta = $("#ta"), it = slashState.items[i]; if (!ta || !it) return;
+  const from = slashState.from, to = ta.selectionStart;
+  if (it.o) { ta.setRangeText(it.o + it.c, from, to, "end"); const pos = from + it.o.length; ta.setSelectionRange(pos, pos); } else { ta.setRangeText("", from, to, "end"); }
+  slashClose(); ta.focus(); grow(ta); syncImprove(); if (!it.o) fmtHelp();
+}
+function slashKeys(e) {
+  if (!slashState.open) return;
+  const n = slashState.items.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { slashState.i = (slashState.i + (e.key === "ArrowDown" ? 1 : n - 1)) % n; slashDraw(); }
+  else if (e.key === "Enter" || e.key === "Tab") slashPick(slashState.i);
+  else if (e.key === "Escape") slashClose();
+  else return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}
+document.addEventListener("mousedown", (e) => { if (e.target.closest(".slash")) e.preventDefault(); });
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-sl]"); if (!b) return; e.stopPropagation(); e.preventDefault(); slashPick(Number(b.dataset.sl)); }, true);
+
+/* Melhorar texto: o modelo reescreve o que o jogador escreveu, sem mudar o que o personagem faz ou diz (exemplo fixo no protótipo). */
+S.imp = null; S.improving = false;
+function syncImprove() {
+  const ta = $("#ta"), b = $('[data-act="improve"]'); if (!b || !ta) return;
+  const off = S.model !== "ok", empty = !ta.value.trim();
+  b.disabled = off || empty || S.improving || S.streaming || ta.disabled;
+  const tip = off ? "Sem modelo carregado" : empty ? "Escreva algo para melhorar" : "Melhorar o texto com o Narrador";
+  b.dataset.tip = tip; b.setAttribute("aria-label", tip);
+}
+function improveText(t) {
+  t = t.trim(); const cap = t.charAt(0).toUpperCase() + t.slice(1), end = /[.!?…]$/.test(t) ? "" : ".";
+  return /["“*]/.test(t) ? cap : `*Ajeito a capa e respiro fundo.* "${cap}${end}"`;
+}
 document.addEventListener("click", (e) => {
-  const b = e.target.closest("[data-f]"); if (!b) return; e.stopPropagation(); e.preventDefault();
-  if (b.dataset.f === "help") {
-    dialog("Formatação do texto", `<p style="margin:0">O texto do chat usa quatro estilos. O Narrador segue a mesma convenção; o que você escreve também.</p>
-      <ul class="fmthelp"><li><span class="k">Narração</span><span>Sem marca. Descreve o mundo e o que acontece.</span></li>
-      <li><span class="k">Fala</span><span><code>"assim"</code> entre aspas; no chat aparece com travessão e em itálico, no mesmo estilo da ação. O nome de quem fala vem acima, recuado. ${fmt('Tibo: "Eu só entrego, moça."')}</span></li>
-      <li><span class="k">Ação</span><span><code>*assim*</code> entre asteriscos; aparece em itálico, no mesmo estilo da fala. ${fmt("*Você pega o envelope.*")}</span></li>
-      <li><span class="k">Pensamento</span><span><code>_assim_</code> entre sublinhados. ${fmt("_Esse selo é do meu irmão._")}</span></li></ul>
-      <p style="margin:0;font-size:var(--fs-xs);color:var(--muted)">Os botões <b>Fala</b>, <b>Ação</b> e <b>Pensamento</b> aplicam a marca ao texto selecionado. Texto sem marca que você escreve conta como ação. <b>O pensamento é só seu</b>: os NPCs não o conhecem. O destaque nunca depende só da cor.</p>`);
-    return;
-  }
-  const ta = $("#ta"); if (!ta || ta.disabled) return;
-  const [o, c] = { fala: ['"', '"'], acao: ["*", "*"], pens: ["_", "_"] }[b.dataset.f];
-  const st = ta.selectionStart, en = ta.selectionEnd, sel = ta.value.slice(st, en);
-  ta.setRangeText(o + sel + c, st, en, "end"); if (!sel) ta.setSelectionRange(st + 1, st + 1);
-  ta.focus(); grow(ta);
+  const b = e.target.closest('[data-act="improve"], [data-act="undoimp"]'); if (!b) return; e.stopPropagation(); e.preventDefault();
+  const ta = $("#ta"), hint = $("#fhint"); if (!ta || !hint) return;
+  if (b.dataset.act === "undoimp") { if (S.imp != null) { ta.value = S.imp; S.imp = null; grow(ta); hint.textContent = HINT; syncImprove(); ta.focus(); } return; }
+  if (b.disabled) return;
+  S.improving = true; S.imp = ta.value; ta.readOnly = true; b.classList.add("busy"); b.setAttribute("aria-busy", "true"); hint.textContent = "O Narrador está melhorando o texto…"; syncImprove();
+  setTimeout(() => {
+    S.improving = false; const t2 = $("#ta"), h2 = $("#fhint"), b2 = $('[data-act="improve"]'); if (!t2 || !h2) return;
+    t2.readOnly = false; t2.value = improveText(S.imp); grow(t2); if (b2) { b2.classList.remove("busy"); b2.removeAttribute("aria-busy"); }
+    h2.innerHTML = `Texto melhorado: revise antes de enviar. <button type="button" class="link" data-act="undoimp">Desfazer</button>`; syncImprove(); t2.focus();
+  }, 1100);
 }, true);
 
 /* ====================================================== Diário do jogador: anotações, o que sei e NPCs que conheço */
@@ -1299,7 +1363,7 @@ function interceptSend(e, ta) {
   e.preventDefault(); e.stopPropagation(); const v = (ta.value || "").trim(); if (!v) return true;
   ta.value = ""; answerDoubt(v, "jogador"); return true;
 }
-document.addEventListener("keydown", (e) => { const ta = e.target.closest && e.target.closest("#ta"); if (ta && e.key === "Enter" && !e.shiftKey) interceptSend(e, ta); }, true);
+document.addEventListener("keydown", (e) => { const ta = e.target.closest && e.target.closest("#ta"); if (ta && e.key === "Enter" && !e.shiftKey && !slashState.open) interceptSend(e, ta); }, true);
 document.addEventListener("click", (e) => {
   const send = e.target.closest('[data-act="send"]'); if (send) { const ta = $("#ta"); if (ta && interceptSend(e, ta)) return; }
   const t = e.target.closest("[data-c], [data-act='doubt']"); if (!t) return;

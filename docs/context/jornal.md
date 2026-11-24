@@ -363,3 +363,11 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões assumidas pelo planejador, aprovadas na conversa: carregar sobrescreve com um ponto "Antes de carregar"; 20 manuais e 5 automáticos; o Mundo não volta.
 - Ocorrências: o protótipo inicial tinha um painel de detalhes com resumo; o responsável o trocou pela lista de pontos. Dois botões do painel Protótipo falhavam com a lista vazia (corrigido e retestado em jsdom).
 - Arquivos: `docs/ui-ux/15-jornadas.md`, `docs/ui-ux/prototipos/jornadas.html`, `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`.
+
+## 2026-11-24 — `chat-fala-e-melhorar-texto`
+
+- Rota: conversa com o planejador → ajuste do protótipo da tela da Jornada (artifact privado) → aprovação → Entrega. Só documentação e protótipo.
+- Resultado: travessão da fala abre sempre e fecha só se houver texto depois; **pensamento removido** do chat e do planejamento; barra de botões do campo de escrita substituída pelo menu `/` (fala, ação, ajuda); novo botão **Melhorar texto** à esquerda do enviar. `09` (item 2.10), `05` (seção 6.2), backlog e handoff atualizados.
+- Decisões do responsável: pensamentos não são expressos no chat; formatação por `/` em vez de botões; melhorar texto pelo modelo. Decisão do planejador, aprovada: o modelo melhora a redação sem mudar o que o personagem faz ou diz e sem inventar fatos; o `@` fica para o `@Aduran`.
+- Ocorrências: no teste, o atalho de Enter do cartão de dúvida de continuidade capturava o Enter do menu `/`; corrigido (o menu aberto tem prioridade).
+- Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/05-narrador-ia.md`, `docs/backlog.md`.
