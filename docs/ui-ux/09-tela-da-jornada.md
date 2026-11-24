@@ -78,11 +78,11 @@
 
 Janela com **abas na lateral** (retrato grande acima) e conteúdo em pergaminho:
 
-1. **Visão geral**: trilhas e Atributos.
-2. **Perícias**: as 22, em duas colunas.
-3. **Objetivos**: Ambição (com o arco e quantas Cenas) e Desejo.
-4. **Convicções**: cada uma com o Pilar e as Fraturas desenhadas.
-5. **Descrição**: Conceito, **idade, altura, origem e personalidade** (campos **opcionais, sem efeito de regra**, novos), aparência e histórico.
+1. **Visão geral**: trilhas, Atributos e as 22 Perícias, em duas colunas.
+2. **Convicções**: Objetivos (Ambição, com o arco e quantas Cenas, e Desejo) acima das Convicções, cada uma com o Pilar e as Fraturas desenhadas.
+3. **Descrição**: Conceito, **idade, altura, origem e personalidade** (campos **opcionais, sem efeito de regra**, novos), aparência e histórico.
+
+A ficha expandida tem dimensões fixas entre as abas; o conteúdo de cada aba rola internamente. Em telas estreitas, a composição responsiva mantém a coluna única.
 
 ### 2.7 Retrato
 

@@ -262,24 +262,32 @@ describe("Jornada aberta", () => {
     expect(within(sheet).getByText("Erudição")).toBeInTheDocument();
   });
 
-  it("Ficha completa: abas laterais com Objetivos, Convicções e Descrição", async () => {
+  it("Ficha completa: visão geral reúne as 22 perícias e Convicções reúne objetivos e convicções", async () => {
     const { user } = await openJourney();
     await user.click(screen.getByRole("button", { name: "Abrir a ficha completa" }));
     const dialog = await screen.findByRole("dialog", { name: "Ficha completa" });
     const tabs = within(dialog).getByRole("tablist", { name: "Seções da ficha" });
+    const sheet = dialog.querySelector(".fsheet");
     expect(tabs).toHaveAttribute("aria-orientation", "vertical");
-    await user.click(within(dialog).getByRole("tab", { name: "Objetivos" }));
+    expect(sheet).not.toBeNull();
+    expect(within(tabs).queryByRole("tab", { name: "Perícias" })).not.toBeInTheDocument();
+    expect(within(tabs).queryByRole("tab", { name: "Objetivos" })).not.toBeInTheDocument();
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(3);
+    expect(within(dialog).getByText("Erudição")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("tab", { name: "Convicções" }));
+    expect(within(dialog).getByRole("heading", { name: "Objetivos" })).toBeInTheDocument();
     expect(within(dialog).getByText("Vingar o irmão morto na Ponte Velha")).toBeInTheDocument();
     expect(within(dialog).getByText("Concluir o contrato de escolta atual")).toBeInTheDocument();
     expect(within(dialog).getByText(/Arco 1 · 1 Cena/)).toBeInTheDocument();
-    // Setas para cima e para baixo trocam de aba.
-    within(dialog).getByRole("tab", { name: "Objetivos" }).focus();
-    await user.keyboard("{ArrowDown}");
-    expect(within(dialog).getByRole("tab", { name: "Convicções" })).toHaveAttribute("aria-selected", "true");
     expect(within(dialog).getByText("Nunca abandonar quem luta ao meu lado")).toBeInTheDocument();
     expect(within(dialog).getByText(/Pilar: Bram, meu antigo sargento · íntegra/)).toBeInTheDocument();
     expect(within(dialog).getAllByRole("img", { name: "0 de 2 Fraturas" })).toHaveLength(3);
-    await user.click(within(dialog).getByRole("tab", { name: "Descrição" }));
+    // Setas para cima e para baixo trocam de aba.
+    within(dialog).getByRole("tab", { name: "Convicções" }).focus();
+    await user.keyboard("{ArrowDown}");
+    expect(within(dialog).getByRole("tab", { name: "Descrição" })).toHaveAttribute("aria-selected", "true");
+    // A ficha mantém o mesmo contêiner ao trocar de aba; o conteúdo rola dentro dele.
+    expect(dialog.querySelector(".fsheet")).toBe(sheet);
     expect(within(dialog).getByText("Alta, cabelo raspado, cicatriz no queixo.")).toBeInTheDocument();
     expect(within(dialog).getAllByText("não informado").length).toBeGreaterThan(0);
   });
