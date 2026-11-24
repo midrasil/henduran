@@ -234,6 +234,7 @@ async def _propose(
         current_place=state.current_place,
         date=state.date,
         replacing=replacing,
+        description=state.meta.get("description"),
     )
     parse = functools.partial(engine.parse_aduran_proposal, known=state.place_names)
 
@@ -316,6 +317,7 @@ async def run_opening(
         place_id=plan.place_id,
         tone=tone,
         date=state.date,
+        description=state.meta.get("description"),
     )
 
     async def complete(messages: list[ChatMessage]) -> str:
@@ -344,7 +346,12 @@ async def run_opening(
     yield "scene", {"scene": engine.public_scene(proposed, state.world)}
 
     narration_messages = ctx.opening_narration_context(
-        world=state.world, character=state.character, scene=proposed, tone=tone, date=state.date
+        world=state.world,
+        character=state.character,
+        scene=proposed,
+        tone=tone,
+        date=state.date,
+        description=state.meta.get("description"),
     )
     filt = _MarkerFilter()
     async for event in _stream_tokens(provider, narration_messages, cancel, filt):
@@ -452,6 +459,7 @@ def reply_context(journey: OpenJourney, plan: ReplyPlan, *, before_id: int | Non
         "previous": state.previous,
         "places": state.places,
         "date": state.date,
+        "description": state.meta.get("description"),
     }
     if plan.channel == store.CHANNEL_SCENE:
         history = store.recent_messages(journey.db, plan.channel, plan.scene_id, ctx.RECENT_MESSAGES, before_id=before_id)
@@ -569,6 +577,7 @@ def redo_context(journey: OpenJourney, plan: RedoPlan) -> list[ChatMessage]:
         previous=previous,
         date=state.date,
         initial=scene.get("opening_tone") is not None,
+        description=state.meta.get("description"),
     )
 
 
@@ -761,6 +770,7 @@ async def run_accept(
         previous=state.previous,
         date=state.date,
         initial=False,
+        description=state.meta.get("description"),
     )
     filt = _MarkerFilter()
     async for event in _stream_tokens(provider, messages, cancel, filt):
@@ -846,6 +856,7 @@ async def run_close(provider: NarratorProvider, journey: OpenJourney, plan: Clos
         scene=plan.scene,
         history=plan.history,
         places=plan.state.places,
+        description=plan.state.meta.get("description"),
     )
 
     async def complete(msgs: list[ChatMessage]) -> str:

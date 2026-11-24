@@ -671,7 +671,8 @@ def test_backup_pre_migracao_por_jornada_com_rotacao(env, monkeypatch):
     assert len(journeys.list_backups(jid)) == 5
     current = mig_mod.latest_version("journey")  # a migração extra vem depois das reais
     (root / "journey" / f"{current + 1:04d}_extra.sql").write_text("CREATE TABLE extra_teste (x INTEGER);\n", encoding="utf-8")
-    (root / "world" / "0002_extra.sql").write_text("CREATE TABLE extra_mundo (x INTEGER);\n", encoding="utf-8")
+    world_next = mig_mod.latest_version("world") + 1
+    (root / "world" / f"{world_next:04d}_extra.sql").write_text("CREATE TABLE extra_mundo (x INTEGER);\n", encoding="utf-8")
     monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", root)
     with journeys.open_journey(jid) as journey:
         assert journey.db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == current + 1
@@ -680,7 +681,7 @@ def test_backup_pre_migracao_por_jornada_com_rotacao(env, monkeypatch):
     assert len(found) == 5 and found[0].schema_version == current and found[0].created.startswith("20")
     assert found[0].created > "2025"  # o novo, de agora
     assert journeys.list_backups(other) == []  # só a Jornada aberta foi copiada
-    assert len(list(paths.world_backups_dir(wid).glob("world-v1-*.db"))) == 1
+    assert len(list(paths.world_backups_dir(wid).glob(f"world-v{world_next - 1}-*.db"))) == 1
     assert not paths.backups_dir.exists() or not list(paths.backups_dir.iterdir())
     # Um app sem a migração extra recusa a Jornada mais nova, sem mexer nela.
     monkeypatch.setattr(mig_mod, "MIGRATIONS_ROOT", original)

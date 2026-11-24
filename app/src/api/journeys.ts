@@ -159,6 +159,11 @@ export interface CharacterDraft {
   height?: string;
   origin?: string;
   personality?: string;
+  /**
+   * História formatada (HTML do editor; ADR-077). O servidor sanea, deriva o texto puro e o usa
+   * como `history` (o limite de `text_limits.history` conta o texto puro). Ausente = `history` em texto simples.
+   */
+  history_html?: string;
 }
 
 export interface DerivedPreview {
@@ -197,6 +202,8 @@ export interface JourneySummary {
   current_scene_title?: string | null;
   /** Retrato servido sem abrir a Jornada (`url_path` = `/journeys/<id>/portrait`). */
   portrait?: PortraitInfo | null;
+  /** Descrição da Jornada (ADR-077, item 4); `null` sem descrição; ausente em respostas antigas. */
+  description?: string | null;
 }
 
 export interface JourneyList {
@@ -240,7 +247,10 @@ export interface CharacterSheet {
   name: string;
   concept: string;
   appearance: string;
+  /** Texto puro da História. */
   history: string;
+  /** História formatada (HTML saneado pelo serviço; parágrafos nas Histórias antigas). */
+  history_html?: string | null;
   /** Campos opcionais da descrição (nulos quando não informados; ausentes em Jornadas antigas). */
   age?: string | null;
   height?: string | null;
@@ -276,6 +286,8 @@ export interface OpenJourneySummary {
   calendar_year?: number | null;
   calendar_month?: number | null;
   calendar_day?: number | null;
+  /** Descrição da Jornada (ADR-077, item 4). */
+  description?: string | null;
 }
 
 /* ------------------------------------------------- Cena, proposta e lugar */
@@ -365,9 +377,34 @@ export interface JourneyDeletion {
   world_kept_reason: string | null;
 }
 
+/** Mundo salvo, na lista da Nova Jornada (`GET /worlds`). */
+export interface SavedWorld {
+  id: string;
+  name: string | null;
+  created_at: string | null;
+  versions: number[];
+  latest_version: number | null;
+  schema_version: number;
+  status: "ok" | "danificado" | "mais_novo" | string;
+  error_code: string | null;
+  error_message: string | null;
+  /** Semente do Mundo; `null` em Mundos antigos. */
+  seed: number | null;
+  /** Nome da era e do tom da última versão. */
+  era: string | null;
+  tone: string | null;
+  /** Quantas Jornadas usam o Mundo. */
+  journey_count: number | null;
+}
+
+/** Mundo novo (conteúdo e, se gerado sem edição, a semente) ou Mundo salvo (id), lido sem alteração. */
+export type NewJourneyWorld = { content: WorldContent; seed?: number } | { id: string };
+
 export interface NewJourneyBody {
   name?: string;
-  world: { content: WorldContent };
+  /** Descrição da Jornada (opcional, até 2.000 caracteres). */
+  description?: string;
+  world: NewJourneyWorld;
   start_place_id: string;
   character: CharacterDraft;
 }
@@ -384,6 +421,11 @@ export const generateWorld = (info: BackendInfo, seed?: number) =>
     method: "POST",
     body: seed === undefined ? {} : { seed },
   });
+
+export const listWorlds = (info: BackendInfo) => request<{ worlds: SavedWorld[] }>(info, "/worlds");
+
+export const fetchWorld = (info: BackendInfo, id: string) =>
+  request<{ world: SavedWorld; content: WorldContent | null }>(info, `/worlds/${encodeURIComponent(id)}`);
 
 export const validateWorld = (info: BackendInfo, content: WorldContent) =>
   request<WorldValidation>(info, "/worlds/validate", { method: "POST", body: { content } });

@@ -1,20 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { RULES, WORLD } from "../../test/gameData";
+import { RULES, WORLD, WORLD_SCHEMA } from "../../test/gameData";
 import {
+  advanceMove,
   attributeCounts,
+  blankWorld,
+  CHARACTER_TABS,
+  characterTabOf,
+  countByTab,
   countStatus,
   emptyCharacter,
   fieldId,
   nextPlaceId,
   overused,
   parentPath,
+  plainTextOfHtml,
   profileValues,
   randomAttributes,
   randomSeed,
   randomSkills,
   stripPrefix,
   toDraft,
+  wordCount,
+  worldTabOf,
 } from "./model";
 
 const seq = (values: number[]) => {
@@ -32,6 +40,7 @@ describe("modelo do assistente", () => {
       concept: "",
       appearance: "",
       history: "",
+      history_html: "",
       ambition: "",
       desire: "",
       convictions: form.convictions,
@@ -90,5 +99,54 @@ describe("modelo do assistente", () => {
     expect(stripPrefix([{ field: "character.name", code: "x", message: "m" }, { field: "name", code: "y", message: "n" }], "character.")).toEqual([
       { field: "name", code: "x", message: "m" },
     ]);
+  });
+});
+
+describe("abas, Avançar e Mundo em branco", () => {
+  it("cada erro do servidor cai na aba certa", () => {
+    expect(worldTabOf("name")).toBe("geral");
+    expect(worldTabOf("era.description")).toBe("geral");
+    expect(worldTabOf("calendar.months[2].days")).toBe("calendario");
+    expect(worldTabOf("religions[0].domain")).toBe("religioes");
+    expect(worldTabOf("places[1].name")).toBe("lugares");
+    expect(worldTabOf("start")).toBe("lugares");
+    expect(characterTabOf("appearance")).toBe("ident");
+    expect(characterTabOf("age")).toBe("ident");
+    expect(characterTabOf("history")).toBe("hist");
+    expect(characterTabOf("convictions[1].pillar")).toBe("obj");
+    expect(characterTabOf("attributes.forca")).toBe("status");
+    expect(characterTabOf("skill_profile")).toBe("status");
+    const counts = countByTab(CHARACTER_TABS, [{ field: "name", code: "", message: "" }, { field: "skills", code: "", message: "" }], characterTabOf);
+    expect(counts).toEqual({ ident: 1, hist: 0, obj: 0, status: 1 });
+  });
+
+  it("Avançar fica na aba incompleta, vai à próxima incompleta (recomeçando do início) ou ao passo seguinte", () => {
+    const order = ["a", "b", "c", "d"] as const;
+    const pending = (a: number, b: number, c: number, d: number) => ({ a, b, c, d });
+    expect(advanceMove([...order], "b", pending(0, 1, 0, 0))).toEqual({ kind: "stay" });
+    expect(advanceMove([...order], "a", pending(0, 0, 2, 1))).toEqual({ kind: "tab", tab: "c" });
+    expect(advanceMove([...order], "c", pending(1, 0, 0, 0))).toEqual({ kind: "tab", tab: "a" });
+    expect(advanceMove([...order], "d", pending(0, 0, 0, 0))).toEqual({ kind: "step" });
+  });
+
+  it("Criar do zero usa os mínimos do esquema", () => {
+    const world = blankWorld(WORLD_SCHEMA);
+    expect(world.schema).toBe(WORLD_SCHEMA.schema);
+    expect(world.calendar.months).toHaveLength(WORLD_SCHEMA.months.min);
+    expect(world.calendar.weekdays).toHaveLength(WORLD_SCHEMA.weekdays.min);
+    expect(world.religions).toHaveLength(WORLD_SCHEMA.religions.min);
+    expect(world.places.map((p) => p.id)).toEqual(Array.from({ length: WORLD_SCHEMA.places.min }, (_, i) => `lugar-${i + 1}`));
+  });
+
+  it("texto puro da História como o servidor deriva", () => {
+    expect(plainTextOfHtml("")).toBe("");
+    expect(plainTextOfHtml("<h3>Origens</h3><p>Cresceu  no <b>porto</b>.</p>")).toBe("Origens\nCresceu no porto.");
+    expect(plainTextOfHtml("<ul><li>um</li><li>dois</li></ul><ol><li>a</li><li>b<ul><li>c</li></ul></li></ol>")).toBe(
+      "- um\n- dois\n1. a\n2. b\n- c",
+    );
+    expect(plainTextOfHtml("<blockquote><p>citado</p></blockquote>solto<div>a<br>b</div>")).toBe("citado\nsolto\na b");
+    expect(plainTextOfHtml("<p></p><p> </p><script>x</script>")).toBe("");
+    expect(wordCount("- um\n1. dois três")).toBe(3);
+    expect(toDraft({ ...emptyCharacter(RULES), history: "<p>Oi</p>" })).toMatchObject({ history: "Oi", history_html: "<p>Oi</p>" });
   });
 });

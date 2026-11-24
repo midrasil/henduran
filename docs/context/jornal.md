@@ -279,3 +279,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões fechadas depois da aprovação e registradas no ADR-077: editor TipTap enxuto para a História (o responsável perguntou por uma experiência próxima a um processador de texto, e escolheu a opção recomendada), História em HTML saneado com texto puro derivado, rota do Narrador que preenche dados (a IA propõe, o motor valida) e descrição da Jornada em `journey_meta`. Pendente na implementação: licença e tamanho do TipTap, aprovação da dependência. O texto dos botões do Narrador no protótipo é só exemplo.
 - Arquivos principais: `docs/ui-ux/12-nova-jornada.md`, `docs/ui-ux/prototipos/nova-jornada.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/main/decisoes/ADR-077-nova-jornada-historia-formatada-descricao-e-narrador-que-preenche.md`.
 - Entrega: PR [#28](https://github.com/midrasil/henduran/pull/28) aberto contra `main`.
+
+## 2026-11-24 — `nova-jornada` (rodada 1)
+
+- Rota: conversa com o planejador → Dev (rodada 1 de 2) → teste e validação do responsável → Entrega.
+- Resultado: assistente de Nova Jornada implementado conforme o protótipo aprovado (PR #28) e o ADR-077: 3 passos e Iniciar Jornada, Mundos salvos, Protagonista em abas com retrato e editor provisório de História, Revisão em abas, descrição da Jornada, História em HTML saneado com texto puro derivado, criação em Mundo existente, semente do Mundo. Detalhes e diferenças no handoff e na seção 9 de `12-nova-jornada.md`.
+- Decisões do responsável (2026-11-24): instalar o TipTap na rodada 2; aparência opcional com migração na rodada 2; aviso na tela se o envio do retrato falhar; botão no menu para uma lista de Mundos com criação lá dentro (precisa de protótipo).
+- Decisões do dev nesta rodada: sanitizador próprio com `html.parser`, sem dependência; `formatacao_demais` para HTML saneado acima de 40.000 caracteres; semente pedida só vale se gera exatamente o conteúdo enviado; Mundos ilegíveis ficam fora da lista com um aviso.
+- TipTap (só consultado): licença MIT nos pacotes que entrariam; `@tiptap/core` com 3,3 MB descompactado no npm; o StarterKit v3 traz `link` e `code`, que serão desligados.
+- Ocorrência: troca de branch da pasta principal durante o trabalho (PR #29); alterações recolocadas em `feat/nova-jornada` sem conflito. O dev deixou um backend de teste na porta 8765, que pode ser fechado.
+- Arquivos principais: `app/src/screens/newJourney/*`, `app/src/ui/HistoryEditor/*`, `backend/henduran/richtext.py`, `backend/henduran/services/journey_creation.py`, `backend/henduran/storage/{worlds,character,journeys}.py`, `backend/henduran/api/app.py`, migrações `journey/0005` e `world/0002`, `docs/ui-ux/12-nova-jornada.md`.

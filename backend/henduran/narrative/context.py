@@ -6,7 +6,9 @@ mesmo estado: Mundo, ficha resumida, período do dia, Cena aberta, resumos das
 últimas Cenas encerradas e as últimas mensagens **concluídas** do canal atual
 (mensagens canceladas nunca entram).
 
-Os textos do jogador e do Mundo são dados; vão no contexto como estão.
+Os textos do jogador e do Mundo são dados; vão no contexto como estão. A descrição
+da Jornada, escrita pelo jogador na Nova Jornada (ADR-077, item 4), entra no estado
+geral de todos os contextos, logo depois da ficha.
 
 O Aduran, Fora de Cena, pode sinalizar que a ação declarada pede uma Cena com a
 marcação :data:`MARKER` no fim da resposta (ADR-076, item 17); o serviço a remove
@@ -195,6 +197,12 @@ def previous_scenes_brief(scenes: Iterable[dict[str, Any]]) -> str | None:
     return "Cenas anteriores (resumos):\n" + "\n".join(f"- {s['summary']}" for s in items)
 
 
+def description_brief(description: str | None) -> str | None:
+    """Descrição da Jornada escrita pelo jogador (ADR-077, item 4), ou ``None`` sem descrição."""
+    text = (description or "").strip()
+    return f"Descrição da Jornada, escrita pelo jogador:\n{text}" if text else None
+
+
 def _state_block(
     world: dict[str, Any] | None,
     character: dict[str, Any] | None,
@@ -202,8 +210,13 @@ def _state_block(
     previous: Iterable[dict[str, Any]] = (),
     *,
     date: dict[str, Any] | None = None,
+    description: str | None = None,
 ) -> list[str]:
-    parts = [world_brief(world), character_brief(character), f"Período do dia atual: {period_label(day_period)}"]
+    parts = [world_brief(world), character_brief(character)]
+    about = description_brief(description)
+    if about:
+        parts.append(about)
+    parts.append(f"Período do dia atual: {period_label(day_period)}")
     when = date_text(date)
     if when:
         parts.append(f"Data atual: {when}")
@@ -249,6 +262,7 @@ def chat_context(
     current_place: dict[str, Any] | None = None,
     scene_reference: dict[str, Any] | None = None,
     scene_reference_messages: Iterable[dict[str, Any]] = (),
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Contexto de uma resposta no canal atual: Narrador da Cena se ``scene``, senão Aduran.
 
@@ -258,11 +272,11 @@ def chat_context(
     """
     places = list(places)
     if scene is not None:
-        parts = [SCENE_INSTRUCTIONS, _COMMON_LIMITS, *_state_block(world, character, day_period, previous, date=date)]
+        parts = [SCENE_INSTRUCTIONS, _COMMON_LIMITS, *_state_block(world, character, day_period, previous, date=date, description=description)]
         parts.append(scene_brief(scene, world, places))
     else:
         parts = [ADURAN_INSTRUCTIONS, ADURAN_DURING_SCENE if scene_reference is not None else ADURAN_PROPOSE_RULE]
-        parts += [_COMMON_LIMITS, *_state_block(world, character, day_period, previous, date=date)]
+        parts += [_COMMON_LIMITS, *_state_block(world, character, day_period, previous, date=date, description=description)]
         if current_place is not None:
             parts.append(_place_line(current_place))
         if scene_reference is not None:
@@ -304,13 +318,14 @@ def opening_proposal_context(
     place_id: str,
     tone: Tone,
     date: dict[str, Any] | None = None,
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Etapa 1 da abertura: pede o título, o motivo e os participantes da Cena inicial, em JSON."""
     system = "\n\n".join(
         [
             SCENE_INSTRUCTIONS,
             _COMMON_LIMITS,
-            *_state_block(world, character, day_period, date=date),
+            *_state_block(world, character, day_period, date=date, description=description),
             "A Jornada está começando. Você vai propor a Cena inicial.",
             place_brief(place, place_id),
             f"Tom de partida sorteado: {tone.name} — {tone.description}",
@@ -334,6 +349,7 @@ def aduran_proposal_context(
     current_place: dict[str, Any] | None = None,
     date: dict[str, Any] | None = None,
     replacing: dict[str, Any] | None = None,
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Proposta de Cena do Aduran (depois da marcação): título, lugar, motivo e participantes, em JSON.
 
@@ -341,7 +357,11 @@ def aduran_proposal_context(
     ``replacing``: a proposta pendente que o jogador pediu para trocar (a nova deve ser outra).
     """
     places = list(places)
-    parts = [ADURAN_INSTRUCTIONS, _COMMON_LIMITS, *_state_block(world, character, day_period, previous, date=date)]
+    parts = [
+        ADURAN_INSTRUCTIONS,
+        _COMMON_LIMITS,
+        *_state_block(world, character, day_period, previous, date=date, description=description),
+    ]
     if current_place is not None:
         parts.append(_place_line(current_place))
     parts.append(known_places_brief(world, places))
@@ -369,6 +389,7 @@ def opening_narration_context(
     previous: Iterable[dict[str, Any]] = (),
     date: dict[str, Any] | None = None,
     initial: bool = True,
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Etapa 2 da abertura: o texto de abertura, a partir da Cena validada.
 
@@ -377,7 +398,7 @@ def opening_narration_context(
     parts = [
         SCENE_INSTRUCTIONS,
         _COMMON_LIMITS,
-        *_state_block(world, character, scene.get("day_period"), previous, date=date),
+        *_state_block(world, character, scene.get("day_period"), previous, date=date, description=description),
         scene_brief(scene, world, places),
     ]
     if tone is not None:
@@ -402,11 +423,12 @@ def summary_context(
     scene: dict[str, Any],
     history: Iterable[dict[str, Any]],
     places: Iterable[dict[str, Any]] = (),
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Encerramento: pede o resumo da Cena, em JSON."""
     parts = [
         SCENE_INSTRUCTIONS,
-        *_state_block(world, character, scene.get("day_period")),
+        *_state_block(world, character, scene.get("day_period"), description=description),
         scene_brief(scene, world, places),
     ]
     lines = [
@@ -433,6 +455,7 @@ __all__ = [
     "chat_context",
     "character_brief",
     "continue_messages",
+    "description_brief",
     "history_messages",
     "known_places_brief",
     "opening_narration_context",

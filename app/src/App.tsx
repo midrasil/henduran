@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { version as APP_VERSION } from "../package.json";
 import { BackendError, canExitApp, exitApp, type BackendInfo } from "./api/backend";
+import { uploadPortrait } from "./api/journeyScreen";
 import { closeJourney, openJourney, type JourneySnapshot, type JourneySummary } from "./api/journeys";
 import { ModelsView, type ModelsViewProps } from "./components/ModelsView";
 import { StatusIndicator } from "./components/StatusIndicator";
@@ -13,7 +14,7 @@ import { initialNav, navReducer, type Screen } from "./navigation";
 import { JourneyScreen } from "./screens/journey/JourneyScreen";
 import { JourneysScreen } from "./screens/JourneysScreen";
 import { MainMenu, pickLastJourney } from "./screens/MainMenu";
-import { NewJourneyWizard } from "./screens/newJourney/NewJourneyWizard";
+import { NewJourneyWizard, type CreatedExtras } from "./screens/newJourney/NewJourneyWizard";
 import { Button, PeriodLabel, PixelIcon, SkyBackdrop } from "./ui";
 
 export interface AppProps {
@@ -109,10 +110,20 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
     dispatch({ type: "closed" });
   };
 
-  const onCreated = async (journey: JourneySummary) => {
+  const onCreated = async (journey: JourneySummary, extras: CreatedExtras = {}) => {
     if (!info) return;
     try {
-      const snapshot = await openWithRetry(info, journey.id);
+      let snapshot = await openWithRetry(info, journey.id);
+      // Retrato escolhido no assistente: vai ao serviço (que confere os bytes) com a Jornada já aberta.
+      // Se falhar, a Jornada abre sem retrato; ele pode ser escolhido de novo na ficha.
+      if (extras.portrait && snapshot.character) {
+        try {
+          const portrait = await uploadPortrait(info, extras.portrait.file, extras.portrait.crop);
+          snapshot = { ...snapshot, character: { ...snapshot.character, portrait } };
+        } catch (err) {
+          console.warn("retrato não enviado:", describeError(err));
+        }
+      }
       lastOpenedId.current = snapshot.journey.id;
       dispatch({ type: "opened", snapshot });
     } catch (err) {

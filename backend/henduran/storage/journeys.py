@@ -69,11 +69,11 @@ _BACKUP_NAME_RE = re.compile(r"^journey-v\d+-\d{8}-\d{6}(?:-\d+)?\.db$")
 _DAMAGE_CODES = ("banco_danificado", "banco_ausente", "banco_vazio", "sem_resumo")
 _UNSET: Any = object()
 # Campos do resumo devolvidos por OpenJourney.summary() (rules_version existe a partir da migração 0002;
-# start_place_id, da 0003; current_place_id e a data no calendário, da 0004).
+# start_place_id, da 0003; current_place_id e a data no calendário, da 0004; description, da 0005).
 _SUMMARY_KEYS = (
     "id", "name", "character_name", "location", "day_period", "world_id", "world_version",
     "created_at", "last_saved_at", "rules_version", "start_place_id", "current_place_id",
-    "calendar_year", "calendar_month", "calendar_day",
+    "calendar_year", "calendar_month", "calendar_day", "description",
 )
 
 # Uma Jornada aberta por vez neste processo (entre todas as instâncias de JourneyStore).
@@ -110,6 +110,7 @@ class JourneySummary:
     calendar: dict[str, Any] | None = None  # data no calendário do Mundo (narrative.calendar.date_view)
     current_scene_title: str | None = None  # título da Cena em andamento; None Fora de Cena
     portrait: dict[str, Any] | None = None  # {"crop", "url_path"}: o retrato servido sem abrir a Jornada
+    description: str | None = None  # descrição da Jornada (migração 0005; ADR-077, item 4)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -433,6 +434,7 @@ class JourneyStore:
             schema_version=snap.version,
             status="ok",
             rules_version=meta.get("rules_version"),
+            description=meta.get("description") if isinstance(meta.get("description"), str) else None,
         )
 
         def mark(status: str, code: str, message: str | None) -> JourneySummary:

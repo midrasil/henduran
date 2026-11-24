@@ -7,6 +7,14 @@ no Mundo e na Jornada ao mesmo tempo.
 
 Banco de Mundo danificado **nunca é recriado**: vira :class:`WorldDamaged` e o
 arquivo fica como está.
+
+A migração ``world/0002`` acrescenta ``world_meta.seed`` (ADR-077, item 5): a semente do
+gerador num Mundo gerado e não editado, ou uma semente nova, atribuída ao criar, num
+Mundo editado à mão, criado do zero ou duplicado. Nula em Mundos criados antes.
+
+:meth:`WorldStore.catalog` é a lista de Mundos salvos da Nova Jornada: além do resumo,
+nome da era e do tom da última versão, a semente e quantas Jornadas usam cada Mundo,
+tudo lido em modo somente leitura e sem migrar.
 """
 
 from __future__ import annotations
@@ -14,11 +22,12 @@ from __future__ import annotations
 import json
 import logging
 import shutil
+import sqlite3
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from henduran.db.connection import Database, DatabaseError, utc_now_iso
+from henduran.db.connection import Database, DatabaseError, connect_readonly, utc_now_iso
 from henduran.db.migrations import latest_version, migrate
 from henduran.paths import DataPaths, InvalidIdError, new_id, validate_id
 from henduran.storage.errors import StorageError, WorldDamaged
@@ -57,6 +66,11 @@ class WorldSummary:
     status: str = "ok"
     error_code: str | None = None
     error_message: str | None = None
+    seed: int | None = None  # world/0002; None em Mundos antigos ou sem semente
+    # Só em :meth:`WorldStore.catalog` (None nas outras listas):
+    era: str | None = None  # nome da era da última versão
+    tone: str | None = None  # nome do tom da última versão
+    journey_count: int | None = None  # Jornadas legíveis que usam o Mundo
 
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
@@ -72,6 +86,7 @@ def _summary_from(world_id: str, snap: DbSnapshot, latest: int) -> WorldSummary:
         created_at=meta.get("created_at"),
         versions=list(snap.world_versions),
         schema_version=snap.version,
+        seed=meta.get("seed") if isinstance(meta.get("seed"), int) else None,
     )
     if snap.problem is not None:
         summary.status = "danificado"
@@ -95,9 +110,13 @@ class WorldStore:
         self.paths = paths
 
     # ------------------------------------------------------------- criação
-    def create_world(self, name: str, content: Any = None, *, label: str | None = None) -> str:
-        """Cria o Mundo com a versão 1 (``content`` em JSON; padrão ``{}``). Devolve o id."""
+    def create_world(
+        self, name: str, content: Any = None, *, label: str | None = None, seed: int | None = None
+    ) -> str:
+        """Cria o Mundo com a versão 1 (``content`` em JSON; padrão ``{}``) e a ``seed``. Devolve o id."""
         name = clean_name(name)
+        if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 2**53 - 1):
+            raise StorageError("semente_invalida", "A semente do Mundo deve ser um inteiro entre 0 e 2^53 - 1.")
         if label is not None:
             label = clean_name(label, field_name="label")[:LABEL_MAX]
         try:
@@ -114,7 +133,9 @@ class WorldStore:
             migrate(db, migration_set=WORLD_SET, backups_dir=self.paths.world_backups_dir(world_id))
             now = utc_now_iso()
             with db.transaction() as tx:
-                tx.execute("INSERT INTO world_meta (id, name, created_at) VALUES (?, ?, ?)", (world_id, name, now))
+                tx.execute(
+                    "INSERT INTO world_meta (id, name, created_at, seed) VALUES (?, ?, ?, ?)", (world_id, name, now, seed)
+                )
                 tx.execute(
                     "INSERT INTO world_versions (version, label, created_at, content) VALUES (1, ?, ?, ?)",
                     (label, now, payload),
@@ -165,6 +186,49 @@ class WorldStore:
         ]
         out.sort(key=lambda w: ((w.name or "").casefold(), w.id))
         return out
+
+    def read_content(self, world_id: str, version: int | None = None) -> Any:
+        """Conteúdo (JSON decodificado) de uma versão do Mundo (padrão: a última), em modo somente leitura.
+
+        Levanta :class:`StorageError` ``mundo_nao_encontrado`` ou ``versao_ausente``.
+        """
+        wid = checked_id(world_id)
+        path = self.paths.world_db_file(wid)
+        if not path.is_file():
+            raise StorageError("mundo_nao_encontrado", "Mundo não encontrado.")
+        conn = connect_readonly(path)
+        try:
+            if version is None:
+                row = conn.execute("SELECT content FROM world_versions ORDER BY version DESC LIMIT 1").fetchone()
+            else:
+                row = conn.execute("SELECT content FROM world_versions WHERE version = ?", (version,)).fetchone()
+        finally:
+            conn.close()
+        if row is None:
+            raise StorageError("versao_ausente", "O Mundo não tem a versão pedida.")
+        return json.loads(row["content"])
+
+    def catalog(self) -> list[WorldSummary]:
+        """Mundos salvos para a Nova Jornada: resumo, era e tom da última versão, semente e uso.
+
+        Somente leitura e sem migrar; um Mundo ilegível continua na lista com ``status``.
+        """
+        items = self.list_worlds()
+        counts = self.journey_counts()
+        for item in items:
+            item.journey_count = counts.get(item.id, 0)
+            if item.status != "ok" or not item.versions:
+                continue
+            try:
+                content = self.read_content(item.id, item.versions[-1])
+            except (StorageError, sqlite3.Error, ValueError) as exc:
+                log.warning("conteúdo do mundo %s ilegível: %s", item.id, exc)
+                continue
+            if isinstance(content, dict):
+                era, tone = content.get("era"), content.get("tone")
+                item.era = era.get("name") if isinstance(era, dict) and isinstance(era.get("name"), str) else None
+                item.tone = tone.get("name") if isinstance(tone, dict) and isinstance(tone.get("name"), str) else None
+        return items
 
     def require_version(self, world_id: str, version: int) -> None:
         """Confere que o Mundo existe, abre e tem ``version``. Levanta :class:`StorageError`."""
@@ -253,6 +317,25 @@ class WorldStore:
             elif snap.meta.get("world_id") == wid:
                 users.append(jid)
         return users, unknown
+
+    def journey_counts(self) -> dict[str, int]:
+        """Quantas Jornadas legíveis usam cada Mundo (uma leitura de ``journey_meta`` por Jornada)."""
+        counts: dict[str, int] = {}
+        root = self.paths.journeys_dir
+        if not root.is_dir():
+            return counts
+        for entry in root.iterdir():
+            try:
+                jid = validate_id(entry.name)
+            except InvalidIdError:
+                continue
+            if not entry.is_dir() or jid != entry.name:
+                continue
+            snap = read_snapshot(self.paths.journey_db_file(jid), "journey_meta")
+            wid = (snap.meta or {}).get("world_id")
+            if isinstance(wid, str):
+                counts[wid] = counts.get(wid, 0) + 1
+        return counts
 
     def world_in_use(self, world_id: str) -> bool:
         """``True`` se alguma Jornada legível está vinculada a este Mundo."""

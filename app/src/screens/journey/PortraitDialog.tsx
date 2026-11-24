@@ -15,6 +15,16 @@ export interface PortraitDialogProps {
   currentCrop: PortraitCropValue | null;
   /** Chamado depois de salvar (`null` = removido). */
   onSaved: (portrait: PortraitInfo | null, newImage: boolean) => void;
+  /**
+   * Modo local (Nova Jornada): nada vai ao serviço; o arquivo escolhido (ou `null`, mantendo a
+   * imagem atual) e o enquadramento voltam para quem chamou, que envia depois de criar a Jornada.
+   */
+  local?: {
+    onApply: (file: File | null, crop: PortraitCropValue) => void;
+    onRemove: () => void;
+    /** Confere o arquivo antes de aceitar (mensagem de erro ou `null`). */
+    check?: (file: File) => Promise<string | null>;
+  };
 }
 
 const ZOOM_MAX = 4;
@@ -29,7 +39,7 @@ const createUrl = (file: Blob): string | null =>
  * com prévia. Envia a imagem original com o enquadramento (PUT); sem imagem
  * nova, só refaz o enquadramento (PATCH). A validação do arquivo é do serviço.
  */
-export function PortraitDialog({ open, onClose, info, name, currentUrl, currentCrop, onSaved }: PortraitDialogProps) {
+export function PortraitDialog({ open, onClose, info, name, currentUrl, currentCrop, onSaved, local }: PortraitDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<PortraitCropValue>(currentCrop ?? DEFAULT_CROP);
@@ -74,9 +84,16 @@ export function PortraitDialog({ open, onClose, info, name, currentUrl, currentC
   /** Atualiza a partir do valor mais recente (teclas repetidas não se perdem). */
   const update = (next: (c: PortraitCropValue) => PortraitCropValue) => setCrop((c) => clampCrop(natural, next(c)));
 
-  const choose = (picked: File | undefined) => {
+  const choose = async (picked: File | undefined) => {
     if (!picked) return;
     setError(null);
+    if (local?.check) {
+      const problem = await local.check(picked);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
     setFile(picked);
     setFileUrl(createUrl(picked));
     setNatural(null);
@@ -131,6 +148,11 @@ export function PortraitDialog({ open, onClose, info, name, currentUrl, currentC
   });
 
   const save = async () => {
+    if (local) {
+      local.onApply(file, round(crop));
+      onClose();
+      return;
+    }
     setSaving("save");
     setError(null);
     try {
@@ -145,6 +167,11 @@ export function PortraitDialog({ open, onClose, info, name, currentUrl, currentC
   };
 
   const remove = async () => {
+    if (local) {
+      local.onRemove();
+      onClose();
+      return;
+    }
     setSaving("delete");
     setError(null);
     try {
@@ -215,7 +242,7 @@ export function PortraitDialog({ open, onClose, info, name, currentUrl, currentC
         <div className="crop__controls">
           <label className="crop__file">
             <span>Escolher imagem do computador</span>
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => choose(e.target.files?.[0])} />
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => void choose(e.target.files?.[0])} />
             <span className="hint">PNG, JPEG ou WebP, até 20 MB.</span>
           </label>
           <label className="crop__zoom">

@@ -9,6 +9,10 @@ A ``0004`` acrescenta os campos opcionais da descrição (``age``, ``height``,
 ``origin``, ``personality``; sem efeito de regra) e o retrato: o nome do arquivo em
 ``assets`` e o enquadramento ``{x, y, zoom}``. A ficha expõe
 ``portrait: {"crop", "url_path"}`` ou ``None``.
+
+A ``0005`` acrescenta ``history_html`` (a História formatada, HTML já saneado; ADR-077).
+``history`` continua com o texto puro. Histórias antigas, sem ``history_html``, saem da
+ficha como parágrafos (:func:`henduran.richtext.paragraphs_html`).
 """
 
 from __future__ import annotations
@@ -16,6 +20,7 @@ from __future__ import annotations
 import json
 from typing import Any, Protocol
 
+from henduran.richtext import paragraphs_html
 from henduran.rules import fatia1 as R
 from henduran.rules.creation import Character
 from henduran.storage.errors import StorageError
@@ -45,10 +50,10 @@ def write_character(tx: _Writer, character: Character, now: str) -> None:
         raise StorageError("personagem_existente", "Esta Jornada já tem um personagem.")
     tx.execute(
         "INSERT INTO character (id, name, concept, appearance, history, creation_profile, created_at, age, height, "
-        "origin, personality) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "origin, personality, history_html) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             character.name, character.concept, character.appearance, character.history, character.skill_profile, now,
-            character.age, character.height, character.origin, character.personality,
+            character.age, character.height, character.origin, character.personality, character.history_html,
         ),
     )
     tx.executemany(
@@ -74,7 +79,7 @@ def read_character(db: _Reader) -> dict[str, Any] | None:
     row = db.query_one(
         "SELECT name, concept, appearance, history, creation_profile, vida_superficial, vida_agravada, "
         "vontade_superficial, vontade_agravada, created_at, age, height, origin, personality, portrait_file, "
-        "portrait_crop FROM character WHERE id = 1"
+        "portrait_crop, history_html FROM character WHERE id = 1"
     )
     if row is None:
         return None
@@ -95,6 +100,7 @@ def read_character(db: _Reader) -> dict[str, Any] | None:
         "concept": row["concept"],
         "appearance": row["appearance"],
         "history": row["history"],
+        "history_html": row["history_html"] or paragraphs_html(row["history"]),
         "age": row["age"],
         "height": row["height"],
         "origin": row["origin"],
