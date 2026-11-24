@@ -371,3 +371,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões do responsável: pensamentos não são expressos no chat; formatação por `/` em vez de botões; melhorar texto pelo modelo. Decisão do planejador, aprovada: o modelo melhora a redação sem mudar o que o personagem faz ou diz e sem inventar fatos; o `@` fica para o `@Aduran`.
 - Ocorrências: no teste, o atalho de Enter do cartão de dúvida de continuidade capturava o Enter do menu `/`; corrigido (o menu aberto tem prioridade).
 - Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/05-narrador-ia.md`, `docs/backlog.md`.
+
+## 2026-11-24 — `skills-por-cena-e-idioma-do-prompt`
+
+- Rota: conversa de planejamento (antes de mandar a tela Modelos ao dev) → ADR e atualização dos documentos. Só documentação.
+- Resultado: **ADR-079** (instruções internas em inglês, resposta em português, medição obrigatória); ADR-078, item 7, reescrito (skills por Cena, automático e manual, até 3, prioridade abaixo de regras e Cânone); `14-modelos.md`, `05-narrador-ia.md` e backlog atualizados.
+- Decisões do responsável: filtro +18 sem padrão; todas as skills do acervo entram; importação pelo comando do skills.sh sem rodar o `npx`; skills **por Cena** com modo automático e limite de 3; trocar skill no meio da Cena é possível; prompt interno em inglês (opção 1 do idioma).
+- Decisões do planejador, aprovadas na conversa: o app lê o texto colado e baixa só texto do GitHub; a busca de skills é só no acervo local; sem tradução de entrada e saída.
+- Em aberto: modo padrão da Cena nova, regra de troca, fixar skill entre Cenas; licenças para o lançamento.
+- Arquivos: `docs/main/decisoes/ADR-079-idioma-interno-dos-prompts.md`, `docs/main/decisoes/ADR-078-...md`, `docs/main/05-narrador-ia.md`, `docs/ui-ux/14-modelos.md`, `docs/backlog.md`.

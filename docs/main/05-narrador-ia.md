@@ -36,7 +36,7 @@ Memória narrativa e estado oficial são diferentes. Rumores, suposições, ment
 
 ## 5. Skills
 
-Skills podem fornecer instruções especializadas de interpretação, estilo, geração de acontecimentos ou consulta, mas **não substituem o motor de regras**. Estudar o sistema `SKILL.md` do Caliope como referência; decidir posteriormente seleção, ativação, limites de contexto e política de scripts. Conteúdo de skill importado não deve ter permissão implícita para executar código ou alterar arquivos.
+Skills podem fornecer instruções especializadas de interpretação, estilo, geração de acontecimentos ou consulta, mas **não substituem o motor de regras**. Estudar o sistema `SKILL.md` do Caliope como referência. **Decidido em 2026-11-24** (ADR-078, item 7): skills por Cena, até 3, texto completo das ativas, modo automático (filtro por código no acervo local e escolha do modelo) e manual, prioridade abaixo das regras e do Cânone. **Idioma:** instruções e skills em inglês, resposta em português (ADR-079). Política de scripts: **nunca executados**. Conteúdo de skill importado não deve ter permissão implícita para executar código ou alterar arquivos.
 
 ## 6. Modelos
 
@@ -72,6 +72,7 @@ O Narrador e o jogador escrevem com marcas leves (`"fala"` e `*ação*`); o rest
 
 - Política exata de confirmação e contestação.
 - Contratos e schemas de ferramentas.
+- Medir o custo em tokens dos prompts em inglês e em português e testar a aderência ao idioma (ADR-079).
 - Roteamento de contexto, memória, resumos e possíveis embeddings.
 - Suspender e reabrir Cenas. A abertura (inclusive a Cena inicial da Jornada) e o encerramento no MVP estão no ADR-076.
 - Estratégia para minimizar alucinações em modelos locais menores: **proposta no ADR-078** (Quadro da Cena, Cânone, fichas de NPC, compactação, orçamento de tokens e pergunta de continuidade), aguardando confirmação.
