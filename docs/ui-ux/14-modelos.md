@@ -1,7 +1,7 @@
 # 14 — Tela Modelos (modelos de IA e Skills)
 
 **Data:** 2026-11-24
-**Estado:** **protótipo aprovado pelo responsável em 2026-11-24** (versão 5). **Ainda não implementado**: o app continua com a tela Modelos atual (`app/src/components/ModelsView.tsx`, uma página única com Hardware, Motor de IA, Modelos locais, Downloads, Hub e Pastas).
+**Estado:** **protótipo aprovado pelo responsável em 2026-11-24** (versão 5). **Rodada 1 implementada em 2026-11-24** (cabeçalho de estado, abas Modelos, Procurar neste PC e Downloads, sem a aba Skills; `app/src/components/ModelsView.tsx` e `app/src/components/models/`). **A aba Skills (seção 4) e o seletor nativo de pasta ainda não existem.**
 **Protótipo de referência:** [`prototipos/modelos.html`](prototipos/modelos.html) (botão **Protótipo**: estado do motor e do modelo, aba, filtro, busca online, procura no PC, diálogos e Skills). Processo em [`10-prototipagem.md`](10-prototipagem.md).
 **Substitui:** a organização atual da tela Modelos (uma página longa) e a nota do backlog "levar a aba Modelos ao nível do Caliope".
 **Relacionados:** ADR-070 a 072 (motor local, `NarratorProvider`, HTTP), `05-narrador-ia.md` (seção 5, Skills), ADR-078 (memória e contexto do Narrador), `auditoria-caliope.md` (skills e `modelhub`), `ESCOPO-MVP.md` (item 11).
@@ -61,7 +61,14 @@ Lista com progresso, velocidade, estado (na fila, baixando, conferindo o SHA-256
 ## 8. Pendências para a implementação
 
 - **Backend**: ocultar modelo, ajustes de contexto e de camadas por modelo, estimativa de memória, busca em pastas, exclusão e listagem de skills (gerenciador `skills.py` do Caliope: importar o gerenciador, não o acervo), importação a partir do GitHub (sem executar nada, só texto, com tamanho máximo e verificação), registro de licenças e atribuições.
-- **Decidido em 2026-11-24**: filtro +18 **sem padrão** (todas visíveis, com a etiqueta); **todas as skills do acervo entram**, com o aviso de licença; importação por comando, link ou `dono/repositório` **sem `npx`** e com leitura de texto pelo app; skills **por Cena** (ADR-078, item 7); idioma interno em inglês (ADR-079). Muitas skills do skills.sh são para programar: a importação avisa "pode não servir para narração".
-- **Decisões abertas**: modo padrão de uma Cena nova, regra de troca no meio da Cena e fixar skill entre Cenas (ADR-078, item 7); **licenças para o lançamento** (apenas 81 de 520 declaram licença; a origem do restante é pergunta para o autor do Caliope; é pendência de lançamento, não bloqueia o desenvolvimento); conferência de segurança das skills importadas (o texto é instrução para o modelo e pode induzir comportamento).
+- **Decidido em 2026-11-24**: filtro +18 **sem padrão** (todas visíveis, com a etiqueta); **todas as skills do acervo entram**, com o aviso de licença; importação por comando, link ou `dono/repositório` **sem `npx`** e com leitura de texto pelo app; skills **por Cena**, modo padrão automático, troca de no máximo uma skill a cada 6 turnos ou quando o Quadro mudar no essencial, e fixar skill entre Cenas (ADR-078, item 7); idioma interno em inglês (ADR-079). Muitas skills do skills.sh são para programar: a importação avisa "pode não servir para narração".
+- **Decisões abertas**: **licenças para o lançamento** (apenas 81 de 520 declaram licença; a origem do restante é pergunta para o autor do Caliope; é pendência de lançamento, não bloqueia o desenvolvimento); conferência de segurança das skills importadas (o texto é instrução para o modelo e pode induzir comportamento).
 - **Visual** a verificar: leitor de tela (abas, filtros, diálogos), DPI de 125% a 200% e reflow a 320 px.
 - **Dependência**: a lista de sugestões por hardware usa as listas do Caliope, só como sugestão (decisão de 2026-11-22).
+
+## 9. Estado da implementação (rodada 1, 2026-11-24)
+
+- **Feito:** os três quadros do cabeçalho, as abas Modelos, Procurar neste PC e Downloads; busca, filtros, notas de qualidade, ocultar, apagar, Carregar… com contexto, camadas e estimativa de memória; downloads com SHA-256; varredura do PC (só leitura); sugestões por hardware.
+- **Diferenças do protótipo:** as sugestões abrem **"Buscar este modelo"** (a lista do Caliope traz termos de busca, não repositórios) e **não informam licença**; **Adicionar pasta…** pede para colar o caminho (o seletor nativo exige `tauri-plugin-dialog` e a permissão `dialog:allow-open`, decisão de segurança); o contexto inicial é 4.096; os botões dos cartões usam o estilo escuro padrão.
+- **Conflito entre fontes (a decidir):** esta spec manda usar a lista do Caliope nas sugestões, e `auditoria-caliope.md` (seções 3 e 5) diz que ela deve ser refeita para o Henduran (modelos de roleplay em inglês).
+- **Não verificado:** app Tauri real, motor e `.gguf` reais (inclusive o `-ngl` numérico no `llama-server`), qualidade da estimativa de memória, busca real no Hugging Face, varredura real das pastas, leitor de tela e DPI de 125% a 200%.

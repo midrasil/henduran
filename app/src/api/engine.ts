@@ -44,6 +44,57 @@ export interface LocalModel {
   source?: "app" | "extra";
   folder?: string | null;
   removable?: boolean;
+  /** Oculto pelo jogador (fica na seção recolhida "Ocultos"; nada é apagado). */
+  hidden?: boolean;
+  /** Ajustes usados ao carregar o motor com este modelo. */
+  options?: ModelOptions;
+}
+
+export type GpuLayers = "auto" | number;
+
+export interface ModelOptions {
+  context_size: number;
+  gpu_layers: GpuLayers;
+}
+
+/** Estimativa de memória de vídeo de `GET /models/estimate` (aproximada; sem os buffers do motor). */
+export interface VramEstimate {
+  id: string;
+  context_size: number;
+  gpu_layers: GpuLayers;
+  total_layers: number | null;
+  layers_on_gpu: number | null;
+  weights_bytes: number | null;
+  kv_bytes: number | null;
+  vram_bytes: number | null;
+  vram_total_bytes: number;
+  known: boolean;
+  slots: number;
+  variant: EngineVariant | null;
+}
+
+/** Sugestão da lista do Caliope para este PC (só sugestão; a lista não informa a licença). */
+export interface ModelSuggestion {
+  name: string;
+  quant: string;
+  search: string;
+  why: string;
+  gpu: boolean;
+  min_vram_bytes: number;
+  license: string | null;
+  source: string;
+}
+
+/** `.gguf` encontrado ao procurar neste PC (nada é copiado nem movido). */
+export interface FoundModel {
+  path: string;
+  folder: string;
+  name: string;
+  quant: string | null;
+  size_bytes: number;
+  parts: number;
+  complete: boolean;
+  fit: ModelFit;
 }
 
 export interface ModelFolder {
@@ -97,8 +148,28 @@ export const installEngine = (info: BackendInfo, variant: EngineVariant, allowUn
     body: { variant, allow_unverified: allowUnverified },
   });
 
-export const selectModel = (info: BackendInfo, id: string) =>
-  request<{ active: string; name: string }>(info, "/models/select", { method: "POST", body: { id } });
+export const selectModel = (info: BackendInfo, id: string, options?: Partial<ModelOptions>) =>
+  request<{ active: string; name: string; options?: ModelOptions }>(info, "/models/select", {
+    method: "POST",
+    body: { id, ...(options ?? {}) },
+  });
+
+/** Oculta ou mostra um modelo na lista (nada é apagado). */
+export const setModelHidden = (info: BackendInfo, id: string, hidden: boolean) =>
+  request<{ id: string; hidden: boolean }>(info, "/models/hidden", { method: "POST", body: { id, hidden } });
+
+export const fetchEstimate = (info: BackendInfo, id: string, contextSize: number, gpuLayers: GpuLayers) =>
+  request<VramEstimate>(
+    info,
+    `/models/estimate?id=${encodeURIComponent(id)}&context_size=${contextSize}&gpu_layers=${encodeURIComponent(String(gpuLayers))}`,
+  );
+
+export const fetchSuggestions = (info: BackendInfo) =>
+  request<{ suggestions: ModelSuggestion[]; search_terms: string[] }>(info, "/models/suggestions");
+
+/** Procura `.gguf` nas pastas comuns deste PC (Downloads, LM Studio, Documentos). */
+export const scanPc = (info: BackendInfo) =>
+  request<{ found: FoundModel[]; searched: string[]; truncated: boolean }>(info, "/models/scan");
 
 export const startEngine = (info: BackendInfo) =>
   request<EngineStatus>(info, "/engine/start", { method: "POST" });
@@ -136,8 +207,8 @@ export function formatBytes(bytes: number): string {
 }
 
 export const FIT_LABEL: Record<ModelFit, string> = {
-  gpu: "Cabe na sua placa",
-  cpu_lento: "Vai rodar no processador, mais lento",
+  gpu: "Cabe na placa",
+  cpu_lento: "Roda na CPU, lento",
   pesado_demais: "Pesado demais para este PC",
 };
 

@@ -10,7 +10,11 @@ Guarda apenas:
   nunca copia nem move arquivos dessas pastas;
 - ``last_journey_id``: UUID da última Jornada jogada (ou ``None``), usado por
   "Continuar" e pelo céu do menu (ADR-075). O banco do app não guarda catálogo
-  de Jornadas; a Jornada em si mora em ``journeys/<id>/journey.db``.
+  de Jornadas; a Jornada em si mora em ``journeys/<id>/journey.db``;
+- ``hidden_models``: ids dos modelos que o jogador ocultou da lista (tela
+  Modelos); ocultar não apaga nem move nada;
+- ``model_options``: ajustes por modelo usados ao carregar o ``llama-server``:
+  ``{id: {"context_size": 4096..32768, "gpu_layers": "auto" ou 0..1024}}``.
 
 Cada preferência é uma linha (``key``, ``value`` em JSON, ``updated_at``). Valor
 inválido no banco é ignorado com aviso (vale o padrão). As leituras saem de uma
@@ -45,12 +49,20 @@ DEFAULTS: dict[str, Any] = {
     "engine_variant": "vulkan",
     "model_folders": [],
     "last_journey_id": None,
+    "hidden_models": [],
+    "model_options": {},
 }
 # Chaves que podem vir do settings.json antigo (anterior ao banco).
 LEGACY_KEYS = ("active_model", "context_size", "engine_variant", "model_folders")
 MAX_MODEL_FOLDERS = 20
 CONTEXT_MIN = 512
 CONTEXT_MAX = 131072
+# Ajustes por modelo (docs/ui-ux/14-modelos.md: contexto de 4.096 a 32.768 tokens).
+MODEL_CONTEXT_MIN = 4096
+MODEL_CONTEXT_MAX = 32768
+GPU_LAYERS_MAX = 1024
+MAX_MODEL_ENTRIES = 1000
+MODEL_ID_MAX = 1024
 LEGACY_IMPORTED_KEY = "settings_json_imported_at"
 MIGRATED_SUFFIX = ".migrado"
 
@@ -86,6 +98,18 @@ def _validate(key: str, value: Any) -> Any:
             return validate_id(value)
         except InvalidIdError as exc:
             raise ValueError("last_journey_id deve ser um UUID ou nulo") from exc
+    if key == "hidden_models":
+        if not isinstance(value, list) or len(value) > MAX_MODEL_ENTRIES:
+            raise ValueError(f"hidden_models deve ser uma lista de até {MAX_MODEL_ENTRIES} ids")
+        out_ids: list[str] = []
+        for item in value:
+            if _model_id(item) not in out_ids:
+                out_ids.append(item)
+        return out_ids
+    if key == "model_options":
+        if not isinstance(value, dict) or len(value) > MAX_MODEL_ENTRIES:
+            raise ValueError(f"model_options deve ser um objeto com até {MAX_MODEL_ENTRIES} modelos")
+        return {_model_id(k): validate_model_options(v) for k, v in value.items()}
     raise KeyError(f"preferência desconhecida: {key}")
 
 
@@ -108,7 +132,37 @@ def atomic_write_text(path: Path, text: str) -> None:
 
 
 def _copy(value: Any) -> Any:
-    return list(value) if isinstance(value, list) else value
+    if isinstance(value, list):
+        return list(value)
+    if isinstance(value, dict):
+        return {k: dict(v) if isinstance(v, dict) else v for k, v in value.items()}
+    return value
+
+
+def _model_id(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip() or "\x00" in value or len(value) > MODEL_ID_MAX:
+        raise ValueError("id de modelo inválido")
+    return value
+
+
+def validate_model_options(value: Any) -> dict[str, Any]:
+    """``{"context_size": int, "gpu_layers": "auto" | int}`` de um modelo; levanta ``ValueError``."""
+    if not isinstance(value, dict) or set(value) - {"context_size", "gpu_layers"}:
+        raise ValueError("ajustes do modelo devem ter só context_size e gpu_layers")
+    out: dict[str, Any] = {}
+    if "context_size" in value:
+        ctx = value["context_size"]
+        if isinstance(ctx, bool) or not isinstance(ctx, int) or not MODEL_CONTEXT_MIN <= ctx <= MODEL_CONTEXT_MAX:
+            raise ValueError(f"context_size deve ser inteiro de {MODEL_CONTEXT_MIN} a {MODEL_CONTEXT_MAX}")
+        out["context_size"] = ctx
+    if "gpu_layers" in value:
+        layers = value["gpu_layers"]
+        if layers != "auto" and (
+            isinstance(layers, bool) or not isinstance(layers, int) or not 0 <= layers <= GPU_LAYERS_MAX
+        ):
+            raise ValueError(f'gpu_layers deve ser "auto" ou inteiro de 0 a {GPU_LAYERS_MAX}')
+        out["gpu_layers"] = layers
+    return out
 
 
 def _read_legacy(path: Path) -> dict[str, Any] | None:

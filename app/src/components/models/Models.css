@@ -1,0 +1,409 @@
+/* Tela Modelos (docs/ui-ux/14-modelos.md; protótipo docs/ui-ux/prototipos/modelos.html).
+   Cabeçalho com três quadros de estado e um cartão de pergaminho com abas. Tokens do ADR-069;
+   tudo quebra em coluna única em telas estreitas (reflow até 320 px, ADR-068). */
+
+.mdl {
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* ----------------------------------------------------------- cabeçalho de estado */
+
+.mdl-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-2);
+}
+
+.mdl-box {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  border: 3px solid var(--color-frame-dark);
+}
+
+.mdl-box__title {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-md);
+  color: var(--color-accent);
+}
+
+.mdl-box__main,
+.mdl-box__line {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mdl-box__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mdl-box__small {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.mdl-box__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-top: 4px;
+}
+
+/* O estado do motor está sempre no texto; o indicador só o reforça. */
+.mdl-led {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  background: var(--color-text-muted);
+  box-shadow: 0 0 0 2px var(--color-shadow);
+}
+
+.mdl-led--ok {
+  background: var(--color-success-text);
+}
+
+.mdl-led--busy {
+  background: var(--color-warn-text);
+}
+
+.mdl-led--bad {
+  background: var(--color-danger-text);
+}
+
+/* ------------------------------------------------------------- cartão com abas */
+
+.mdl-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-parchment);
+  border: var(--border-frame) solid var(--color-parchment-edge);
+  box-shadow: var(--shadow-drop) var(--shadow-drop) 0 0 var(--color-shadow);
+}
+
+.mdl-tabs {
+  gap: 6px;
+  padding: 10px 14px 0;
+  border-bottom: 3px solid var(--color-parchment-edge);
+}
+
+.mdl-tabs .tabs__tab {
+  min-height: 40px;
+  margin-bottom: -3px;
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-on-parchment-muted);
+  background: var(--color-parchment-deep);
+  border: 3px solid var(--color-parchment-edge);
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+.mdl-tabs .tabs__tab:hover {
+  background: var(--color-parchment-light);
+}
+
+.mdl-tabs .tabs__tab--active,
+.mdl-tabs .tabs__tab--active:hover {
+  padding-bottom: 9px;
+  color: var(--color-text-on-parchment);
+  background: var(--color-parchment-light);
+  border-color: var(--color-input-border-on-parchment);
+}
+
+/* A aba ativa também é marcada por um traço (não só pela cor). */
+.mdl-tabs .tabs__tab--active > span {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.mdl-tabs .tabs__tab > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mdl-tab-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-badge-dark-text);
+  background: var(--color-badge-accent-bg);
+  border: 2px solid var(--color-frame-dark);
+}
+
+.mdl-pane {
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+}
+
+.mdl-pane-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mdl-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mdl-section__title {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-on-parchment);
+  overflow-wrap: anywhere;
+}
+
+/* Cartões da lista em pergaminho claro; o modelo carregado ganha moldura dupla (não só a cor). */
+.mdl-card .list-card {
+  background: var(--color-parchment-light);
+  color: var(--color-text-on-parchment);
+  --fg: var(--color-text-on-parchment);
+  --fg-muted: var(--color-text-on-parchment-muted);
+  --fg-danger: var(--color-danger-text-on-parchment);
+  --fg-ok: var(--color-success-text-on-parchment);
+  --fg-warn: var(--color-warn-text-on-parchment);
+  --frame-inner: var(--color-parchment-edge);
+  --frame-hi: var(--color-parchment-light);
+  --frame-lo: var(--color-parchment-deep);
+}
+
+.mdl-card .list-card--selected {
+  --frame-inner: var(--color-primary);
+  outline: 3px solid var(--color-frame-dark);
+  outline-offset: 2px;
+}
+
+.mdl-note {
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.mdl-note--warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-warn);
+  font-weight: 600;
+}
+
+.mdl-note--why {
+  color: var(--fg);
+  font-style: italic;
+}
+
+.mdl-status-line {
+  min-height: 1lh;
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+}
+
+/* ------------------------------------------------------------- busca e filtros */
+
+.mdl-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.mdl-search .field__row {
+  flex-wrap: wrap;
+}
+
+.mdl-search .field__row > .field__control {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.mdl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.mdl-chips__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.mdl-chips__label {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--fg-muted);
+}
+
+.mdl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--target-min);
+  padding: 2px 10px;
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment);
+  background: var(--color-parchment-deep);
+  border: 2px solid var(--color-parchment-edge);
+  cursor: pointer;
+}
+
+.mdl-chip:hover {
+  border-color: var(--color-input-border-on-parchment);
+}
+
+.mdl-chip:focus-visible {
+  outline: 3px solid var(--color-focus-on-parchment);
+  outline-offset: 2px;
+}
+
+.mdl-chip--on {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  border-color: var(--color-frame-dark);
+}
+
+.mdl-chip b {
+  margin-left: 2px;
+}
+
+.mdl-hidden {
+  padding: var(--space-1) var(--space-2);
+  border: 2px dashed var(--color-parchment-edge);
+}
+
+.mdl-hidden > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--target-min);
+  font-family: var(--font-pixel);
+  cursor: pointer;
+}
+
+.mdl-hidden > summary:focus-visible {
+  outline: 3px solid var(--color-focus-on-parchment);
+  outline-offset: 2px;
+}
+
+.mdl-hidden[open] > summary {
+  margin-bottom: var(--space-1);
+}
+
+.mdl-sugs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) 4px;
+  list-style: none;
+}
+
+/* ---------------------------------------------------- tela inicial sem modelo */
+
+.mdl-welcome {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 48rem;
+}
+
+.mdl-welcome__title {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-on-parchment);
+}
+
+.mdl-steps {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdl-steps > li {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-parchment-light);
+  border: 3px solid var(--color-parchment-edge);
+}
+
+.mdl-steps > li > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mdl-steps__done {
+  border-color: var(--color-success-text-on-parchment) !important;
+}
+
+/* ------------------------------------------------------------------ repositório */
+
+.mdl-repo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mdl-repo__title:focus-visible {
+  outline: 3px solid var(--color-focus-on-parchment);
+  outline-offset: 2px;
+}
+
+.mdl-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+}
+
+.mdl-toolbar > p {
+  flex: 1 1 16rem;
+}
+
+/* ------------------------------------------------------------------- diálogos */
+
+.mdl-load,
+.mdl-confirm {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mdl-load__estimate {
+  font-size: var(--font-size-md);
+}
+
+.mdl-range {
+  width: 100%;
+  min-height: var(--target-min);
+  accent-color: var(--color-accent);
+}
+
+.mdl-hashes {
+  margin: 0;
+  padding-left: var(--space-2);
+}

@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `skills-por-cena-e-idioma-do-prompt` (decisões de skills e de idioma).
+Atualizado em 2026-11-24 após a tarefa `tela-modelos` (rodada 1).
 
 ## Estado
 
@@ -57,8 +57,17 @@ Atualizado em 2026-11-24 após a tarefa `skills-por-cena-e-idioma-do-prompt` (de
 
 - **ADR-079 (aprovada, com medição):** instruções internas em inglês, resposta direta em português, sem camada de tradução. O dev mede o custo em tokens nos dois idiomas e cria o teste de idioma.
 - **Skills por Cena** (ADR-078, item 7, atualizado): até 3, texto completo das ativas, modo automático (filtro por código no acervo local e escolha do modelo) e manual; **sem padrão** no filtro +18; todas as skills do acervo entram; importação por comando, link ou `dono/repositório` **sem `npx`**.
-- **A confirmar:** modo padrão de uma Cena nova (proposta: automático), regra de troca no meio da Cena e fixar skill entre Cenas. **Licenças** das skills: pendência de lançamento.
+- **Confirmado:** modo padrão automático, troca de no máximo uma skill a cada 6 turnos ou quando o Quadro mudar no essencial, e fixar skill entre Cenas. **Licenças** das skills: pendência de lançamento.
 - **Próximos passos:** ⭐ plano da rodada 1 de Modelos (sem a aba Skills) já pronto para o dev, aguardando a ordem do responsável; depois a rodada 2 (Skills), Estado da Cena, Diário, pontos de retorno e chat.
+
+## Atualização de 2026-11-24 (madrugada, 5): tela Modelos, rodada 1
+
+- **Branch `feat/tela-modelos`** (PR de entrega): tela Modelos refeita conforme `14-modelos.md` e o protótipo, **sem a aba Skills**. Frontend em `app/src/components/ModelsView.tsx` e `app/src/components/models/` (StatusHeader, ModelsPane, LoadModelDialog, PcPane, DownloadsPane); removidos `HubSearch`, `DownloadsPanel` e `ModelFolders`. Backend: ocultar modelo (`hidden_models`), contexto e camadas por modelo (`model_options`, usados ao iniciar o `llama-server`), estimativa de memória (`ai/gguf.py`), varredura do PC e sugestões; rotas novas `POST /models/hidden`, `GET /models/estimate`, `GET /models/suggestions`, `GET /models/scan` (`backend/README.md`).
+- **Validações:** `npm run typecheck` sem erros; `npx vitest run` 326/326; `pytest` 701 passando e 1 pulado (reexecutados pelo planejador).
+- **Diferenças do protótipo e conflito de fontes:** ver `14-modelos.md`, seção 9 (sugestões abrem "Buscar este modelo" e não informam licença; Adicionar pasta pede o caminho colado; lista do Caliope x auditoria).
+- **Não verificado:** app Tauri real, motor e `.gguf` reais, `-ngl` numérico, qualidade da estimativa, rede, leitor de tela e DPI.
+- **Confirmado nesta sessão (docs):** skills por Cena com modo padrão automático, troca de no máximo uma a cada 6 turnos ou quando o Quadro mudar no essencial, e fixar skill entre Cenas (ADR-078, item 7).
+- **Próximos passos:** ⭐ rodada 2 de Modelos (aba Skills); decidir o seletor nativo de pasta e a lista de sugestões; depois Estado da Cena, Diário, pontos de retorno e chat da Jornada com o dev; medir tokens (ADR-079).
 
 ## Decisões vigentes
 

@@ -248,3 +248,38 @@ def test_pasta_de_dados(monkeypatch, tmp_path):
     assert p.database_file == tmp_path / "d" / "henduran.db"
     assert p.backups_dir == tmp_path / "d" / "backups"
     assert os.path.basename(p.settings_file) == "settings.json"
+
+
+# ------------------------------------------------- modelos ocultos e ajustes por modelo
+def test_modelos_ocultos_e_ajustes_por_modelo(store, tmp_path):
+    s = store()
+    s.update(hidden_models=["a.gguf", "ext:1234abcd/b.gguf", "a.gguf"],
+             model_options={"a.gguf": {"context_size": 8192, "gpu_layers": "auto"}, "c.gguf": {"gpu_layers": 20}})
+    again = store()
+    assert again.get("hidden_models") == ["a.gguf", "ext:1234abcd/b.gguf"]
+    assert again.get("model_options") == {"a.gguf": {"context_size": 8192, "gpu_layers": "auto"}, "c.gguf": {"gpu_layers": 20}}
+    copy = again.get("model_options")
+    copy["a.gguf"]["context_size"] = 1
+    assert again.get("model_options")["a.gguf"]["context_size"] == 8192  # cópia, não a referência
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"hidden_models": "a.gguf"},
+        {"hidden_models": [""]},
+        {"model_options": {"a.gguf": {"context_size": 2048}}},
+        {"model_options": {"a.gguf": {"context_size": 65536}}},
+        {"model_options": {"a.gguf": {"gpu_layers": -1}}},
+        {"model_options": {"a.gguf": {"gpu_layers": "todas"}}},
+        {"model_options": {"a.gguf": {"gpu_layers": True}}},
+        {"model_options": {"a.gguf": {"outra": 1}}},
+        {"model_options": {"": {}}},
+        {"model_options": []},
+    ],
+)
+def test_ajustes_de_modelo_invalidos_sao_recusados(store, change):
+    s = store()
+    with pytest.raises(ValueError):
+        s.update(**change)
+    assert s.all() == DEFAULTS

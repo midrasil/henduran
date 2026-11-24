@@ -83,6 +83,7 @@ const modelsRoutes: Route = (url) => {
   if (url.endsWith("/hardware")) return jsonResponse({ gpus: [], ram_bytes: 0, cpu: "", os: "Windows" });
   if (url.endsWith("/models")) return jsonResponse({ models: [], models_dir: "C:\\m", active: null });
   if (url.endsWith("/models/folders")) return jsonResponse({ folders: [] });
+  if (url.endsWith("/models/suggestions")) return jsonResponse({ suggestions: [], search_terms: [] });
   if (url.endsWith("/hub/downloads")) return jsonResponse({ downloads: [] });
   throw new Error(`rota inesperada: ${url}`);
 };

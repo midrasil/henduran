@@ -507,6 +507,14 @@ class EngineManager:
             return None
         return next((m for m in self.models() if m["id"] == model_id), None)
 
+    def model_options(self, model_id: str | None) -> dict:
+        """Ajustes de carga do modelo: ``context_size`` (o salvo ou o global) e ``gpu_layers`` (o salvo ou ``auto``)."""
+        saved = self.settings.get("model_options").get(model_id or "", {})
+        return {
+            "context_size": int(saved.get("context_size") or self.settings.get("context_size")),
+            "gpu_layers": saved.get("gpu_layers", "auto"),
+        }
+
     # ---- estado
     def _set(self, state: str, message: str) -> None:
         assert state in STATES
@@ -675,7 +683,10 @@ class EngineManager:
             self._start_task.cancel()
         self.progress = 0.0
         self._set("starting", "Carregando o modelo (a primeira vez pode levar um minuto)…")
-        self._start_task = asyncio.create_task(self._run_start(binary, model["path"]))
+        options = self.model_options(model["id"])
+        self._start_task = asyncio.create_task(
+            self._run_start(binary, model["path"], options["context_size"], options["gpu_layers"])
+        )
         return self._start_task
 
     async def start(self) -> dict:
@@ -684,16 +695,16 @@ class EngineManager:
             await task
         return self.status()
 
-    async def _run_start(self, binary: Path, model: str) -> None:
+    async def _run_start(self, binary: Path, model: str, ctx: int | None = None, layers: str | int = "auto") -> None:
         async with self._lock:
             await self._stop_process()
             self._set("starting", "Carregando o modelo (a primeira vez pode levar um minuto)…")
             self._kill_stale()
             self._rotate_log()
-            ctx = int(self.settings.get("context_size"))
+            ctx = int(ctx or self.settings.get("context_size"))
             variant = self.source_info().get("variant") or self.settings.get("engine_variant")
-            key = (model, ctx, variant)
-            tries = fit_ladder("auto", variant)
+            key = (model, ctx, variant, str(layers))
+            tries = fit_ladder(str(layers), variant)
             if self._fit.get(key) in tries:
                 tries = tries[tries.index(self._fit[key]):]
             try:

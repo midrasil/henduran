@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EngineStatus } from "../api/engine";
+import type { EngineStatus, VramEstimate } from "../api/engine";
 import { useEngineStatus } from "../hooks/useEngineStatus";
 import { jsonResponse } from "../test/fakeFetch";
 import { ModelsView } from "./ModelsView";
@@ -17,15 +17,42 @@ const HARDWARE = {
   os: "Windows 11",
 };
 
+const OPTIONS = { context_size: 4096, gpu_layers: "auto" as const };
+
 const MODELS = {
   models_dir: "C:\\Users\\x\\AppData\\Local\\Henduran\\models",
   active: null as string | null,
   models: [
-    { id: "a.gguf", name: "Pequeno-Q4_K_M.gguf", size_bytes: 400 * 2 ** 20, quant: "Q4_K_M", parts: 1, complete: true, fit: "gpu", active: false },
-    { id: "b.gguf", name: "Medio-Q8_0.gguf", size_bytes: 9 * GB, quant: "Q8_0", parts: 1, complete: true, fit: "cpu_lento", active: false },
-    { id: "c.gguf", name: "Enorme-F16.gguf", size_bytes: 40 * GB, quant: "F16", parts: 1, complete: true, fit: "pesado_demais", active: false },
+    { id: "a.gguf", name: "Pequeno-Q4_K_M.gguf", size_bytes: 400 * 2 ** 20, quant: "Q4_K_M", parts: 1, complete: true, fit: "gpu", active: false, source: "app", removable: true, hidden: false, options: OPTIONS },
+    { id: "b.gguf", name: "Médio-Q8_0.gguf", size_bytes: 9 * GB, quant: "Q8_0", parts: 1, complete: true, fit: "cpu_lento", active: false, source: "app", removable: true, hidden: false, options: OPTIONS },
+    { id: "c.gguf", name: "Enorme-F16.gguf", size_bytes: 40 * GB, quant: "F16", parts: 1, complete: true, fit: "pesado_demais", active: false, source: "app", removable: true, hidden: false, options: OPTIONS },
   ],
 };
+
+const SUGGESTIONS = {
+  suggestions: [
+    { name: "Stheno 8B (L3-8B-Stheno-v3.2)", quant: "Q4_K_M", search: "Stheno-v3.2", why: "A escolha recomendada para placas de 8 GB.", gpu: true, min_vram_bytes: 7.5 * GB, license: null, source: "Caliope" },
+  ],
+  search_terms: ["Cydonia-24B", "Stheno-v3.2"],
+};
+
+function estimate(patch: Partial<VramEstimate> = {}): VramEstimate {
+  return {
+    id: "a.gguf",
+    context_size: 4096,
+    gpu_layers: "auto",
+    total_layers: 29,
+    layers_on_gpu: 29,
+    weights_bytes: 4 * GB,
+    kv_bytes: GB / 2,
+    vram_bytes: 4.5 * GB,
+    vram_total_bytes: 8 * GB,
+    known: true,
+    slots: 2,
+    variant: "vulkan",
+    ...patch,
+  };
+}
 
 function status(patch: Partial<EngineStatus> = {}): EngineStatus {
   return {
@@ -64,6 +91,8 @@ function stubFetch({
     if (path === "/engine/status") return jsonResponse(queue.length > 1 ? queue.shift() : queue[0]);
     if (path === "/hardware") return jsonResponse(HARDWARE);
     if (path === "/models") return jsonResponse(models);
+    if (path === "/models/suggestions") return jsonResponse(SUGGESTIONS);
+    if (path.startsWith("/models/estimate")) return jsonResponse(estimate());
     if (path === "/hub/downloads") return jsonResponse({ downloads: [] });
     if (path === "/models/folders") return jsonResponse({ folders: [{ path: MODELS.models_dir, kind: "app", exists: true }] });
     throw new Error(`rota inesperada: ${path}`);
@@ -74,7 +103,7 @@ function stubFetch({
 
 const pass = () => new Response(null, { status: 599 });
 
-function Harness({ copyText }: { copyText?: (t: string) => Promise<void> }) {
+function Harness() {
   const engine = useEngineStatus(info, 10);
   return (
     <ModelsView
@@ -83,25 +112,52 @@ function Harness({ copyText }: { copyText?: (t: string) => Promise<void> }) {
       engineError={engine.error}
       onEngineChange={engine.setStatus}
       refreshEngine={engine.refresh}
-      {...(copyText ? { copyText } : {})}
     />
   );
 }
+
+const engineBox = () => screen.getByRole("region", { name: "Motor de IA" });
+const narratorBox = () => screen.getByRole("region", { name: "Narrador" });
+const modelCard = (name: string) =>
+  screen.getAllByRole("listitem").find((li) => li.querySelector(".list-card__title")?.textContent === name)!;
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("ModelsView", () => {
-  it("mostra o hardware do PC", async () => {
+describe("ModelsView — cabeçalho e abas", () => {
+  it("três quadros de estado sem título visível e três abas (sem Skills)", async () => {
     stubFetch();
     render(<Harness />);
-    expect(await screen.findByText("Radeon Teste — 8,0 GB")).toBeInTheDocument();
-    expect(screen.getByText("16 GB")).toBeInTheDocument();
-    expect(screen.getByText("Ryzen Teste")).toBeInTheDocument();
+    const pc = await screen.findByRole("region", { name: "Este PC" });
+    expect(await within(pc).findByText("Radeon Teste")).toBeInTheDocument();
+    expect(pc).toHaveTextContent("8 GB de memória de vídeo · 16 GB de RAM");
+    expect(pc).toHaveTextContent("Ryzen Teste · Windows 11");
+    expect(engineBox()).toBeInTheDocument();
+    expect(narratorBox()).toHaveTextContent("Nenhum modelo");
+    // O título "Modelos" existe só para leitores de tela (e para o foco ao trocar de tela).
+    expect(screen.getByRole("heading", { level: 2, name: "Modelos" })).toHaveClass("visually-hidden");
+    const tabs = within(screen.getByRole("tablist", { name: "Partes da tela Modelos" })).getAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual(["Modelos", "Procurar neste PC", "Downloads"]);
+    expect(screen.queryByRole("tab", { name: /Skills/ })).not.toBeInTheDocument();
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
   });
 
-  it("sem motor: mostra o tamanho antes e baixa com a variante escolhida após confirmar", async () => {
+  it("abas trocam com as setas do teclado", async () => {
+    stubFetch();
+    const user = userEvent.setup();
+    render(<Harness />);
+    const first = await screen.findByRole("tab", { name: "Modelos" });
+    first.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: "Procurar neste PC" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Procurar neste PC" })).toHaveFocus();
+    expect(await screen.findByRole("heading", { name: "Pastas de modelos" })).toBeVisible();
+  });
+});
+
+describe("ModelsView — motor de IA", () => {
+  it("sem motor: Baixar o motor mostra o tamanho e baixa a variante escolhida após confirmar", async () => {
     const calls = stubFetch({
       extra: (path) => {
         if (path.startsWith("/engine/release")) {
@@ -113,19 +169,18 @@ describe("ModelsView", () => {
     });
     const user = userEvent.setup();
     render(<Harness />);
-    expect(await screen.findByRole("status")).toHaveTextContent("Parado");
-    expect(screen.getByRole("radio", { name: /Vulkan/ })).toBeChecked();
-    await user.click(screen.getByRole("radio", { name: /CPU/ }));
-    await user.click(screen.getByRole("button", { name: "Baixar o motor de IA" }));
-
-    const confirm = await screen.findByRole("group");
-    expect(confirm).toHaveTextContent("llama-b12635-bin-win-cpu-x64.zip (25 MB), versão b12635");
+    await waitFor(() => expect(engineBox()).toHaveTextContent("Motor não instalado"));
+    await user.click(within(engineBox()).getByRole("button", { name: "Baixar o motor" }));
+    const dialog = screen.getByRole("dialog", { name: "Baixar o motor de IA" });
+    expect(within(dialog).getByRole("radio", { name: /Vulkan/ })).toBeChecked();
+    await user.click(within(dialog).getByRole("radio", { name: /CPU/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Continuar" }));
+    expect(await within(dialog).findByText(/llama-b12635-bin-win-cpu-x64\.zip \(25 MB\), versão b12635/)).toBeInTheDocument();
     expect(calls.some((c) => c.url.endsWith("/engine/release?variant=cpu"))).toBe(true);
     expect(calls.some((c) => c.url.endsWith("/engine/install"))).toBe(false);
-
-    await user.click(within(confirm).getByRole("button", { name: "Confirmar download" }));
-    const install = calls.find((c) => c.url.endsWith("/engine/install"));
-    expect(install?.body).toEqual({ variant: "cpu", allow_unverified: false });
+    await user.click(within(dialog).getByRole("button", { name: "Confirmar download" }));
+    expect(calls.find((c) => c.url.endsWith("/engine/install"))?.body).toEqual({ variant: "cpu", allow_unverified: false });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("sem digest: exibe aviso e exige segundo consentimento", async () => {
@@ -140,7 +195,8 @@ describe("ModelsView", () => {
     });
     const user = userEvent.setup();
     render(<Harness />);
-    await user.click(await screen.findByRole("button", { name: "Baixar o motor de IA" }));
+    await user.click(await within(await screen.findByRole("region", { name: "Motor de IA" })).findByRole("button", { name: "Baixar o motor" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("não publicou o SHA-256");
     const confirmButton = screen.getByRole("button", { name: "Confirmar download" });
     expect(confirmButton).toBeDisabled();
@@ -160,111 +216,199 @@ describe("ModelsView", () => {
     });
     render(<Harness />);
     expect(await screen.findByRole("progressbar", { name: "Progresso do download do motor" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Baixando: Baixando o motor de IA…");
-    expect(await screen.findByText("Versão b12635 (Vulkan)")).toBeInTheDocument();
+    expect(within(engineBox()).getByRole("status")).toHaveTextContent(/Baixando o motor… \d+%/);
+    await waitFor(() => expect(engineBox()).toHaveTextContent("Motor parado"));
+    expect(engineBox()).toHaveTextContent("Vulkan (usa a placa de vídeo) · versão b12635");
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("instalado");
   });
 
-  it("sem modelo: mostra a pasta e copia o caminho", async () => {
-    stubFetch({ statuses: [status({ installed: true, version: "b1", variant: "vulkan" })], models: { ...MODELS, models: [] } });
-    const copyText = vi.fn(async () => undefined);
+  it("erro: Ver o log mostra o final do log e Tentar de novo reinicia", async () => {
+    const calls = stubFetch({
+      statuses: [status({ installed: true, state: "error", active_model: "a.gguf", message: "O motor parou enquanto carregava o modelo.", log: "ggml_vulkan: ErrorOutOfDeviceMemory" })],
+      extra: (path) => (path === "/engine/start" ? jsonResponse(status({ installed: true, state: "starting", active_model: "a.gguf" }), 202) : pass()),
+    });
     const user = userEvent.setup();
-    render(<Harness copyText={copyText} />);
-    expect(await screen.findByText(/Nenhum modelo \.gguf encontrado/)).toBeInTheDocument();
-    expect(screen.getAllByText(MODELS.models_dir).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/virá em breve/)).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Buscar modelos no Hugging Face" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Copiar caminho" }));
-    expect(copyText).toHaveBeenCalledWith(MODELS.models_dir);
-    expect(await screen.findByText("Caminho copiado.")).toBeInTheDocument();
+    render(<Harness />);
+    await waitFor(() => expect(engineBox()).toHaveTextContent("O motor teve um erro"));
+    expect(engineBox()).toHaveTextContent("O motor parou enquanto carregava o modelo.");
+    await user.click(within(engineBox()).getByRole("button", { name: "Ver o log" }));
+    const dialog = screen.getByRole("dialog", { name: "Log do motor de IA" });
+    expect(within(dialog).getByLabelText("Final do log do motor")).toHaveTextContent("ErrorOutOfDeviceMemory");
+    await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
+    await user.click(within(engineBox()).getByRole("button", { name: "Tentar de novo" }));
+    expect(calls.some((c) => c.url.endsWith("/engine/start") && c.method === "POST")).toBe(true);
+  });
+});
+
+describe("ModelsView — Meus modelos", () => {
+  it("sem modelos: tela inicial com os dois passos, sugestões e atalho para Procurar neste PC", async () => {
+    stubFetch({ statuses: [status({ installed: true, version: "b1", variant: "vulkan" })], models: { ...MODELS, models: [] } });
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(await screen.findByRole("heading", { name: "Vamos dar uma voz ao Narrador" })).toBeInTheDocument();
+    expect(screen.getByText("1. Motor de IA").parentElement).toHaveTextContent("Instalado.");
+    const sugs = await screen.findByRole("list", { name: "Sugestões para este PC" });
+    expect(sugs).toHaveTextContent("Stheno 8B (L3-8B-Stheno-v3.2)");
+    expect(sugs).toHaveTextContent("Licença: a lista não informa; confira no repositório antes de baixar.");
+    expect(screen.getByText(/São só sugestões: nada é escolhido nem baixado sozinho/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Já tenho modelos neste PC" }));
+    expect(screen.getByRole("tab", { name: "Procurar neste PC" })).toHaveAttribute("aria-selected", "true");
   });
 
-  it("lista os modelos com tamanho, quantização e compatibilidade em português", async () => {
+  it("lista com quantização, nota de qualidade, tamanho e compatibilidade; pesado demais não carrega", async () => {
     stubFetch({ statuses: [status({ installed: true })] });
     render(<Harness />);
-    const items = await screen.findAllByRole("listitem");
-    const small = items.find((li) => li.textContent?.includes("Pequeno-Q4_K_M.gguf"));
-    expect(small).toHaveTextContent("400 MB · Q4_K_M");
-    expect(small).toHaveTextContent("Cabe na sua placa");
-    expect(screen.getByText("Vai rodar no processador, mais lento")).toBeInTheDocument();
-    expect(screen.getByText("Pesado demais para este PC")).toBeInTheDocument();
-    const buttons = screen.getAllByRole("button", { name: "Usar este modelo" });
-    expect(buttons).toHaveLength(3);
-    expect(buttons[0]).toBeEnabled();
-    expect(buttons[0]).toHaveAccessibleDescription("Pequeno-Q4_K_M.gguf");
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    const small = modelCard("Pequeno-Q4_K_M");
+    expect(small).toHaveTextContent("Q4_K_M · 400 MB");
+    expect(small).toHaveTextContent("Q4_K_M: Bom equilíbrio. A escolha mais comum.");
+    expect(small).toHaveTextContent("Cabe na placa");
+    expect(modelCard("Médio-Q8_0")).toHaveTextContent("Roda na CPU, lento");
+    expect(modelCard("Médio-Q8_0")).toHaveTextContent("Q8_0: Quase sem perda, o maior.");
+    expect(modelCard("Enorme-F16")).toHaveTextContent("Pesado demais para este PC");
+    const load = within(small).getByRole("button", { name: "Carregar…" });
+    expect(load).toBeEnabled();
+    expect(load).toHaveAccessibleDescription("Pequeno-Q4_K_M");
+    expect(within(modelCard("Enorme-F16")).getByRole("button", { name: "Carregar…" })).toBeDisabled();
+    expect(within(small).getByRole("button", { name: "Ocultar" })).toBeInTheDocument();
+    expect(within(small).getByRole("button", { name: "Apagar do disco" })).toBeInTheDocument();
   });
 
-  it("sem motor instalado, os botões de modelo ficam desativados com explicação", async () => {
+  it("sem motor instalado, Carregar… fica desativado com explicação", async () => {
     stubFetch({ statuses: [status({ installed: false })] });
     render(<Harness />);
-    const buttons = await screen.findAllByRole("button", { name: "Usar este modelo" });
-    expect(buttons.every((b) => (b as HTMLButtonElement).disabled)).toBe(true);
-    expect(screen.getByText("Baixe o motor de IA antes de usar um modelo.")).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    for (const b of screen.getAllByRole("button", { name: "Carregar…" })) expect(b).toBeDisabled();
+    expect(screen.getByText("Baixe o motor de IA antes de carregar um modelo.")).toBeInTheDocument();
   });
 
-  it("Usar este modelo seleciona, inicia e mostra Carregando e depois Pronto", async () => {
-    const after = { ...MODELS, active: "a.gguf" };
+  it("a busca filtra os seus modelos ignorando acentos, hífens e caixa; filtros com contadores", async () => {
+    stubFetch({ statuses: [status({ installed: true })] });
+    const user = userEvent.setup();
+    render(<Harness />);
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    const filters = screen.getByRole("group", { name: "Filtro:" });
+    expect(within(filters).getByRole("button", { name: "Todos 4" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(filters).getByRole("button", { name: "Meus modelos 3" })).toHaveAttribute("aria-pressed", "false");
+    expect(within(filters).getByRole("button", { name: "Para baixar 1" })).toBeInTheDocument();
+    await user.type(screen.getByRole("searchbox", { name: "Buscar modelo" }), "MEDIO q8");
+    expect(await screen.findByRole("heading", { name: "Meus modelos (1)" })).toBeInTheDocument();
+    expect(modelCard("Médio-Q8_0")).toBeDefined();
+    await user.click(within(filters).getByRole("button", { name: /Para baixar/ }));
+    expect(screen.queryByRole("heading", { name: /Meus modelos/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Para baixar: sugestões para este PC" })).toBeInTheDocument();
+    await user.click(within(filters).getByRole("button", { name: /Meus modelos/ }));
+    expect(screen.queryByRole("heading", { name: /Para baixar/ })).not.toBeInTheDocument();
+  });
+
+  it("Ocultar manda o modelo para a seção Ocultos (nada é apagado)", async () => {
+    let hidden = false;
+    const calls = stubFetch({
+      statuses: [status({ installed: true })],
+      extra: (path) => {
+        if (path === "/models/hidden") {
+          hidden = true;
+          return jsonResponse({ id: "a.gguf", hidden: true });
+        }
+        if (path === "/models") {
+          return jsonResponse({ ...MODELS, models: MODELS.models.map((m) => (m.id === "a.gguf" ? { ...m, hidden } : m)) });
+        }
+        return pass();
+      },
+    });
+    const user = userEvent.setup();
+    render(<Harness />);
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    await user.click(within(modelCard("Pequeno-Q4_K_M")).getByRole("button", { name: "Ocultar" }));
+    expect(await screen.findByRole("heading", { name: "Meus modelos (2)" })).toBeInTheDocument();
+    expect(calls.find((c) => c.url.endsWith("/models/hidden"))?.body).toEqual({ id: "a.gguf", hidden: true });
+    const summary = screen.getByText("Ocultos (1)");
+    await user.click(summary);
+    expect(within(modelCard("Pequeno-Q4_K_M")).getByRole("button", { name: "Mostrar na lista" })).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+  });
+});
+
+describe("ModelsView — Carregar…", () => {
+  it("diálogo com contexto, camadas e memória estimada; carrega com os ajustes e depois descarrega", async () => {
     let selected = false;
     const calls = stubFetch({
       statuses: [
-        status({ installed: true }),
-        status({ installed: true, state: "starting", message: "Carregando o modelo…", active_model: "a.gguf" }),
-        status({ installed: true, state: "ready", message: "Pronto", active_model: "a.gguf" }),
+        status({ installed: true, variant: "vulkan", version: "b1" }),
+        status({ installed: true, state: "starting", active_model: "a.gguf" }),
+        status({ installed: true, state: "ready", active_model: "a.gguf" }),
       ],
       extra: (path) => {
+        if (path.startsWith("/models/estimate")) {
+          const params = new URLSearchParams(path.split("?")[1]);
+          const ctx = Number(params.get("context_size"));
+          const layers = params.get("gpu_layers");
+          return jsonResponse(estimate({ context_size: ctx, gpu_layers: layers === "auto" ? "auto" : Number(layers), layers_on_gpu: layers === "auto" ? 29 : Number(layers), vram_bytes: ctx === 8192 ? 5 * GB : 4.5 * GB }));
+        }
         if (path === "/models/select") {
           selected = true;
           return jsonResponse({ active: "a.gguf", name: "Pequeno-Q4_K_M.gguf" });
         }
-        if (path === "/engine/start") {
-          return jsonResponse(status({ installed: true, state: "starting", message: "Carregando o modelo…", active_model: "a.gguf" }), 202);
-        }
-        if (path === "/models" && selected) return jsonResponse(after);
+        if (path === "/engine/start") return jsonResponse(status({ installed: true, state: "starting", active_model: "a.gguf" }), 202);
+        if (path === "/engine/stop") return jsonResponse(status({ installed: true }));
+        if (path === "/models" && selected) return jsonResponse({ ...MODELS, active: "a.gguf" });
         return pass();
       },
     });
     const user = userEvent.setup();
     render(<Harness />);
-    const [first] = await screen.findAllByRole("button", { name: "Usar este modelo" });
-    await user.click(first!);
-    expect(calls.find((c) => c.url.endsWith("/models/select"))?.body).toEqual({ id: "a.gguf" });
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    await user.click(within(modelCard("Pequeno-Q4_K_M")).getByRole("button", { name: "Carregar…" }));
+    const dialog = screen.getByRole("dialog", { name: "Carregar Pequeno-Q4_K_M" });
+    expect(await within(dialog).findByText(/Memória de vídeo estimada:/)).toHaveTextContent("Memória de vídeo estimada: 4,5 GB de 8,0 GB.");
+    expect(within(dialog).getByRole("checkbox", { name: /Camadas na placa de vídeo: automático \(29 de 29\)/ })).toBeChecked();
+
+    await user.selectOptions(within(dialog).getByRole("combobox", { name: "Tamanho do contexto" }), "8192");
+    await waitFor(() => expect(within(dialog).getByText(/Memória de vídeo estimada:/)).toHaveTextContent("5,0 GB"));
+    expect(calls.some((c) => c.url.includes("/models/estimate?id=a.gguf&context_size=8192&gpu_layers=auto"))).toBe(true);
+
+    await user.click(within(dialog).getByRole("checkbox", { name: /automático/ }));
+    const slider = within(dialog).getByRole("slider", { name: "Camadas na placa de vídeo: 29 de 29" });
+    expect(slider).toHaveAttribute("max", "29");
+    await user.click(within(dialog).getByRole("button", { name: "Carregar" }));
+    expect(calls.find((c) => c.url.endsWith("/models/select"))?.body).toEqual({ id: "a.gguf", context_size: 8192, gpu_layers: 29 });
     expect(calls.some((c) => c.url.endsWith("/engine/start") && c.method === "POST")).toBe(true);
-    expect(await screen.findByText("Ativo")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Carregando o modelo…"));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/^Pronto$/));
-    expect(screen.getByRole("button", { name: "Parar o motor" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await waitFor(() => expect(narratorBox()).toHaveTextContent("Pequeno-Q4_K_M"));
+    await waitFor(() => expect(narratorBox()).toHaveTextContent("carregado"));
+    expect(within(modelCard("Pequeno-Q4_K_M")).getByText("Carregado")).toBeInTheDocument();
+    await user.click(within(narratorBox()).getByRole("button", { name: "Descarregar" }));
+    expect(calls.some((c) => c.url.endsWith("/engine/stop") && c.method === "POST")).toBe(true);
   });
 
-  it("erro: mostra a mensagem e o final do log do motor", async () => {
-    stubFetch({
-      statuses: [status({
-        installed: true,
-        state: "error",
-        message: "O motor parou enquanto carregava o modelo.",
-        log: "ggml_vulkan: ErrorOutOfDeviceMemory",
-      })],
-    });
-    render(<Harness />);
-    expect(await screen.findByRole("status")).toHaveTextContent("Erro: O motor parou enquanto carregava o modelo.");
-    expect(screen.getByLabelText("Final do log do motor")).toHaveTextContent("ErrorOutOfDeviceMemory");
-  });
-
-  it("erro ao iniciar vira alerta com a mensagem do serviço", async () => {
+  it("erro ao iniciar aparece no diálogo, que continua aberto", async () => {
     stubFetch({
       statuses: [status({ installed: true })],
       extra: (path) => {
         if (path === "/models/select") return jsonResponse({ active: "a.gguf", name: "x" });
-        if (path === "/engine/start") {
-          return jsonResponse({ detail: { code: "busy", message: "Espere o download do motor terminar." } }, 409);
-        }
+        if (path === "/engine/start") return jsonResponse({ detail: { code: "busy", message: "Espere o download do motor terminar." } }, 409);
         return pass();
       },
     });
     const user = userEvent.setup();
     render(<Harness />);
-    const [first] = await screen.findAllByRole("button", { name: "Usar este modelo" });
-    await user.click(first!);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Erro: Espere o download do motor terminar.");
+    await screen.findByRole("heading", { name: "Meus modelos (3)" });
+    await user.click(within(modelCard("Pequeno-Q4_K_M")).getByRole("button", { name: "Carregar…" }));
+    const dialog = screen.getByRole("dialog");
+    await within(dialog).findByText(/Memória de vídeo estimada:/);
+    await user.click(within(dialog).getByRole("button", { name: "Carregar" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Erro: Espere o download do motor terminar.");
+  });
+
+  it("modelo selecionado e não carregado: o Narrador oferece Carregar", async () => {
+    stubFetch({ statuses: [status({ installed: true, active_model: "b.gguf" })], models: { ...MODELS, active: "b.gguf" } });
+    const user = userEvent.setup();
+    render(<Harness />);
+    await waitFor(() => expect(narratorBox()).toHaveTextContent("Médio-Q8_0"));
+    expect(narratorBox()).toHaveTextContent("selecionado, ainda não carregado");
+    expect(within(modelCard("Médio-Q8_0")).getByText("Selecionado")).toBeInTheDocument();
+    await user.click(within(narratorBox()).getByRole("button", { name: "Carregar" }));
+    expect(screen.getByRole("dialog", { name: "Carregar Médio-Q8_0" })).toBeInTheDocument();
   });
 });

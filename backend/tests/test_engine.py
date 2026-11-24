@@ -353,7 +353,7 @@ async def test_falta_de_memoria_tenta_inicio_mais_leve(paths, settings, monkeypa
         assert st["state"] == "ready", st
         assert "-np 1" in " ".join(m.process.args)
         model = str(paths.models_dir / "autor" / "Modelo-Q4_K_M.gguf")
-        assert m._fit[(model, 4096, "vulkan")] == (1, "auto")
+        assert m._fit[(model, 4096, "vulkan", "auto")] == (1, "auto")
     finally:
         await m.stop()
 
@@ -465,3 +465,21 @@ def test_kill_stale_ignora_processo_que_nao_e_do_motor(paths, settings):
     (paths.logs_dir / eng.PID_NAME).write_text(json.dumps([os.getpid()]))
     EngineManager(paths, settings)._kill_stale()
     assert _alive(os.getpid()) if os.name == "nt" else True
+
+
+async def test_inicio_usa_o_contexto_e_as_camadas_salvos_do_modelo(paths, settings):
+    install_fake_binary(paths)
+    add_model(paths)
+    model_id = "autor/Modelo-Q4_K_M.gguf"
+    settings.update(active_model=model_id, model_options={model_id: {"context_size": 8192, "gpu_layers": 20}})
+    m = EngineManager(paths, settings, launcher=fake_launcher, poll_interval=0.05, ready_timeout=20)
+    assert m.model_options(model_id) == {"context_size": 8192, "gpu_layers": 20}
+    assert m.model_options("outro.gguf") == {"context_size": 4096, "gpu_layers": "auto"}
+    try:
+        st = await m.start()
+        assert st["state"] == "ready", st
+        args = list(m.process.args)
+        assert args[args.index("-c") + 1] == "16384"  # dois slots de 8192
+        assert args[args.index("-ngl") + 1] == "20"
+    finally:
+        await m.stop()
