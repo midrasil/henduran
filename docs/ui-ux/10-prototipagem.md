@@ -35,6 +35,7 @@ Ajustes pequenos numa tela já aprovada (um botão, um texto, um espaçamento) n
 | Menu inicial (redesenho) | `11-menu-inicial.md` | `prototipos/menu-inicial.html` | Aprovado e implementado em 2026-11-23 |
 | Nova Jornada (assistente) | `12-nova-jornada.md` | `prototipos/nova-jornada.html` | Aprovado em 2026-11-23; implementação no backlog |
 | Jornadas (lista) | — | — | Idem |
+| Mundos (lista e criação) | `13-mundos.md` | `prototipos/mundos.html` | **Aprovado em 2026-11-24 como está**: o protótipo é o registro da tela já implementada |
 | Modelos (no nível do Caliope) | backlog | — | **A prototipar** antes do redesenho |
 | Mundo e registro de lugares | `09`, item 2.1 | — | **A prototipar** quando passar de diálogo simples |
 | Configurações | — | — | **A prototipar** |

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { version as APP_VERSION } from "../package.json";
 import { BackendError, canExitApp, exitApp, type BackendInfo } from "./api/backend";
+import { portraitErrorMessage, uploadPortrait } from "./api/journeyScreen";
 import { closeJourney, openJourney, type JourneySnapshot, type JourneySummary } from "./api/journeys";
 import { ModelsView, type ModelsViewProps } from "./components/ModelsView";
 import { StatusIndicator } from "./components/StatusIndicator";
@@ -10,10 +11,11 @@ import { useEngineStatus } from "./hooks/useEngineStatus";
 import { useCreationRules, useJourneyList } from "./hooks/useGameData";
 import { describeError, openErrorMessage, toPeriod } from "./lib/format";
 import { initialNav, navReducer, type Screen } from "./navigation";
-import { JourneyScreen } from "./screens/journey/JourneyScreen";
+import { JourneyScreen, type PortraitRetry } from "./screens/journey/JourneyScreen";
 import { JourneysScreen } from "./screens/JourneysScreen";
+import { WorldsScreen } from "./screens/WorldsScreen";
 import { MainMenu, pickLastJourney } from "./screens/MainMenu";
-import { NewJourneyWizard } from "./screens/newJourney/NewJourneyWizard";
+import { NewJourneyWizard, type CreatedExtras } from "./screens/newJourney/NewJourneyWizard";
 import { Button, PeriodLabel, PixelIcon, SkyBackdrop } from "./ui";
 
 export interface AppProps {
@@ -50,6 +52,8 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
   const [opening, setOpening] = useState<string | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
   const [menuError, setMenuError] = useState<string | null>(null);
+  /** Retrato da Nova Jornada que não foi enviado (a tela da Jornada avisa e deixa tentar de novo). */
+  const [portraitRetry, setPortraitRetry] = useState<PortraitRetry | null>(null);
   const lastOpenedId = useRef<string | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const previousScreen = useRef<Screen>(nav.screen);
@@ -84,6 +88,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
       setMenuError(null);
       try {
         const snapshot = await openWithRetry(info, journey.id);
+        setPortraitRetry(null);
         lastOpenedId.current = snapshot.journey.id;
         dispatch({ type: "opened", snapshot });
       } catch (err) {
@@ -109,10 +114,23 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
     dispatch({ type: "closed" });
   };
 
-  const onCreated = async (journey: JourneySummary) => {
+  const onCreated = async (journey: JourneySummary, extras: CreatedExtras = {}) => {
     if (!info) return;
     try {
-      const snapshot = await openWithRetry(info, journey.id);
+      let snapshot = await openWithRetry(info, journey.id);
+      // Retrato escolhido no assistente: vai ao serviço (que confere os bytes) com a Jornada já aberta.
+      // Se falhar, a Jornada abre sem retrato e a tela avisa (Tentar de novo ou Escolher outro na ficha).
+      let retry: PortraitRetry | null = null;
+      if (extras.portrait && snapshot.character) {
+        try {
+          const portrait = await uploadPortrait(info, extras.portrait.file, extras.portrait.crop);
+          snapshot = { ...snapshot, character: { ...snapshot.character, portrait } };
+        } catch (err) {
+          const reason = portraitErrorMessage(err);
+          retry = { ...extras.portrait, reason: /[.!?]$/.test(reason) ? reason : `${reason}.` };
+        }
+      }
+      setPortraitRetry(retry);
       lastOpenedId.current = snapshot.journey.id;
       dispatch({ type: "opened", snapshot });
     } catch (err) {
@@ -152,7 +170,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               <Button onClick={() => dispatch({ type: "go", screen: "jornada" })}>
                 <PixelIcon name="back" /> Voltar à Jornada
               </Button>
-            ) : screen === "jornadas" || screen === "modelos" ? (
+            ) : screen === "jornadas" || screen === "mundos" || screen === "modelos" ? (
               <Button onClick={() => dispatch({ type: "go", screen: "menu" })}>
                 <PixelIcon name="back" /> Menu
               </Button>
@@ -177,6 +195,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
             onContinue={(j) => void open(j, "menu")}
             onNew={() => dispatch({ type: "go", screen: "nova-jornada" })}
             onJourneys={() => dispatch({ type: "go", screen: "jornadas" })}
+            onWorlds={() => dispatch({ type: "go", screen: "mundos" })}
             onModels={openModels}
             canExit={canExit}
             onExit={onExit}
@@ -199,6 +218,28 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
           </div>
         ) : null}
 
+        {screen === "mundos" && info ? (
+          rules.schema ? (
+            <WorldsScreen info={info} schema={rules.schema} />
+          ) : (
+            <div className="app__panel app__panel--scroll">
+              <h2 className="screen-title">Mundos</h2>
+              {rules.error ? (
+                <div className="callout callout--danger" role="alert">
+                  <p>{rules.error}</p>
+                  <div className="actions">
+                    <Button size="sm" onClick={rules.reload}>
+                      Tentar de novo
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="hint">Carregando o esquema do Mundo…</p>
+              )}
+            </div>
+          )
+        ) : null}
+
         {screen === "nova-jornada" && info ? (
           rules.rules && rules.schema ? (
             <NewJourneyWizard
@@ -206,6 +247,17 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               rules={rules.rules}
               schema={rules.schema}
               onCreated={onCreated}
+              engine={engine.status}
+              modelsPanel={
+                <ModelsView
+                  info={info}
+                  engine={engine.status}
+                  engineError={engine.error}
+                  onEngineChange={engine.setStatus}
+                  refreshEngine={engine.refresh}
+                  {...(copyText ? { copyText } : {})}
+                />
+              }
               onCancel={() => dispatch({ type: "go", screen: "menu" })}
             />
           ) : (
@@ -253,7 +305,12 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
             engine={engine.status}
             onEngineProblem={() => void refresh()}
             onOpenModels={openModels}
-            onBackToMenu={() => void backToMenu()}
+            onBackToMenu={() => {
+              setPortraitRetry(null);
+              void backToMenu();
+            }}
+            portraitRetry={portraitRetry}
+            onJourneyChanged={(journey) => dispatch({ type: "summary", journey })}
             {...(copyMessage ? { copyText: copyMessage } : {})}
           />
         ) : null}

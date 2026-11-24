@@ -46,6 +46,17 @@ const card = () => screen.getByRole("region", { name: "Última Jornada" });
 const indicator = () => screen.getByRole("button", { name: /Abrir Modelos$/ });
 
 describe("Menu inicial", () => {
+  it("Mundos abre a tela de Mundos (modelo provisório) e Menu volta", async () => {
+    stubGame();
+    const user = userEvent.setup();
+    await renderMenu();
+    await user.click(screen.getByRole("button", { name: "Mundos" }));
+    expect(await screen.findByRole("heading", { name: "Mundos" })).toHaveFocus();
+    expect(await screen.findByText(/Você ainda não tem Mundos salvos/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Menu" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Henduran" })).toBeInTheDocument();
+  });
+
   it("primeira vez: sem cartão de Última Jornada, Continuar desativado, sem Modelos entre os botões", async () => {
     stubGame();
     await renderMenu();
@@ -57,7 +68,9 @@ describe("Menu inicial", () => {
     expect(screen.queryByText(/Ainda não há nenhuma Jornada/)).not.toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Menu inicial" });
     expect(within(nav).getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
-    for (const name of ["Nova Jornada", "Jornadas"]) expect(within(nav).getByRole("button", { name })).toBeEnabled();
+    for (const name of ["Nova Jornada", "Jornadas", "Mundos"]) expect(within(nav).getByRole("button", { name })).toBeEnabled();
+    // Ordem: Mundos vem entre Jornadas e Sair (11-menu-inicial.md).
+    expect(within(nav).getAllByRole("button").map((b) => b.textContent)).toEqual(["Continuar Jornada", "Nova Jornada", "Jornadas", "Mundos"]);
     // Modelos não é botão do menu: o acesso fica no indicador do rodapé.
     expect(within(nav).queryByRole("button", { name: /Modelos/ })).not.toBeInTheDocument();
     // Sem Jornada, a paisagem do período padrão.
@@ -279,6 +292,36 @@ describe("Jornada aberta", () => {
     expect(await within(dialog).findByText("Você está aqui")).toBeInTheDocument();
     expect(within(dialog).getAllByText(WORLD.places[1]!.name).length).toBeGreaterThan(0);
     expect(within(dialog).getByText(`Por onde Ilsa Corvalho passou`)).toBeInTheDocument();
+  });
+
+  it("⚙ Editar Jornada: nome e descrição; o nome novo vai para a barra e para o menu inicial", async () => {
+    const { user, api } = await openJourney();
+    await user.click(screen.getByRole("button", { name: "Opções" }));
+    await user.click(screen.getByRole("menuitem", { name: /Editar Jornada/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Editar Jornada" });
+    const name = within(dialog).getByRole("textbox", { name: "Nome da Jornada (opcional)" });
+    expect(name).toHaveFocus();
+    expect(name).toHaveValue("O Selo de Elmora");
+    expect(name).toHaveAttribute("placeholder", "A Jornada de Ilsa Corvalho");
+    // Erro do serviço: aviso claro e nada muda.
+    await user.clear(name);
+    await user.type(name, "x".repeat(201));
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText(/Não foi possível salvar/)).toBeInTheDocument();
+    expect(within(dialog).getByText("O nome da Jornada deve ter até 200 caracteres.")).toBeInTheDocument();
+    await user.clear(name);
+    await user.type(name, "Crônicas do Porto");
+    await user.type(within(dialog).getByRole("textbox", { name: "Descrição (opcional)" }), "Uma dívida antiga.");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const patch = api.calls.filter((c) => c.method === "PATCH" && c.path === "/journeys/current").at(-1);
+    expect(patch?.body).toEqual({ name: "Crônicas do Porto", description: "Uma dívida antiga." });
+    expect(screen.getAllByText("Crônicas do Porto").length).toBeGreaterThan(0);
+    expect(screen.queryByText("O Selo de Elmora")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Opções" }));
+    await user.click(screen.getByRole("menuitem", { name: /Voltar ao menu/ }));
+    await user.click(within(await screen.findByRole("dialog", { name: "Voltar ao menu?" })).getByRole("button", { name: "Voltar ao menu" }));
+    expect(await screen.findByText("Crônicas do Porto")).toBeInTheDocument();
   });
 
   it("⚙ Voltar ao menu fecha a Jornada e volta ao menu", async () => {

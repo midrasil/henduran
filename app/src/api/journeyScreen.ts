@@ -16,6 +16,7 @@ import type {
   CurrentPlace,
   JourneyMode,
   MessageChannel,
+  OpenJourneySummary,
   PortraitCrop,
   PortraitInfo,
   SceneProposal,
@@ -233,6 +234,10 @@ export const streamAcceptProposal = (info: BackendInfo, handlers?: NarrationHand
   streamNarration(info, `${CURRENT}/proposal/accept`, {}, handlers, signal);
 
 /* ------------------------------------------------------------- rotas JSON */
+
+/** Nome e descrição da Jornada aberta (nulo ou em branco: nome padrão e sem descrição). */
+export const editJourney = (info: BackendInfo, body: { name?: string | null; description?: string | null }) =>
+  request<{ journey: OpenJourneySummary }>(info, CURRENT, { method: "PATCH", body });
 
 export const fetchHistory = (info: BackendInfo) => request<HistoryView>(info, `${CURRENT}/messages`);
 

@@ -4,6 +4,7 @@ export { Button, type ButtonProps, type ButtonVariant } from "./Button/Button";
 export { ChatBubble, type ChatBubbleProps, type ChatBubbleVariant } from "./ChatBubble/ChatBubble";
 export { Dialog, type DialogProps } from "./Dialog/Dialog";
 export { PixelIcon, type PixelIconName } from "./icons";
+export { HistoryEditor, type HistoryEditorProps } from "./HistoryEditor/LazyHistoryEditor";
 export { ListCard, type ListCardProps } from "./ListCard/ListCard";
 export { Panel, type PanelProps, type PanelVariant } from "./Panel/Panel";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar/ProgressBar";

@@ -129,92 +129,7 @@ h3[tabindex="-1"]:focus,
 
 /* ------------------------------------------------------- Nova Jornada */
 
-.wizard {
-  display: grid;
-  flex: 1;
-  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: var(--space-2) var(--space-3);
-  width: 100%;
-  max-width: 1200px;
-  min-height: 0;
-  padding: 4px 4px 0;
-}
-
-.wizard__side {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-height: 0;
-  padding: var(--space-2);
-  overflow-y: auto;
-}
-
-.wizard__heading {
-  font-size: var(--font-size-xl);
-  color: var(--color-accent);
-}
-
-.wizard__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
-  min-height: 0;
-}
-
-.wizard__header {
-  padding: var(--space-1) var(--space-2);
-}
-
-.wizard__title {
-  font-size: var(--font-size-xl);
-  color: var(--color-accent);
-}
-
-.wizard__scroll {
-  /* contém os .visually-hidden (rótulos ocultos) dentro da rolagem */
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-height: 0;
-  padding: 4px 8px var(--space-3) 4px;
-  overflow-y: auto;
-}
-
-.wizard__footer {
-  display: flex;
-  flex-wrap: wrap;
-  grid-column: 1 / -1;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-1) 4px;
-}
-
-.wizard__nav {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.wizard__status {
-  min-height: 1lh;
-}
-
-.step {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.world-gen {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
+/* Layout do assistente: src/screens/newJourney/NewJourney.css. Linhas editáveis do Mundo: */
 
 .edit-list {
   display: flex;
@@ -263,39 +178,6 @@ h3[tabindex="-1"]:focus,
   margin-top: 6px;
 }
 
-.summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  background: var(--color-surface-raised);
-  --frame-inner: var(--color-frame-dark);
-  --frame-hi: var(--color-secondary-hover);
-  --frame-lo: var(--color-outline);
-}
-
-.summary__title,
-.pending__title {
-  font-size: var(--font-size-md);
-}
-
-.summary__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.summary__item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-family: var(--font-pixel);
-  font-size: var(--font-size-sm);
-}
-
 .counts {
   font-size: var(--font-size-sm);
 }
@@ -308,64 +190,4 @@ h3[tabindex="-1"]:focus,
   color: var(--fg-danger);
 }
 
-.pending {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 4px;
-  padding: var(--space-2);
-  background: var(--color-parchment);
-  --frame-inner: var(--fg-danger);
-  --frame-hi: var(--color-parchment-light);
-  --frame-lo: var(--color-parchment-deep);
-}
-
-.pending__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: 2px var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pending__link {
-  justify-content: flex-start;
-  min-height: var(--target-min);
-  font-family: var(--font-serif);
-  font-size: var(--font-size-sm);
-  text-align: left;
-  text-decoration: underline;
-}
-
 /* A Jornada aberta tem folha própria: screens/journey/JourneyScreen.css. */
-
-/* ------------------------------------------------------- janelas estreitas */
-
-@media (max-width: 860px) {
-  .wizard {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-
-  .wizard__side {
-    padding: var(--space-1);
-  }
-
-  .wizard__side > .hint {
-    display: none;
-  }
-
-  .wizard__side .stepper__list {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .wizard__side .stepper__item {
-    flex: 1 1 8rem;
-  }
-
-  .wizard__footer {
-    grid-column: 1;
-  }
-}

@@ -1,21 +1,23 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu inicial).
-
-- Elaborado por: opencode
+Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de Mundos; PR #34).
 
 ## Estado
 
-- Tarefa: três ajustes pequenos no menu inicial, sem nova tela e sem mudança de regra.
-  1. O indicador do modelo no rodapé passou a espelhar o tratamento visual da versão à esquerda: LED + `Conectado · <detalhe> · Modelos ▸`, sem caixa, com o mesmo `aria-label` de antes (`Conectado, <detalhe>. Abrir Modelos`).
-  2. O cartão "Última Jornada" deixou de aparecer quando a lista carregou sem Jornadas; o texto "Sua primeira Jornada" / "Ainda não há nenhuma Jornada..." foi removido. Os estados de serviço iniciando, carregando, erro e Jornada danificada continuam com painel.
-  3. Ajuste posterior: o gap entre os botões centrais passou de 12 px para 16 px (`--space-2`) e a sombra externa dos botões foi removida, mantendo moldura e bisel em pixel.
-- Decisões do responsável: indicador **sem caixa**, mantendo a palavra **Conectado**; cartão de primeira vez **não deve existir**; sincronizar `docs/ui-ux/11-menu-inicial.md` e `docs/ui-ux/prototipos/menu-inicial.html`.
-- Artefatos alterados: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
-- Validações: em worktree temporário limpo, com somente as mudanças desta tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal havia mudanças concorrentes da Nova Jornada (`App.tsx`, `newJourney/`, `api/`, `ui/`, backend), que quebram o typecheck e um teste de `model.ts`; elas **não** fazem parte deste commit.
-- Revalidado após o ajuste de gap/sombra: 15/15 no teste do menu, 285/285 na suíte e `typecheck` OK no worktree do PR.
-- Não verificado: layout real do menu sem cartão e sem o "quadrado" da sombra em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
-- Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) foi merged; o ajuste posterior de gap e sombra segue no PR [#31](https://github.com/midrasil/henduran/pull/31), aberto contra `main`.
+- Tarefa: rodada 2 da Nova Jornada (a rodada 1 foi o PR #30, mergeado) mais três ampliações pedidas pelo responsável no mesmo dia. Branch `feat/nova-jornada-narrador`; PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.
+- **TipTap** (3.35.0, MIT, versões exatas) no lugar do editor provisório: `@tiptap/react`, `pm`, `starter-kit`, `extension-text-align`, `extension-placeholder` (underline vem no StarterKit v3; `link`, `code`, `codeBlock`, `horizontalRule`, `hardBreak` e `trailingNode` desligados; `extension-character-count` removido). Carregado sob demanda na aba História (`LazyHistoryEditor`): pacote inicial 435,5 kB (132,6 kB gzip), editor 407,5 kB (129,6 kB gzip). O servidor continua sendo a fonte de verdade do saneamento.
+- **Narrador que preenche dados**: `POST /narrator/fill` (SSE; `start` e `done` com `result` ou `error`; tipos `field`, `missing`, `attributes`, `skills`, `history`; esquema fixo, resposta inválida repetida até 2 vezes, tempo limite de 120 s, cancelável; sem modelo usa os códigos do chat; nada é gravado) e os botões na interface (Sugerir, Preencher o que falta, Sugerir Atributos e Perícias, Escrever, Continuar, Desfazer). Código em `backend/henduran/narrative/fill.py` e `services/fill.py`, `app/src/screens/newJourney/narrator.tsx` e `app/src/api/narratorFill.ts`. Sugerir Atributos e Perícias só preenche o que falta; ideia até 500 caracteres.
+- **Aparência opcional**: migração `journey/0006_optional_appearance.sql` (reconstrói `character` preservando Atributos, Perícias, Convicções e objetivos); a aparência só entra no contexto do Narrador se existir.
+- **Aviso do retrato**: se o envio falha depois da criação, a Jornada abre com aviso e os botões Tentar de novo, Escolher outro e Fechar.
+- **Mundo personalizado**: Mundo editado, do zero ou duplicado não tem semente (`world_meta.seed` nulo); a interface mostra "Mundo personalizado". A `world/0002` não foi reescrita (mudaria o checksum dos bancos do PR #30).
+- **Excluir Jornada não apaga mais o Mundo** (`services/journey_deletion.delete_journey`, resposta `{deleted, world_id}`).
+- **Tela de Mundos** (implementada sem protótipo, por decisão do responsável em 2026-11-24, e depois **aprovada como está**; o protótipo `docs/ui-ux/prototipos/mundos.html` foi feito só como registro): botão **Mundos** no menu, `app/src/screens/WorldsScreen.tsx` (reaproveita `WorldStep` em modo `library`), `POST /worlds`, `DELETE /worlds/{id}` (409 `mundo_em_uso` ou `uso_indeterminado`; exclusão atômica por renomeação). Documento `docs/ui-ux/13-mundos.md`. A nota "Tela provisória" do cabeçalho foi removida.
+- **Editar Jornada**: `PATCH /journeys/current` (nome e descrição, regras da criação; 422 `resumo_invalido`) e "Editar Jornada" no menu ⚙ da Jornada.
+- Validações: `npm run typecheck` sem erros; `npm run test` 320/320 (reexecutado pelo planejador); `pytest` 662 passando e 1 pulado, `npm run build` ok (relatados pelo dev; não reexecutados pelo planejador). Após o merge da `main` no PR #31, revalidado no worktree do PR: `npm run typecheck` OK, `npm run test -- src/screens/MainMenu.test.tsx` 17/17 e `npm run test` 321/321.
+- Não verificado: app Tauri real, TipTap em navegador real (digitar, atalhos, colar do Word), leitor de tela, DPI de 125% a 200%, reflow a 320 px, qualidade das sugestões com modelo local real e se o `llama-server` aceita os esquemas com `const` e `enum` (se recusar, o cliente repete sem esquema e o motor valida).
+- Aprovado pelo responsável: editor sob demanda, remoção do `character-count`, `world/0002` intacta, comportamento de Sugerir Atributos e Perícias e os limites (ideia 500 caracteres, 120 s, 2 novas tentativas), na opção recomendada.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial, Nova Jornada e Mundos (registro).
+- Ajustes do menu em paralelo (PR #29 merged): rodapé sem caixa com `Conectado · <detalhe> · Modelos ▸`, cartão de primeira vez removido, gap dos botões centrais de 12 px para 16 px (`--space-2`) e sombra externa removida; seguem no PR [#31](https://github.com/midrasil/henduran/pull/31), aberto contra `main` após resolução de conflitos com a `main` atual.
 
 ## Decisões vigentes
 
@@ -47,4 +49,4 @@ Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu in
 
 ## Próximo passo recomendado
 
-⭐ Revisar e fazer merge do PR destes ajustes do menu; em seguida continuar a **Nova Jornada** conforme `docs/ui-ux/12-nova-jornada.md`, o ADR-077 e o topo de `docs/backlog.md`. Em paralelo, conferir no app real o menu sem cartão e a Jornada com modelo local.
+⭐ Prototipar **Jornadas** (lista) e **Modelos** (no nível do Caliope), conforme `docs/ui-ux/10-prototipagem.md`, uma tela por vez. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador e o TipTap no app), o botão Configurar modelo (PR #33) e conferir o menu em 1024×768 e maximizado.

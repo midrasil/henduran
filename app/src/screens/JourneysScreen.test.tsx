@@ -77,8 +77,8 @@ describe("Tela Jornadas", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(api.calls).toContainEqual({ method: "DELETE", path: `/journeys/${summary().id}?confirm=true`, body: undefined });
     await waitFor(() => expect(screen.queryByText("O Selo de Elmora")).not.toBeInTheDocument());
-    expect(screen.getAllByText(/O Mundo dela também foi apagado/).length).toBeGreaterThan(0);
-    expect(api.state.worlds.has(WORLD_ID)).toBe(false);
+    expect(screen.getAllByText(/O Mundo dela continua salvo/).length).toBeGreaterThan(0);
+    expect(api.state.worlds.has(WORLD_ID)).toBe(true);
   });
 
   it("Cancelar a exclusão não apaga nada", async () => {

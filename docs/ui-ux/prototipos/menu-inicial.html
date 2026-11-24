@@ -186,6 +186,7 @@ const IC = {
   star: L(["...#....", "...#....", "..###...", "########", "..###...", ".##.##..", ".#...#..", "........"]),
   sword: L([".......#", "......##", ".....##.", "#...##..", ".#.##...", "..##....", ".#.#....", "#...#..."]),
   book: L(["........", "###..###", "#..##..#", "#..##..#", "#..##..#", "#..##..#", "########", "........"]),
+  globe: L(["..####..", ".#.##.#.", "#.####.#", "########", "########", "#.####.#", ".#.##.#.", "..####.."]),
   door: L(["######..", "#....#..", "#....#.#", "#..#.###", "#...###.", "#..#.#..", "#....#..", "######.."]),
   person: L(["..##....", ".####...", ".####...", "..##....", ".####...", "######..", "######..", "........"]),
   pin: L(["..####..", ".#....#.", ".#.##.#.", ".#....#.", "..#..#..", "..#..#..", "...##...", "...##..."]),
@@ -290,6 +291,7 @@ function render() {
     <button class="mbtn primary" ${ready && ok ? "" : "disabled"} data-a="continuar">${IC.star}<span>Continuar Jornada</span><span></span></button>
     <button class="mbtn" ${ready ? "" : "disabled"} data-a="nova">${IC.sword}<span>Nova Jornada</span><span></span></button>
     <button class="mbtn" ${ready ? "" : "disabled"} data-a="jornadas">${IC.book}<span>Jornadas</span><span></span></button>
+    <button class="mbtn" ${ready ? "" : "disabled"} data-a="mundos">${IC.globe}<span>Mundos</span><span></span></button>
     <button class="mbtn" data-a="sair">${IC.door}<span>Sair</span><span></span></button>`;
   const card = $("#card");
   if (!ready) { card.hidden = false; card.className = "card empty"; card.innerHTML = `<h2>${IC.scroll} Última Jornada</h2><div class="body">Preparando o serviço local…</div>`; }
@@ -324,7 +326,7 @@ document.addEventListener("click", (e) => {
   if (b.id === "protobtn") { const box = $("#protobox"); box.hidden = !box.hidden; b.setAttribute("aria-expanded", String(!box.hidden)); b.textContent = box.hidden ? "Protótipo ▴" : "Protótipo ▾"; return; }
   const sg = b.closest(".proto .seg"); if (sg) { S[sg.dataset.k] = b.dataset.v; if (sg.dataset.k === "period") { buildBase(); frame(); } if (sg.dataset.k === "anim") frame(); render(); return; }
   if (b.id === "status") { toast("Abriria a tela Modelos"); return; }
-  const a = b.dataset.a; if (a) toast({ continuar: "Abriria a Jornada", nova: "Abriria o assistente de Nova Jornada", jornadas: "Abriria a lista de Jornadas", sair: "Fecharia o jogo" }[a]);
+  const a = b.dataset.a; if (a) toast({ continuar: "Abriria a Jornada", nova: "Abriria o assistente de Nova Jornada", jornadas: "Abriria a lista de Jornadas", mundos: "Abriria os Mundos salvos", sair: "Fecharia o jogo" }[a]);
 });
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { buildBase(); frame(); }, 120); });
 setup(); buildBase(); frame(); render(); requestAnimationFrame(loop);

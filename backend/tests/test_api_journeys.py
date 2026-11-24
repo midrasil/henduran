@@ -69,6 +69,8 @@ NEW_ROUTES = [
     ("GET", "/worlds/schema"),
     ("POST", "/worlds/generate"),
     ("POST", "/worlds/validate"),
+    ("POST", "/worlds"),
+    ("DELETE", f"/worlds/{new_id()}?confirm=true"),
     ("POST", "/characters/validate"),
     ("POST", "/journeys"),
     ("GET", "/journeys/current"),
@@ -213,8 +215,12 @@ def test_criar_jornada_invalida_responde_422_por_campo(srv):
     assert {(e["field"], e["code"]) for e in r.json()["detail"]["errors"]} == {("start_place_id", "lugar_desconhecido")}
     r = call(srv, "POST", "/journeys", json=new_journey_body(world="x"))
     assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world"
-    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "id": 1}))
-    assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world.id"
+    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "extra": 1}))
+    assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "world.extra"
+    # Mundo novo e salvo ao mesmo tempo: ambíguo.
+    r = call(srv, "POST", "/journeys", json=new_journey_body(world={"content": content, "id": "x"}))
+    found = {(e["field"], e["code"]) for e in r.json()["detail"]["errors"]}
+    assert r.status_code == 422 and ("world", "mundo_ambiguo") in found
     r = call(srv, "POST", "/journeys", json=new_journey_body(extra=True))
     assert r.status_code == 422 and r.json()["detail"]["errors"][0]["field"] == "extra"
     assert call(srv, "POST", "/journeys", json={}).status_code == 422
@@ -300,12 +306,13 @@ def test_excluir_exige_confirmacao(srv):
     call(srv, "POST", "/journeys/close")
     r = call(srv, "DELETE", f"/journeys/{jid}?confirm=true")
     assert r.status_code == 200
-    assert r.json() == {"deleted": jid, "world_id": journey["world_id"], "world_deleted": True, "world_kept_reason": None}
+    assert r.json() == {"deleted": jid, "world_id": journey["world_id"]}
     assert call(srv, "GET", "/journeys").json() == {"journeys": [], "last_journey_id": None}
     assert call(srv, "DELETE", f"/journeys/{jid}?confirm=true").status_code == 404
-    # O Mundo só desta Jornada foi junto.
-    assert call(srv, "GET", "/worlds").json() == {"worlds": []}
-    assert folders(srv.paths) == []
+    # O Mundo continua salvo (decisão de 2026-11-24): só a tela de Mundos o exclui.
+    [world] = call(srv, "GET", "/worlds").json()["worlds"]
+    assert world["id"] == journey["world_id"] and world["journey_count"] == 0
+    assert [p.name for p in folders(srv.paths)] == [journey["world_id"]]
 
 
 def _second_journey_on(srv, world_id: str) -> str:
@@ -313,53 +320,24 @@ def _second_journey_on(srv, world_id: str) -> str:
     return srv.journeys.create_journey("Outra", world_id)
 
 
-def test_excluir_mantem_mundo_usado_por_outra_jornada(srv):
+def test_excluir_a_ultima_jornada_mantem_o_mundo(srv):
     journey = create(srv)
     other = _second_journey_on(srv, journey["world_id"])
-    r = call(srv, "DELETE", f"/journeys/{journey['id']}?confirm=true")
-    assert r.status_code == 200
-    body = r.json()
-    assert body["deleted"] == journey["id"] and body["world_id"] == journey["world_id"]
-    assert body["world_deleted"] is False and body["world_kept_reason"] == "mundo_em_uso"
-    assert srv.paths.world_dir(journey["world_id"]).is_dir()
-    # Excluída a última que o usa, o Mundo vai junto.
-    r = call(srv, "DELETE", f"/journeys/{other}?confirm=true")
-    assert r.json()["world_deleted"] is True
-    assert not srv.paths.world_dir(journey["world_id"]).exists()
-
-
-def test_excluir_mantem_mundo_com_jornada_ilegivel(srv):
-    journey = create(srv)
-    broken = create(srv, seed=9)
-    srv.paths.journey_db_file(broken["id"]).write_bytes(b"lixo" * 2000)
-    body = call(srv, "DELETE", f"/journeys/{journey['id']}?confirm=true").json()
-    assert body["world_deleted"] is False and body["world_kept_reason"] == "uso_indeterminado"
-    assert srv.paths.world_dir(journey["world_id"]).is_dir()
-
-
-def test_falha_ao_excluir_mundo_nao_derruba_a_exclusao_da_jornada(srv, monkeypatch):
-    journey = create(srv)
-
-    def boom(self, world_id, *, confirm=False):
-        raise OSError("arquivo em uso (simulado)")
-
-    monkeypatch.setattr(WorldStore, "delete_world", boom)
-    r = call(srv, "DELETE", f"/journeys/{journey['id']}?confirm=true")
-    monkeypatch.undo()
-    assert r.status_code == 200
-    body = r.json()
-    assert body["deleted"] == journey["id"] and body["world_deleted"] is False
-    assert body["world_kept_reason"] == "exclusao_falhou"
-    assert not srv.paths.journey_dir(journey["id"]).exists()
-    assert srv.paths.world_dir(journey["world_id"]).is_dir()
+    for jid in (journey["id"], other):
+        r = call(srv, "DELETE", f"/journeys/{jid}?confirm=true")
+        assert r.status_code == 200 and r.json()["world_id"] == journey["world_id"]
+        assert srv.paths.world_dir(journey["world_id"]).is_dir()
+    # Sem Jornadas, o Mundo pode ser usado de novo numa Jornada nova.
+    body = new_journey_body()
+    body["world"] = {"id": journey["world_id"]}
+    assert call(srv, "POST", "/journeys", json=body).status_code == 201
 
 
 def test_excluir_jornada_danificada_sem_mundo_conhecido(srv):
     journey = create(srv)
     srv.paths.journey_db_file(journey["id"]).write_bytes(b"lixo" * 2000)
     body = call(srv, "DELETE", f"/journeys/{journey['id']}?confirm=true").json()
-    # Sem ler o resumo, não dá para saber o Mundo: ele fica.
-    assert body == {"deleted": journey["id"], "world_id": None, "world_deleted": False, "world_kept_reason": None}
+    assert body == {"deleted": journey["id"], "world_id": None}
     assert srv.paths.world_dir(journey["world_id"]).is_dir()
 
 

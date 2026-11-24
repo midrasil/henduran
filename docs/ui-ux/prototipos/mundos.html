@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Registro da tela de Mundos já implementada (docs/ui-ux/13-mundos.md). Só visual, dados de exemplo; não é código do app. Reaproveita o desenho do passo Mundo da Nova Jornada. -->
+<title>Mundos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: trilho de passos à esquerda (3 passos do MVP), painel central com cabeçalho, conteúdo rolável e rodapé fixo.
+   Passo 1: gerador à esquerda e o Mundo editável em abas à direita. Passo 2: seções em coluna única com resumo de
+   progresso fixo. Passo 3: duas páginas de pergaminho. Tokens de app/src/styles/tokens.css (ADR-069). */
+:root {
+  color-scheme: dark;
+  --ink-950:#0e0911; --ink-900:#170f1a; --ink-800:#221a26; --ink-700:#2e2233; --ink-600:#432e4a; --ink-400:#8d7a93;
+  --purple-800:#45186a; --purple-600:#5a2380; --purple-500:#6e3197; --purple-300:#9a62c4; --purple-200:#c49be3;
+  --gold-700:#7a4e12; --gold-600:#a8701c; --gold-400:#f0c050; --gold-200:#f8d878;
+  --parch-100:#f8e4c8; --parch-200:#f5dbbb; --parch-300:#e8c69c; --parch-500:#a77d52;
+  --brown-900:#2a1b14; --brown-700:#5c4230; --ivory-100:#f4e8d4; --ivory-400:#c8b8ac;
+  --red-800:#8a1c12; --red-600:#b8321f; --red-400:#e8604c; --green-300:#7fd88a; --green-700:#2f7a3c; --cyan-300:#6ee7ff;
+  --bg: var(--ink-900); --surface: var(--ink-800); --raised: var(--ink-700);
+  --text: var(--ivory-100); --muted: var(--ivory-400); --accent: var(--gold-400); --frame: var(--gold-600); --focus: var(--cyan-300);
+  --font-pixel: "Pixelify Sans", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Crimson Pro", Georgia, "Times New Roman", serif;
+  --fs-xs: .875rem; --fs-sm: 1rem; --fs-md: 1.125rem; --fs-lg: 1.25rem; --fs-xl: 1.5rem;
+  --shadow: 4px 4px 0 var(--ink-950);
+  --rail-w: 272px;
+  --pixel-circle: polygon(30% 0,70% 0,70% 5%,80% 5%,80% 10%,90% 10%,90% 20%,95% 20%,95% 30%,100% 30%,100% 70%,95% 70%,95% 80%,90% 80%,90% 90%,80% 90%,80% 95%,70% 95%,70% 100%,30% 100%,30% 95%,20% 95%,20% 90%,10% 90%,10% 80%,5% 80%,5% 70%,0 70%,0 30%,5% 30%,5% 20%,10% 20%,10% 10%,20% 10%,20% 5%,30% 5%);
+  --sb-track: var(--ink-950); --sb-thumb: var(--gold-600); --sb-hi: var(--gold-200); --sb-lo: var(--gold-700);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ink-950); color: var(--text); font-family: var(--font-pixel); font-size: var(--fs-sm); line-height: 1.45; overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.px { shape-rendering: crispEdges; display: block; }
+svg.ic { width: 16px; height: 16px; flex: none; }
+h1, h2, h3, h4, p { margin: 0; }
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: var(--sb-track); box-shadow: inset 2px 0 0 rgba(0,0,0,.35); }
+::-webkit-scrollbar-thumb { background: var(--sb-thumb); border: 3px solid var(--sb-track); box-shadow: inset 2px 2px 0 var(--sb-hi), inset -2px -2px 0 var(--sb-lo); }
+::-webkit-scrollbar-thumb:hover { background: var(--sb-hi); }
+::-webkit-scrollbar-button { display: none; }
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-color: var(--sb-thumb) var(--sb-track); scrollbar-width: thin; } }
+
+/* ------------------------------------------------------------ moldura da tela */
+.app { height: 100%; min-width: 0; display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); gap: 14px; padding: 14px; background:
+  radial-gradient(ellipse 80% 60% at 50% 0%, #2a1840 0%, transparent 70%), var(--ink-950); }
+.framed { position: relative; background: var(--ink-900); border: 4px solid var(--frame); box-shadow: inset 0 0 0 2px var(--ink-950), var(--shadow); }
+.corner { position: absolute; width: 28px; height: 28px; pointer-events: none; z-index: 3; color: var(--gold-200); }
+.corner svg { width: 100%; height: 100%; }
+.corner.tl { left: -8px; top: -8px; } .corner.tr { right: -8px; top: -8px; transform: scaleX(-1); }
+.corner.bl { left: -8px; bottom: -8px; transform: scaleY(-1); } .corner.br { right: -8px; bottom: -8px; transform: scale(-1); }
+
+/* ---------------------------------------------------------------------- trilho */
+.rail { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.rail-top { padding: 20px 18px 8px; text-align: center; }
+.rail-top .mark { width: 36px; margin: 0 auto 6px; color: var(--gold-400); }
+.rail-top h1 { font-family: var(--font-serif); font-weight: 700; font-size: 1.9rem; line-height: 1.1; color: var(--gold-200); text-shadow: 0 2px 0 var(--gold-700), 3px 4px 0 var(--ink-950); }
+.rail-top p { color: var(--muted); font-size: var(--fs-xs); margin-top: 6px; }
+.rail-sep { height: 12px; margin: 6px 22px; background: linear-gradient(var(--ink-600), var(--ink-600)) center / 100% 2px no-repeat; position: relative; }
+.rail-sep::after { content: ""; position: absolute; left: 50%; top: 2px; width: 8px; height: 8px; margin-left: -4px; background: var(--gold-600); transform: rotate(45deg); }
+.steps { list-style: none; margin: 0; padding: 6px 14px 10px; display: grid; gap: 10px; }
+.step-btn { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--ink-800); border: 3px solid var(--ink-600); padding: 8px 10px; min-height: 58px; position: relative; }
+.step-btn:hover:not(:disabled) { border-color: var(--frame); }
+.step-btn:disabled { cursor: default; opacity: .6; }
+.step-btn .num { flex: none; width: 36px; height: 36px; display: grid; place-items: center; font-weight: 600; font-size: var(--fs-md); background: var(--ink-950); border: 3px solid var(--ink-600); color: var(--muted); }
+.step-btn .lbl { display: grid; line-height: 1.2; min-width: 0; }
+.step-btn .lbl b { font-weight: 600; font-size: var(--fs-md); }
+.step-btn .lbl small { font-size: var(--fs-xs); color: var(--muted); }
+.step-btn[aria-current="step"] { background: var(--purple-600); border-color: var(--gold-400); box-shadow: 3px 3px 0 var(--ink-950); }
+.step-btn[aria-current="step"] .num { background: var(--gold-400); color: var(--ink-950); border-color: var(--gold-700); }
+.step-btn[aria-current="step"] .lbl small { color: var(--parch-100); }
+.step-btn.done .num { background: var(--green-700); color: var(--ivory-100); border-color: var(--green-300); }
+.step-btn.warn .lbl small { color: var(--amber-300, #f5b04a); }
+.step-btn[aria-current="step"].warn .lbl small { color: var(--gold-200); }
+.rail-art { margin-top: auto; position: relative; height: 190px; border-top: 4px solid var(--frame); }
+.rail-art canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+
+/* ---------------------------------------------------------------------- painel */
+.panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.head { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 4px solid var(--ink-600); background: var(--ink-800); }
+.head .seal { flex: none; width: 56px; height: 56px; display: grid; place-items: center; background: var(--ink-950); border: 3px solid var(--gold-600); clip-path: polygon(0 20%, 8% 20%, 8% 8%, 20% 8%, 20% 0, 80% 0, 80% 8%, 92% 8%, 92% 20%, 100% 20%, 100% 80%, 92% 80%, 92% 92%, 80% 92%, 80% 100%, 20% 100%, 20% 92%, 8% 92%, 8% 80%, 0 80%); color: var(--gold-400); }
+.head .seal svg { width: 30px; height: 30px; }
+.head .titles { flex: 1; min-width: 0; }
+.head h2 { font-family: var(--font-serif); font-weight: 600; font-size: 1.7rem; line-height: 1.15; color: var(--gold-200); }
+.head p { color: var(--muted); font-size: var(--fs-sm); }
+.note { flex: none; width: min(330px, 34%); display: flex; gap: 10px; background: var(--parch-200); color: var(--brown-900); border: 3px solid var(--parch-500); padding: 8px 12px; font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.3; }
+.note .i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--brown-700); color: var(--parch-100); font: 600 14px/1 var(--font-pixel); margin-top: 2px; }
+.body { flex: 1; min-height: 0; overflow: auto; padding: 18px 20px 24px; scroll-behavior: smooth; }
+.foot { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 4px solid var(--ink-600); background: var(--ink-800); }
+.foot .sp { flex: 1; }
+.foot .status { color: var(--muted); font-size: var(--fs-xs); }
+
+/* -------------------------------------------------------------------- botões */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 6px 18px; background: var(--raised); color: var(--ivory-100);
+  border: 3px solid var(--ink-600); box-shadow: 3px 3px 0 var(--ink-950); font-weight: 600; letter-spacing: .02em; }
+.btn:hover:not(:disabled) { border-color: var(--frame); background: var(--ink-600); }
+.btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink-950); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--purple-600); border-color: var(--gold-400); }
+.btn.primary:hover:not(:disabled) { background: var(--purple-500); border-color: var(--gold-200); }
+.btn.danger { background: var(--red-800); border-color: var(--red-400); }
+.btn.sm { min-height: 36px; padding: 2px 12px; font-size: var(--fs-xs); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--muted); }
+.btn.ghost:hover:not(:disabled) { color: var(--gold-200); background: none; border-color: var(--ink-600); }
+.btn .spin { width: 16px; height: 16px; border: 3px solid currentColor; border-right-color: transparent; animation: spin .8s steps(8) infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .btn .spin, .gen-dice { animation: none !important; } }
+
+/* ---------------------------------------------------------------- campos */
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > span.l { font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-200); font-weight: 600; }
+.field .hint { font-size: var(--fs-xs); color: var(--muted); }
+.field .err { font-size: var(--fs-xs); color: var(--red-400); }
+.inp, .field input, .field textarea { width: 100%; background: var(--ink-950); border: 3px solid var(--ink-600); padding: 6px 10px; min-height: 44px; font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.3; resize: vertical; }
+.field textarea { min-height: 0; }
+.field input:hover, .field textarea:hover { border-color: var(--ink-400); }
+.field input:focus, .field textarea:focus { border-color: var(--gold-400); outline: none; box-shadow: 0 0 0 3px rgba(240,192,80,.3); }
+.field.bad input, .field.bad textarea { border-color: var(--red-400); }
+.field .count { text-align: right; font-size: 12px; color: var(--ink-400); }
+.grid2 { align-items: start; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.grid3 { align-items: start; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.stack { display: grid; gap: 14px; }
+.sec { display: grid; gap: 12px; background: var(--surface); border: 3px solid var(--ink-600); padding: 14px 16px 16px; scroll-margin-top: 8px; }
+.sec > h3 { font-family: var(--font-serif); font-weight: 600; font-size: 1.35rem; color: var(--gold-200); display: flex; align-items: center; gap: 10px; }
+.sec > h3 .ok { width: 22px; height: 22px; display: grid; place-items: center; background: var(--green-700); color: var(--ivory-100); }
+.sec > h3 .ok svg { width: 14px; height: 14px; }
+.sec > h3 .bad { font: 600 12px/1 var(--font-pixel); background: var(--red-800); color: var(--ivory-100); padding: 4px 8px; }
+.sec .help { font-family: var(--font-serif); font-size: 1.05rem; color: var(--muted); font-style: italic; line-height: 1.3; }
+.sec.parch { background: var(--parch-200); color: var(--brown-900); border-color: var(--parch-500); }
+.sec.parch > h3 { color: var(--brown-700); }
+.callout { padding: 10px 14px; border: 3px solid; display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-sm); }
+.callout.danger { background: rgba(138,28,18,.35); border-color: var(--red-400); }
+.callout.warn { background: rgba(168,112,28,.25); border-color: var(--gold-600); }
+.pending { background: var(--parch-200); color: var(--brown-900); border: 4px solid var(--parch-500); padding: 12px 16px; margin-bottom: 16px; }
+.pending h4 { font-family: var(--font-serif); font-size: 1.2rem; color: var(--red-800); margin-bottom: 6px; }
+.pending ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.pending button { background: none; border: 0; padding: 2px 4px; text-align: left; color: var(--brown-900); font-family: var(--font-serif); font-size: 1.1rem; text-decoration: underline dotted; min-height: 30px; }
+.pending button:hover { color: var(--red-800); }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--ink-950); border: 2px solid var(--ink-600); padding: 2px 10px; font-size: var(--fs-xs); color: var(--ivory-100); }
+.chip.gold { border-color: var(--gold-600); color: var(--gold-200); }
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; background: var(--red-600); color: var(--ivory-100); font-size: 12px; font-weight: 600; }
+
+/* ----------------------------------------------------------- passo 1: Mundo */
+.world { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+.body.fill { overflow: hidden; display: flex; flex-direction: column; }
+.body.fill .world { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: minmax(0, 1fr); }
+.world .gen { position: static; display: flex; flex-direction: column; min-height: 0; gap: 12px; }
+.wlist { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 8px; align-content: start; padding: 2px 6px 4px 2px; }
+.wi { text-align: left; display: grid; gap: 2px; background: var(--ink-900); border: 3px solid var(--ink-600); padding: 8px 12px; }
+.wi:hover { border-color: var(--frame); }
+.wi.on { background: var(--purple-800); border-color: var(--gold-400); box-shadow: 3px 3px 0 var(--ink-950); }
+.wi b { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; color: var(--gold-200); line-height: 1.15; }
+.wi span { font-size: var(--fs-xs); color: var(--muted); }
+.wi .tagnew { color: var(--gold-400); font-weight: 600; }
+.wempty { padding: 14px 4px; }
+.genbox { display: grid; gap: 10px; border-top: 3px solid var(--ink-600); padding-top: 12px; }
+.gbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gbtns .btn { padding-inline: 6px; letter-spacing: 0; white-space: nowrap; font-size: .9375rem; gap: 6px; }
+.wcol .pending ul { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; } .wcol .pending { max-height: 190px; overflow: auto; }
+.seedrow { display: flex; gap: 8px; align-items: flex-end; }
+.seedrow .field { flex: 1; }
+.wcol { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.wcol .pending { flex: none; }
+.wcol .wcard { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.wcol .wpane { flex: 1; min-height: 0; overflow: auto; align-content: start; }
+.wcard .whead, .wcard .wtabs { flex: none; }
+.rono { align-items: center; flex-wrap: wrap; font-family: var(--font-serif); font-size: 1.05rem; background: rgba(122,78,18,.18); border-color: var(--gold-600); color: var(--brown-900); }
+.rono span { flex: 1; min-width: 220px; }
+.wcard input[readonly], .wcard textarea[readonly] { cursor: default; background: var(--parch-200); border-style: dashed; }
+.gen-art, .gen-dice { display: none; }
+.wcol .empty-world { flex: 1; min-height: 0; }
+.empty-world { display: grid; place-items: center; text-align: center; gap: 10px; padding: 60px 30px; background: var(--parch-200); color: var(--brown-900); border: 4px dashed var(--parch-500); min-height: 420px; }
+.empty-world svg { width: 56px; height: 56px; color: var(--brown-700); }
+.empty-world p { font-family: var(--font-serif); font-size: 1.3rem; max-width: 34ch; }
+.wcard { background: var(--parch-200); color: var(--brown-900); border: 4px solid var(--parch-500); box-shadow: var(--shadow); --sb-track: var(--parch-300); --sb-thumb: var(--brown-700); --sb-hi: var(--parch-500); --sb-lo: var(--brown-900); }
+.wcard .whead { display: grid; gap: 6px; padding: 14px 18px 10px; border-bottom: 3px solid var(--parch-300); }
+.wcard .wname { width: 100%; background: transparent; border: 3px solid transparent; font-family: var(--font-serif); font-weight: 700; font-size: 2rem; line-height: 1.1; color: var(--brown-900); padding: 0 6px; min-height: 0; }
+.wcard .wname:hover { border-color: var(--parch-500); }
+.wcard .wname:focus { outline: none; border-color: var(--brown-700); background: var(--parch-100); }
+.wcard .wmeta { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 6px; }
+.wcard .wmeta .chip { background: var(--parch-300); border-color: var(--parch-500); color: var(--brown-900); }
+.wtabs { display: flex; gap: 6px; padding: 10px 14px 0; border-bottom: 3px solid var(--parch-500); }
+.wtab { padding-inline: 10px !important; background: var(--parch-300); color: var(--brown-700); border: 3px solid var(--parch-500); border-bottom: 0; padding: 6px 14px; min-height: 40px; display: flex; gap: 8px; align-items: center; font-weight: 600; margin-bottom: -3px; }
+.wtab:hover { background: var(--parch-100); }
+.wtab[aria-selected="true"] { background: var(--parch-100); color: var(--brown-900); border-color: var(--brown-700); padding-bottom: 9px; }
+.wpane { padding: 16px 18px 18px; display: grid; gap: 14px; }
+.wcard .field > span.l { color: var(--brown-700); }
+.wcard .field .hint { color: var(--brown-700); }
+.wcard .field input, .wcard .field textarea { background: var(--parch-100); border-color: var(--parch-500); color: var(--brown-900); }
+.wcard .field input:focus, .wcard .field textarea:focus { border-color: var(--brown-700); box-shadow: 0 0 0 3px rgba(92,66,48,.3); }
+.wcard .field.bad input, .wcard .field.bad textarea { border-color: var(--red-600); }
+.wcard .field .err { color: var(--red-800); }
+.wcard .btn { background: var(--parch-300); color: var(--brown-900); border-color: var(--parch-500); box-shadow: 3px 3px 0 var(--brown-700); }
+.wcard .btn:hover:not(:disabled) { background: var(--parch-100); border-color: var(--brown-700); }
+.wcard .btn.ghost { background: none; box-shadow: none; border-color: transparent; color: var(--brown-700); }
+.wcard .btn.primary { background: var(--purple-600); color: var(--ivory-100); border-color: var(--gold-600); }
+.rows { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 8px; align-items: center; }
+.row.one { grid-template-columns: minmax(0, 1fr) auto; }
+.wgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.sub { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sub h4 { font-family: var(--font-serif); font-size: 1.25rem; color: var(--brown-900); }
+.sub small { color: var(--brown-700); font-size: var(--fs-xs); }
+.item { display: grid; gap: 10px; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 12px 14px; }
+.item.start { border-color: var(--purple-600); box-shadow: 0 0 0 3px var(--gold-400); }
+.item .top { display: flex; align-items: center; gap: 10px; }
+.item .top .grow { flex: 1; }
+.startbtn { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 2px 12px; background: var(--parch-300); border: 3px solid var(--parch-500); color: var(--brown-900); font-weight: 600; font-size: var(--fs-xs); }
+.startbtn:hover { border-color: var(--brown-700); }
+.startbtn[aria-pressed="true"] { background: var(--purple-600); color: var(--ivory-100); border-color: var(--gold-400); }
+
+/* ---------------------------------------------------- passo 2: Protagonista */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; align-items: start; }
+.asd { position: sticky; top: 0; display: grid; gap: 12px; }
+.asd .box { background: var(--surface); border: 3px solid var(--ink-600); padding: 12px 14px; display: grid; gap: 8px; }
+.asd h4 { font-family: var(--font-serif); font-size: 1.15rem; color: var(--gold-200); }
+.chk { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.chk button { width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: 2px solid transparent; padding: 4px 6px; text-align: left; min-height: 34px; }
+.chk button:hover { border-color: var(--ink-600); background: var(--ink-800); }
+.chk .dot { flex: none; width: 18px; height: 18px; display: grid; place-items: center; border: 2px solid var(--ink-600); background: var(--ink-950); }
+.chk .dot svg { width: 12px; height: 12px; }
+.chk .ok .dot { background: var(--green-700); border-color: var(--green-300); }
+.chk .no .dot { border-color: var(--red-400); }
+.chk .no small { color: var(--red-400); }
+.chk small { margin-left: auto; font-size: 12px; color: var(--muted); }
+.trail { display: grid; gap: 4px; }
+.trail .tl { display: flex; justify-content: space-between; font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; font-weight: 600; }
+.trail.v .tl b { color: #ff8a70; } .trail.w .tl b { color: #8fc0ff; }
+.cells { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
+.cells i { width: 20px; height: 20px; background: var(--ink-950); border: 3px solid var(--ink-600); display: block; }
+.trail.v .cells i.f { background: #e0342a; border-color: #ff8a70; }
+.trail.w .cells i.f { background: #3c8cf0; border-color: #8fc0ff; }
+.trail small { color: var(--muted); font-size: 12px; }
+.convs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.conv { display: grid; gap: 8px; background: var(--ink-900); border: 3px solid var(--ink-600); border-top: 6px solid var(--purple-500); padding: 10px 12px 12px; }
+.conv .cn { font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--purple-200); font-weight: 600; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: var(--fs-xs); color: var(--muted); }
+.tally .t { display: inline-flex; align-items: baseline; gap: 6px; background: var(--ink-950); border: 2px solid var(--ink-600); padding: 2px 10px; }
+.tally .t b { font-size: var(--fs-md); color: var(--gold-200); }
+.tally .t.full { border-color: var(--green-300); } .tally .t.full b { color: var(--green-300); }
+.tally .t.over { border-color: var(--red-400); } .tally .t.over b { color: var(--red-400); }
+.cat { font-size: var(--fs-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--purple-200); font-weight: 600; margin-top: 2px; }
+.attrs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.attr { display: grid; gap: 6px; background: var(--ink-900); border: 3px solid var(--ink-600); padding: 10px 12px; align-content: start; }
+.attr.set { border-color: var(--frame); }
+.attr .an { display: flex; justify-content: space-between; align-items: baseline; }
+.attr .an b { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; color: var(--gold-200); }
+.attr .an em { font-style: normal; font-size: 1.6rem; font-weight: 600; color: var(--gold-400); min-width: 1ch; text-align: right; }
+.attr small { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; }
+.attr .skl { color: var(--ink-400); font-size: 12px; }
+.vals { display: flex; gap: 6px; }
+.val { flex: 1; min-width: 0; min-height: 40px; background: var(--ink-950); border: 3px solid var(--ink-600); font-weight: 600; font-size: var(--fs-md); display: grid; place-items: center; padding: 0; }
+.val:hover:not(:disabled) { border-color: var(--gold-400); }
+.val[aria-pressed="true"] { background: var(--purple-600); border-color: var(--gold-400); color: var(--gold-200); }
+.val:disabled { opacity: .3; cursor: not-allowed; }
+.profiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.prof { text-align: left; display: grid; gap: 4px; background: var(--ink-900); border: 3px solid var(--ink-600); padding: 10px 12px; }
+.prof:hover { border-color: var(--frame); }
+.prof[aria-pressed="true"] { background: var(--purple-800); border-color: var(--gold-400); box-shadow: 3px 3px 0 var(--ink-950); }
+.prof b { font-family: var(--font-serif); font-size: 1.3rem; color: var(--gold-200); font-weight: 600; }
+.prof small { color: var(--muted); font-size: var(--fs-xs); }
+.skgroup { display: grid; gap: 4px; }
+.skgroup > .gh { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--ink-600); padding: 4px 2px; }
+.skgroup > .gh b { font-family: var(--font-serif); font-size: 1.15rem; color: var(--purple-200); font-weight: 600; }
+.skgroup > .gh small { color: var(--muted); font-size: var(--fs-xs); }
+.skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; }
+.sk { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 6px; border: 2px solid transparent; }
+.sk:hover { background: var(--ink-800); }
+.sk.has { background: rgba(90,35,128,.25); border-color: var(--purple-600); }
+.sk b { font-weight: 600; font-size: var(--fs-sm); display: block; line-height: 1.15; }
+.sk small { color: var(--muted); font-size: 12px; line-height: 1.2; display: block; }
+.sk .vals { gap: 3px; }
+.sk .val { flex: none; width: 34px; min-height: 32px; font-size: var(--fs-xs); border-width: 2px; }
+.sk .val[aria-pressed="true"] { background: var(--purple-600); }
+.sk .val.zero[aria-pressed="true"] { background: var(--ink-600); color: var(--muted); border-color: var(--ink-400); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+details.more { border: 2px dashed var(--ink-600); padding: 8px 12px; }
+details.more summary { cursor: pointer; font-size: var(--fs-sm); color: var(--gold-200); min-height: 32px; display: flex; align-items: center; }
+details.more[open] summary { margin-bottom: 10px; }
+
+
+/* ---------------------------------------------- passo 2: protagonista em abas */
+.world.pw { grid-template-columns: 300px minmax(0, 1fr); }
+.pside { overflow: auto; align-content: start; }
+.pside .box { background: var(--ink-900); border: 3px solid var(--ink-600); padding: 12px 14px; display: grid; gap: 8px; }
+.pside .box h4 { font-family: var(--font-serif); font-size: 1.15rem; color: var(--gold-200); }
+.pcard-top { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0 4px; }
+.pframe { display: inline-block; padding: 6px; background: var(--gold-600); clip-path: var(--pixel-circle); box-shadow: inset 0 0 0 2px var(--gold-200); }
+.pframe.big { padding: 8px; }
+.pin { display: block; clip-path: var(--pixel-circle); background: var(--ink-950); position: relative; }
+.pin canvas { display: block; image-rendering: pixelated; }
+.pinit { display: grid; place-items: center; font-family: var(--font-serif); font-weight: 700; color: var(--gold-200); background: linear-gradient(160deg, var(--purple-800), var(--ink-800)); }
+.pname { display: grid; gap: 2px; }
+.pname b { font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; color: var(--gold-200); line-height: 1.1; }
+.pname span { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; }
+.pbtn { background: none; border: 0; padding: 4px; cursor: pointer; position: relative; display: inline-grid; }
+.pbtn:hover .pframe, .pbtn:focus-visible .pframe { background: var(--gold-400); filter: brightness(1.08); }
+.pbtn::after { content: attr(data-tip); position: absolute; left: 50%; bottom: -2px; transform: translate(-50%, 100%); white-space: nowrap; background: var(--ink-950); color: var(--ivory-100); border: 2px solid var(--gold-400); padding: 2px 8px; font: 400 12px/1.4 var(--font-pixel); pointer-events: none; opacity: 0; z-index: 5; }
+.pbtn:hover::after, .pbtn:focus-visible::after { opacity: 1; }
+.chk button.cur { background: var(--ink-800); border-color: var(--frame); }
+.ptitle { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--brown-900); padding: 0 6px; }
+.wtab .tick { display: inline-grid; place-items: center; width: 18px; height: 18px; background: var(--green-700); color: var(--ivory-100); }
+.wtab .tick svg { width: 12px; height: 12px; }
+.panenav { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 3px double var(--parch-500); padding-top: 14px; margin-top: 6px; }
+.pcard .help { color: var(--brown-700); }
+.pcard .sub h4 { font-size: 1.35rem; }
+.pcard .tally { color: var(--brown-700); } .pcard .tally .t { background: var(--parch-100); border-color: var(--parch-500); } .pcard .tally .t b { color: var(--purple-800); }
+.pcard .tally .t.full { border-color: var(--green-700); } .pcard .tally .t.full b { color: var(--green-700); }
+.pcard .tally .t.over { border-color: var(--red-600); } .pcard .tally .t.over b { color: var(--red-600); }
+.pcard .cat { color: var(--purple-800); }
+.pcard .attrs { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.pcard .attr { background: var(--parch-100); border-color: var(--parch-500); } .pcard .attr.set { border-color: var(--brown-700); }
+.pcard .attr .an b { color: var(--brown-900); } .pcard .attr .an em { color: var(--purple-800); } .pcard .attr small { color: var(--brown-700); } .pcard .attr .skl { color: var(--brown-700); opacity: .85; }
+.pcard .val { background: var(--parch-300); border-color: var(--parch-500); color: var(--brown-900); }
+.pcard .val:hover:not(:disabled) { border-color: var(--brown-700); }
+.pcard .val[aria-pressed="true"] { background: var(--purple-600); border-color: var(--gold-600); color: var(--gold-200); }
+.pcard .val:disabled { opacity: .35; }
+.pcard .sk .val.zero[aria-pressed="true"] { background: var(--parch-500); color: var(--brown-900); border-color: var(--brown-700); }
+.pcard .profiles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; } .pcard .prof { padding: 8px 10px; }
+.pcard .prof { background: var(--parch-100); border-color: var(--parch-500); color: var(--brown-900); }
+.pcard .prof:hover { border-color: var(--brown-700); } .pcard .prof b { color: var(--brown-900); } .pcard .prof small { color: var(--brown-700); }
+.pcard .prof[aria-pressed="true"] { background: var(--purple-600); border-color: var(--gold-600); }
+.pcard .prof[aria-pressed="true"] b { color: var(--gold-200); } .pcard .prof[aria-pressed="true"] small { color: var(--parch-100); }
+.pcard .skgroup > .gh { border-color: var(--parch-500); } .pcard .skgroup > .gh b { color: var(--purple-800); } .pcard .skgroup > .gh small { color: var(--brown-700); }
+.pcard .skills { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.pcard .sk:hover { background: var(--parch-300); } .pcard .sk.has { background: rgba(110,49,151,.14); border-color: var(--purple-500); } .pcard .sk small { color: var(--brown-700); }
+.pcard details.more { border-color: var(--parch-500); } .pcard details.more summary { color: var(--purple-800); }
+.pcard .callout.warn { background: rgba(122,78,18,.18); border-color: var(--gold-600); color: var(--brown-900); }
+.pcard .item .top { display: flex; }
+.revhead { display: flex; gap: 16px; align-items: flex-start; } .revhead .facts { flex: 1; min-width: 0; grid-template-columns: 5.5em minmax(0, 1fr); } .revhead .pframe { flex: none; padding: 5px; }
+.pdialog { width: min(720px, 100%); } .pdialog .acts { flex-wrap: nowrap; align-items: center; } .pdialog .acts .btn { white-space: nowrap; }
+.pstage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: center; }
+.pstage canvas { width: 256px; height: 256px; cursor: grab; touch-action: none; image-rendering: pixelated; background: var(--ink-950); }
+.pempty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: var(--fs-xs); pointer-events: none; }
+.pctl { min-width: 0; display: grid; gap: 10px; align-content: center; } .pctl .hint { font-size: 12px; color: var(--muted); }
+.pctl input[type="range"] { width: 100%; min-height: 0; padding: 0; border: 0; background: none; accent-color: var(--gold-400); }
+@media (max-width: 1180px) {
+  .world.pw { grid-template-columns: 1fr; }
+  .pside { overflow: visible; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+  .pcard-top { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; text-align: left; align-items: center; gap: 16px; }
+  .pstage { grid-template-columns: 1fr; justify-items: center; }
+}
+
+
+/* ----------------------------------------------- Narrador e editor de texto */
+.field > span.l { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.aibtn { display: inline-flex; align-items: center; gap: 5px; min-height: 26px; padding: 0 9px; font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; background: var(--purple-600); color: var(--gold-200); border: 2px solid var(--gold-600); box-shadow: 2px 2px 0 var(--ink-950); }
+.aibtn svg { width: 12px; height: 12px; }
+.aibtn:hover:not(:disabled) { background: var(--purple-500); border-color: var(--gold-200); }
+.aibtn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.aibtn.big { min-height: 44px; padding: 0 16px; font-size: var(--fs-sm); border-width: 3px; box-shadow: 3px 3px 0 var(--ink-950); align-self: end; }
+.aibtn.busy { opacity: 1; cursor: progress; }
+.aibtn .spin { width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s steps(8) infinite; display: inline-block; }
+.aibar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: end; background: rgba(110,49,151,.12); border: 3px dashed var(--purple-500); padding: 8px 12px; }
+.aibar .aihint { grid-column: 1 / -1; font-size: var(--fs-xs); color: var(--brown-700); }
+.pcard .wtabs { gap: 4px; padding-inline: 8px; } .pcard .wtab { padding: 6px 8px !important; gap: 6px; font-size: .9rem; }
+.aibar .field input { min-height: 40px; }
+.rte { border: 3px solid var(--parch-500); background: var(--parch-100); display: grid; }
+.rte.bad { border-color: var(--red-600); }
+.rte-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 8px; background: var(--parch-300); border-bottom: 3px solid var(--parch-500); }
+.rte-bar .sep { width: 2px; height: 22px; background: var(--parch-500); margin: 0 4px; }
+.rb { min-width: 34px; height: 34px; padding: 0 6px; background: var(--parch-100); color: var(--brown-900); border: 2px solid var(--parch-500); font: 600 15px/1 var(--font-pixel); }
+.rb.b { font-weight: 700; } .rb.i { font-style: italic; font-family: var(--font-serif); font-size: 18px; } .rb.u { text-decoration: underline; } .rb.s { text-decoration: line-through; }
+.rb:hover { border-color: var(--brown-700); }
+.rb[aria-pressed="true"] { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); }
+.rsel { height: 34px; background: var(--parch-100); color: var(--brown-900); border: 2px solid var(--parch-500); padding: 0 6px; font-size: var(--fs-xs); }
+.aigroup { display: inline-flex; gap: 6px; margin-left: auto; }
+.rte-area { min-height: 260px; max-height: 46vh; overflow: auto; padding: 14px 18px; font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.5; color: var(--brown-900); outline: none; }
+.rte-area:focus { box-shadow: inset 0 0 0 3px rgba(240,192,80,.55); }
+.rte-area:empty::before { content: attr(data-ph); color: var(--parch-500); font-style: italic; }
+.rte-area h2 { font-size: 1.7rem; margin: .6em 0 .3em; } .rte-area h3 { font-size: 1.35rem; margin: .6em 0 .3em; color: var(--purple-800); }
+.rte-area p { margin: 0 0 .7em; } .rte-area ul, .rte-area ol { margin: 0 0 .7em; padding-left: 1.5em; }
+.rte-area blockquote { margin: 0 0 .7em; padding: 2px 14px; border-left: 4px solid var(--purple-500); color: var(--brown-700); font-style: italic; }
+.rte-foot { display: flex; justify-content: space-between; gap: 12px; padding: 4px 10px; background: var(--parch-300); border-top: 2px solid var(--parch-500); font-size: 12px; color: var(--brown-700); }
+.rte-count.over { color: var(--red-800); font-weight: 600; }
+.toast { position: fixed; left: calc(50% + 140px); bottom: 92px; transform: translateX(-50%); z-index: 55; display: flex; align-items: center; gap: 10px; max-width: min(560px, 90vw); background: var(--ink-800); border: 3px solid var(--gold-400); box-shadow: var(--shadow); padding: 8px 12px; font-size: var(--fs-sm); }
+.toast svg { color: var(--gold-200); } .toast.err { border-color: var(--red-400); } .toast.err svg { color: var(--red-400); }
+.rdet { margin-top: 4px; font-family: var(--font-pixel); font-size: var(--fs-xs); } .rdet summary { cursor: pointer; color: var(--purple-800); min-height: 28px; display: flex; align-items: center; }
+.rtxt { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.4; color: var(--brown-900); } .rtxt h3 { font-size: 1.2rem; color: var(--purple-800); margin: .5em 0 .2em; } .rtxt p { margin: 0 0 .5em; }
+@media (max-width: 900px) { .toast { left: 50%; } .aibar { grid-template-columns: 1fr; } }
+
+
+/* -------------------------------------------- Atributos e Perícias compactos */
+.acats { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 10px 18px; }
+.acat { display: grid; gap: 6px; align-content: start; }
+.arow { display: grid; grid-template-columns: minmax(0, 1fr) auto 30px; gap: 10px; align-items: center; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 6px 10px; border-left: 8px solid var(--parch-500); }
+.arow.set { border-color: var(--brown-700); border-left-color: var(--purple-600); }
+.arow .aname { display: grid; line-height: 1.15; min-width: 0; }
+.arow .aname b { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; color: var(--brown-900); }
+.arow .aname small { color: var(--brown-700); font-size: 12px; line-height: 1.25; }
+.arow .vals { gap: 4px; flex: none; } .arow .val { flex: none; width: 36px; min-height: 36px; }
+.arow .aval { font-style: normal; font: 600 1.5rem/1 var(--font-pixel); color: var(--purple-800); text-align: right; }
+.skgroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 10px; align-items: start; }
+.tbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; } .tbar .help { flex: 1; min-width: 220px; } .tbtns { display: inline-flex; gap: 8px; align-items: center; } .tbtns .aibtn { min-height: 36px; padding: 0 12px; font-size: var(--fs-xs); border-width: 3px; box-shadow: 3px 3px 0 var(--ink-950); }
+.pcard .skgroup { background: var(--parch-100); border: 3px solid var(--parch-500); padding: 4px 10px 8px; gap: 2px; }
+.pcard .skgroup > .gh { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--parch-500); padding: 2px 0 4px; margin-bottom: 4px; }
+.abadge { min-width: 26px; height: 26px; display: grid; place-items: center; background: var(--purple-600); color: var(--gold-200); font-weight: 600; border: 2px solid var(--gold-600); }
+.pcard .skills { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0 20px; }
+.srow { display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; gap: 8px; align-items: center; padding: 3px 6px; min-height: 36px; border: 2px solid transparent; }
+.srow:hover { background: var(--parch-300); } .srow.has { background: rgba(110,49,151,.14); border-color: var(--purple-500); }
+.srow .sname { font-size: var(--fs-sm); font-weight: 600; color: var(--brown-900); line-height: 1.15; }
+.srow em { font-style: normal; font-weight: 600; color: var(--purple-800); text-align: right; }
+.pips { display: inline-flex; gap: 4px; }
+.pip { width: 22px; height: 22px; padding: 0; background: var(--parch-300); border: 3px solid var(--parch-500); box-shadow: inset 2px 2px 0 rgba(255,255,255,.25); }
+.pip:hover:not(:disabled) { border-color: var(--brown-700); }
+.pip.on { background: var(--purple-600); border-color: var(--gold-600); box-shadow: inset 2px 2px 0 var(--purple-300), inset -2px -2px 0 var(--purple-800); }
+.pip:disabled { opacity: .35; cursor: not-allowed; background: repeating-linear-gradient(45deg, var(--parch-300) 0 3px, var(--parch-500) 3px 4px); }
+@media (max-width: 900px) { .arow { grid-template-columns: minmax(0, 1fr) auto; } .arow .aval { display: none; } }
+
+
+/* dica "?" e lista única de Perícias */
+.qtip { position: relative; display: inline-grid; place-items: center; width: 18px; height: 18px; margin-left: 8px; vertical-align: middle; background: var(--parch-300); color: var(--brown-700); border: 2px solid var(--parch-500); font: 600 12px/1 var(--font-pixel); cursor: help; }
+.qtip:hover, .qtip:focus-visible { background: var(--brown-700); color: var(--parch-100); border-color: var(--brown-900); }
+.qtip:hover::after, .qtip:focus-visible::after { content: attr(data-q); position: absolute; z-index: 30; left: -6px; top: calc(100% + 8px); width: max-content; max-width: 260px; background: var(--ink-950); color: var(--ivory-100); border: 2px solid var(--gold-400); padding: 6px 10px; font: 400 13px/1.35 var(--font-pixel); white-space: normal; text-transform: none; letter-spacing: 0; pointer-events: none; text-align: left; }
+.skflat { display: grid; gap: 2px; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 6px 10px; }
+.skflat .srow { grid-template-columns: minmax(0, 1fr) auto 18px; }
+
+
+/* História: a aba é a própria área de texto */
+.wpane.fillpane { display: flex; flex-direction: column; overflow: hidden; padding: 10px; }
+.fillpane .rte { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; }
+.fillpane .rte-area { max-height: none; min-height: 0; font-size: 1.25rem; padding: 18px 24px; }
+@media (max-width: 1180px) { .wpane.fillpane { overflow: visible; } .fillpane .rte-area { min-height: 380px; } }
+
+
+/* ---------------------------------------------- passo 3: revisão em abas */
+.body.fill .wcol.rev { flex: 1; min-height: 0; }
+.rcard .rpane { gap: 12px; padding: 16px 20px; }
+.rtop { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 3px double var(--parch-500); padding-bottom: 6px; }
+.rtop h3 { font-family: var(--font-serif); font-size: 1.9rem; line-height: 1.1; color: var(--brown-900); }
+.rcard h4 { font-family: var(--font-serif); font-size: 1.25rem; color: var(--purple-800); font-weight: 600; margin-top: 6px; }
+.rcard .facts { display: grid; grid-template-columns: 8em minmax(0, 1fr); gap: 2px 14px; margin: 0; font-family: var(--font-serif); font-size: 1.12rem; line-height: 1.35; color: var(--brown-900); }
+.rcard .facts dt { color: var(--brown-700); font-style: italic; } .rcard .facts dd { margin: 0; font-weight: 600; } .rcard .facts dd.none { color: var(--parch-500); font-weight: 400; font-style: italic; }
+.rcard .revhead .facts { grid-template-columns: 7em minmax(0, 1fr); }
+.rgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.rgrid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.rcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.rcardi { background: var(--parch-100); border: 3px solid var(--parch-500); padding: 8px 12px; display: grid; gap: 2px; font-family: var(--font-serif); color: var(--brown-900); }
+.rcardi.start { border-color: var(--purple-600); box-shadow: 0 0 0 3px var(--gold-400); }
+.rcardi b { font-size: 1.2rem; } .rcardi small { font-family: var(--font-pixel); font-size: 12px; color: var(--brown-700); } .rcardi p { font-size: 1.05rem; line-height: 1.3; }
+.rcard ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; font-family: var(--font-serif); font-size: 1.1rem; color: var(--brown-900); } .rcard ol small { display: block; color: var(--brown-700); font-style: italic; font-size: .95rem; }
+.rsmall { font-family: var(--font-pixel); font-size: var(--fs-xs); color: var(--brown-700); }
+.rcard .rtxt p { margin: 0 0 .5em; } .rcard .mini { font-family: var(--font-pixel); }
+.namebar { flex: none; border-top: 3px solid var(--parch-500); background: var(--parch-300); padding: 8px 14px; }
+.namebar .field input { min-height: 40px; }
+@media (max-width: 1180px) { .rgrid, .rgrid2 { grid-template-columns: 1fr; } }
+
+
+.step-btn.final { margin-top: 8px; border-color: var(--gold-600); background: var(--ink-900); }
+.step-btn.final .num { background: var(--ink-950); color: var(--gold-400); border-color: var(--gold-600); }
+.step-btn.final .num svg { width: 18px; height: 18px; }
+.step-btn.final[aria-current="step"] { background: var(--purple-600); border-color: var(--gold-200); }
+.step-btn.final[aria-current="step"] .num { background: var(--gold-400); color: var(--ink-950); border-color: var(--gold-700); }
+.sfacts { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 4px 10px; margin: 0; font-size: var(--fs-xs); } .sfacts dt { color: var(--muted); } .sfacts dd { margin: 0; color: var(--ivory-100); }
+.startpane { gap: 14px; }
+.startpane textarea { font-size: 1.2rem; }
+
+/* ----------------------------------------------------------- passo 3: Revisão */
+.book { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; background: var(--brown-700); border: 4px solid var(--brown-900); box-shadow: var(--shadow); position: relative; }
+.book::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px; background: linear-gradient(90deg, rgba(42,27,20,.35), rgba(42,27,20,.05) 40%, rgba(42,27,20,.35)); pointer-events: none; }
+.page { background: var(--parch-200); color: var(--brown-900); padding: 18px 22px 22px; display: grid; gap: 12px; align-content: start; font-family: var(--font-serif); font-size: 1.12rem; line-height: 1.35; --sb-track: var(--parch-300); }
+.page h3 { font-size: 1.6rem; font-weight: 700; color: var(--brown-900); display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 3px double var(--parch-500); padding-bottom: 4px; }
+.page h3 .btn { font-family: var(--font-pixel); }
+.page h4 { font-size: 1.15rem; color: var(--purple-800); font-weight: 600; margin-top: 6px; }
+.page .facts { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 2px 12px; margin: 0; }
+.page .facts dt { color: var(--brown-700); font-style: italic; }
+.page .facts dd { margin: 0; font-weight: 600; }
+.page .facts dd.none { color: var(--parch-500); font-weight: 400; font-style: italic; }
+.page .btn { background: var(--parch-300); color: var(--brown-900); border-color: var(--parch-500); box-shadow: 2px 2px 0 var(--brown-700); }
+.page ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+.page ol small { display: block; color: var(--brown-700); font-style: italic; }
+.page p.prose { white-space: pre-line; }
+.mini { display: grid; gap: 4px; }
+.mini .mr { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 1.6em; gap: 8px; align-items: center; font-family: var(--font-pixel); font-size: var(--fs-xs); }
+.mini .bar { height: 12px; background: var(--parch-300); border: 2px solid var(--parch-500); display: flex; gap: 2px; padding: 1px; }
+.mini .bar i { flex: 1; background: transparent; } .mini .bar i.f { background: var(--purple-600); }
+.mini .mr b { text-align: right; color: var(--purple-800); }
+.skchips { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-pixel); }
+.skchips span { display: inline-flex; gap: 6px; background: var(--parch-100); border: 2px solid var(--parch-500); padding: 1px 8px; font-size: var(--fs-xs); }
+.skchips span b { color: var(--purple-800); }
+.namebox { margin-top: 16px; display: grid; gap: 10px; background: var(--surface); border: 3px solid var(--frame); padding: 14px 16px; }
+.created { display: grid; place-items: center; text-align: center; gap: 12px; padding: 70px 20px; }
+.created h3 { font-family: var(--font-serif); font-size: 2rem; color: var(--gold-200); }
+.created p { color: var(--muted); max-width: 52ch; }
+
+/* ------------------------------------------------------------------- diálogo */
+.scrim { position: fixed; inset: 0; z-index: 50; background: rgba(14,9,17,.72); display: grid; place-items: center; padding: 20px; }
+.dialog { width: min(480px, 100%); background: var(--ink-800); border: 4px solid var(--frame); box-shadow: 6px 6px 0 var(--ink-950); padding: 20px 22px; display: grid; gap: 14px; }
+.dialog.danger { border-color: var(--red-400); }
+.dialog h3 { font-family: var(--font-serif); font-size: 1.5rem; color: var(--gold-200); font-weight: 600; }
+.dialog p { font-family: var(--font-serif); font-size: 1.15rem; color: var(--ivory-100); }
+.dialog .acts { justify-content: flex-end; }
+
+/* ------------------------------------------------------- caixa do protótipo */
+.proto { position: fixed; left: 28px; bottom: 28px; z-index: 60; display: grid; justify-items: start; gap: 8px; }
+.proto .box { width: 300px; max-height: 76vh; overflow: auto; background: var(--ink-950); border: 3px solid var(--cyan-300); box-shadow: var(--shadow); padding: 10px 12px; display: grid; gap: 10px; font-size: var(--fs-xs); }
+.proto .box[hidden] { display: none; }
+.proto h5 { margin: 0; font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--cyan-300); }
+.proto .opts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.proto .opts button { background: var(--ink-800); border: 2px solid var(--ink-600); padding: 3px 8px; font-size: 12px; min-height: 28px; }
+.proto .opts button[aria-pressed="true"] { background: var(--cyan-300); color: var(--ink-950); border-color: var(--cyan-300); }
+#protobtn { background: var(--cyan-300); color: var(--ink-950); border: 3px solid var(--ink-950); box-shadow: 3px 3px 0 var(--ink-950); font-weight: 600; padding: 4px 14px; min-height: 36px; }
+
+/* --------------------------------------------------------------- telas estreitas */
+@media (max-width: 1180px) {
+  .body.fill { overflow: auto; display: block; }
+  .world { grid-template-columns: 1fr; }
+  .wlist { max-height: 190px; flex: none; }
+  .wcol .wcard { display: block; } .wcol .wpane { overflow: visible; }
+  .hero { grid-template-columns: 1fr; } .asd { position: static; order: -1; }
+  .note { display: none; }
+  .attrs, .profiles, .convs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  :root { --rail-w: 0px; }
+  .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .rail { flex-direction: row; align-items: center; }
+  .rail-top, .rail-sep, .rail-art { display: none; }
+  .steps { grid-auto-flow: column; padding: 8px; flex: 1; } .step-btn .lbl small { display: none; } .step-btn { min-height: 48px; }
+  .skills, .grid2, .grid3, .book { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="app" id="app">
+  <aside class="rail framed" id="rail" aria-label="Passos da Nova Jornada"></aside>
+  <main class="panel framed" id="panel">
+    <header class="head" id="head"></header>
+    <div class="body" id="body" tabindex="-1"></div>
+    <footer class="foot" id="foot"></footer>
+  </main>
+</div>
+<div id="dlg"></div>
+<div id="toast" aria-live="polite"></div>
+
+<div class="proto">
+  <div class="box" id="protobox" hidden>
+    <div><h5>Passo</h5><div class="opts" data-g="step"></div></div>
+    <div><h5>Mundo</h5><div class="opts" data-g="world"></div></div>
+    <div><h5>Protagonista</h5><div class="opts" data-g="char"></div></div>
+    <div><h5>Aba do Protagonista</h5><div class="opts" data-g="tab"></div></div>
+    <div><h5>Retrato</h5><div class="opts" data-g="portrait"></div></div>
+    <div><h5>Narrador (preenchimento)</h5><div class="opts" data-g="narrator"></div></div>
+    <div><h5>Aba da Revisão</h5><div class="opts" data-g="rtab"></div></div>
+    <div><h5>Pendências</h5><div class="opts" data-g="pend"></div></div>
+    <div><h5>Criação</h5><div class="opts" data-g="create"></div></div>
+    <div><h5>Diálogos</h5><div class="opts" data-g="dlg"></div></div>
+  </div>
+  <button id="protobtn" aria-expanded="false">Protótipo ▴</button>
+</div>
+
+<script>
+"use strict";
+/* ================================================================ dados de exemplo */
+const RULES = {
+  attrDist: [4, 3, 3, 2, 2, 1],
+  cats: [{ id: "fisico", name: "Físico" }, { id: "espiritual", name: "Espiritual" }],
+  attrs: [
+    { id: "forca", name: "Força", cat: "fisico", desc: "potência física" },
+    { id: "agilidade", name: "Agilidade", cat: "fisico", desc: "coordenação, reflexos, precisão" },
+    { id: "vigor", name: "Vigor", cat: "fisico", desc: "resistência e robustez" },
+    { id: "carisma", name: "Carisma", cat: "espiritual", desc: "presença e influência" },
+    { id: "determinacao", name: "Determinação", cat: "espiritual", desc: "foco e estabilidade mental" },
+    { id: "astucia", name: "Astúcia", cat: "espiritual", desc: "conhecimento, raciocínio, percepção" },
+  ],
+  skills: [
+    ["acrobacia", "Acrobacia", "agilidade", "esquivar, equilibrar-se, amortecer quedas"],
+    ["arremessar", "Arremessar", "forca", "lançar armas e objetos com o corpo"],
+    ["atirar", "Atirar", "agilidade", "disparar arcos, bestas e similares"],
+    ["atletismo", "Atletismo", "forca", "correr, saltar, escalar, nadar"],
+    ["cavalgar", "Cavalgar", "agilidade", "montar e conduzir animais montados"],
+    ["conhecimento_geral", "Conhecimento Geral", "astucia", "saber comum do mundo e da cultura"],
+    ["consertar", "Consertar", "astucia", "reparar, montar e desmontar mecanismos e estruturas"],
+    ["curar", "Curar", "astucia", "tratar ferimentos, doenças e condições físicas"],
+    ["empatia_animal", "Empatia Animal", "carisma", "acalmar, adestrar e criar laços com animais"],
+    ["erudicao", "Erudição", "astucia", "história, línguas, escrita e saber de estudo"],
+    ["furtividade", "Furtividade", "agilidade", "mover-se sem ser notado"],
+    ["intimidar", "Intimidar", "carisma", "coagir pela presença ou pela ameaça"],
+    ["lutar", "Lutar", "agilidade", "combate corpo a corpo com armas ou sem elas"],
+    ["mentir", "Mentir", "carisma", "enganar, disfarçar intenções, blefar"],
+    ["navegar", "Navegar", "astucia", "orientar-se, ler mapas e conduzir embarcações"],
+    ["ocultismo", "Ocultismo", "astucia", "conhecimento sobrenatural, rituais e mistérios"],
+    ["perceber", "Perceber", "astucia", "notar detalhes e presenças; ler pessoas"],
+    ["performance", "Performance", "carisma", "entreter, atuar, cantar, dançar"],
+    ["persuadir", "Persuadir", "carisma", "convencer por argumento, apelo ou lábia"],
+    ["pesquisar", "Pesquisar", "astucia", "investigar, buscar informações, analisar pistas"],
+    ["prestidigitacao", "Prestidigitação", "agilidade", "furtar, esconder objetos, truques de mão"],
+    ["sobrevivencia", "Sobrevivência", "astucia", "caçar, rastrear, abrigar-se e achar recursos"],
+  ].map(([id, name, attr, desc]) => ({ id, name, attr, desc })),
+  profiles: [
+    { id: "generalista", name: "Generalista", dist: [[3, 1], [2, 6], [1, 6]] },
+    { id: "equilibrado", name: "Equilibrado", dist: [[3, 2], [2, 4], [1, 6]] },
+    { id: "especialista", name: "Especialista", dist: [[4, 1], [3, 2], [2, 2], [1, 2]] },
+  ],
+  creationMax: 4, convictions: 3,
+  limits: { months: [8, 14], weekdays: [5, 8], religions: [1, 3], places: [3, 5], monthDays: [20, 40] },
+};
+const SAVED_ALL = [
+  { id: "mundo-1", used: 2, seed: 4021, name: "Planícies de Rosilha", era: { name: "Era dos Exilados", description: "Um império caído espalhou seus nobres e sábios pelas terras vizinhas, em busca de abrigo." },
+    tone: { name: "Decadência", description: "Um passado glorioso se desfaz aos poucos, entre ruínas, dívidas e memórias." },
+    calendar: { name: "Cômputo de Perova", year: 1065, era_label: "Ano 1065 da Coroa",
+      months: [["Geadar", 32], ["Alvorim", 24], ["Florel", 26], ["Fornalha", 31], ["Nevério", 24], ["Ventínio", 29], ["Trevoso", 29], ["Brotório", 29], ["Colheral", 24], ["Degelo", 26], ["Semeador", 29], ["Estiado", 30], ["Vindimar", 25], ["Orvalim", 29]].map(([name, days]) => ({ name, days })),
+      weekdays: ["Brasal", "Lavradia", "Sereno", "Cintila", "Fecho", "Estrelim", "Terrâneo", "Solário"] },
+    religions: [
+      { name: "Ordem de Araria", domain: "Inverno", description: "Venera Araria, que rege o frio, a resistência e a espera pela primavera. Os fiéis fazem peregrinação a um santuário distante ao menos uma vez na vida." },
+      { name: "Círculo de Galilha", domain: "Colheita", description: "Venera Galilha, que rege as colheitas e os celeiros. Seus fiéis acendem lamparinas a cada lua nova." }],
+    places: [
+      { id: "lugar-1", name: "Norilunde", type: "estalagem", description: "Norilunde é uma estalagem de pedra à beira da estrada, famosa pela cerveja e pelas brigas. Há pouco tempo, um crime sem solução abalou a região." },
+      { id: "lugar-2", name: "Vinarunde", type: "cidade", description: "Vinarunde é uma cidade murada, com mercados barulhentos e ruas estreitas. O lugar vive de uma feira que atrai gente de longe." },
+      { id: "lugar-3", name: "Rosedor", type: "montanha", description: "Rosedor é uma montanha solitária, cercada de histórias e de desfiladeiros. A colheita deste ano foi fraca, e o povo anda inquieto." }] },
+  { id: "mundo-2", used: 0, seed: 1203, name: "Costa de Marvelhar", era: { name: "Era das Marés Largas", description: "Os mares recuaram e deixaram à mostra cidades que ninguém lembrava ter existido." },
+    tone: { name: "Mistério", description: "Cada porto guarda um segredo, e quem pergunta demais some com a maré." },
+    calendar: { name: "Contagem de Ostrel", year: 312, era_label: "Ano 312 do Farol",
+      months: [["Ventral", 28], ["Maresia", 30], ["Calmaria", 26], ["Arribar", 31], ["Salgado", 29], ["Estival", 33], ["Redemoinho", 27], ["Vazante", 30], ["Naufrágio", 24], ["Bonança", 29]].map(([name, days]) => ({ name, days })),
+      weekdays: ["Cais", "Rede", "Sino", "Vela", "Quilha", "Âncora"] },
+    religions: [
+      { name: "Irmandade do Sal", domain: "Mar", description: "Cultua as marés como juízas. Seus fiéis jogam um punhado de sal na água antes de qualquer viagem." },
+      { name: "Vigília do Farol", domain: "Guia", description: "Mantém acesos os faróis da costa e acredita que a luz protege os mortos que ainda navegam." }],
+    places: [
+      { id: "lugar-1", name: "Portelmar", type: "porto", description: "Portelmar é um porto apinhado de barcos, redes e contrabandistas. Todo mundo sabe de tudo, e ninguém diz nada." },
+      { id: "lugar-2", name: "Ostrelunde", type: "vila", description: "Ostrelunde é uma vila de pescadores que vive das ostras e de uma antiga dívida com a Irmandade." },
+      { id: "lugar-3", name: "Faróvia", type: "torre", description: "Faróvia é uma torre isolada, cuja luz acendeu sozinha na semana passada." },
+      { id: "lugar-4", name: "Sargassa", type: "ilha", description: "Sargassa é uma ilha coberta de algas, evitada pelos marinheiros mais velhos." }] },
+  { id: "mundo-3", used: 1, seed: 88112, name: "Vales de Orsenval", era: { name: "Era das Ordens Dispersas", description: "As antigas ordens de cavaleiros se dissolveram, e cada vale agora responde a um senhor diferente." },
+    tone: { name: "Esperança Frágil", description: "A paz é recente e ninguém tem certeza de quanto tempo vai durar." },
+    calendar: { name: "Registro de Pedralta", year: 87, era_label: "Ano 87 da Paz",
+      months: [["Brumeiro", 30], ["Lírio", 28], ["Seivar", 31], ["Aurélio", 29], ["Pedrume", 32], ["Cinzeiro", 27], ["Lenhal", 30], ["Gelário", 28]].map(([name, days]) => ({ name, days })),
+      weekdays: ["Ouro", "Cinza", "Musgo", "Brasa", "Névoa"] },
+    religions: [{ name: "Vigília de Orsen", domain: "Guarda", description: "Cultua um cavaleiro lendário que prometeu voltar quando os vales precisarem. Os fiéis deixam uma cadeira vazia à mesa." }],
+    places: [
+      { id: "lugar-1", name: "Orsenval", type: "aldeia", description: "Orsenval é uma aldeia entre colinas, onde o conselho dos anciãos ainda decide tudo." },
+      { id: "lugar-2", name: "Pedralta", type: "fortaleza", description: "Pedralta é uma fortaleza meio ocupada, com soldados demais para a paz e de menos para a guerra." },
+      { id: "lugar-3", name: "Lenhal-do-Meio", type: "floresta", description: "Lenhal-do-Meio é uma floresta densa, onde caçadores e salteadores dividem as mesmas trilhas." }] },
+];
+
+/* gerador de exemplo: a mesma semente gera o mesmo Mundo (o gerador real fica no backend) */
+function rng(seed) { let a = (seed >>> 0) || 1; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const GEN = {
+  pre: ["Vale", "Costa", "Planícies", "Terras", "Montes", "Bosques", "Marés", "Ermos"],
+  suf: ["de Orsa", "de Calvera", "de Brumel", "do Falcão", "de Tarsil", "da Névoa", "de Ilmar", "de Sorvino"],
+  eras: [["Era das Cinzas", "Uma guerra antiga queimou as cidades, e os sobreviventes ainda reconstroem o que podem."], ["Era dos Reinos Novos", "Reinos jovens disputam fronteiras que ninguém desenhou direito."], ["Era do Silêncio", "Os deuses pararam de responder, e cada povo inventa as suas próprias respostas."], ["Era das Estradas", "O comércio costura terras distantes, e quem controla as estradas controla tudo."], ["Era do Gelo Curto", "Invernos longos empurraram os povos para o sul."], ["Era dos Faróis", "Torres de luz mantêm o mar e a noite sob vigilância."]],
+  tones: [["Aventura", "Cada estrada promete uma história, e quase todas cobram um preço."], ["Intriga", "Alianças mudam de mão antes do jantar."], ["Sombrio", "O perigo é comum e a esperança é mercadoria rara."], ["Esperança", "O pior passou, e as pessoas começam a acreditar de novo."], ["Mistério", "Ruínas e segredos esperam por quem tiver coragem de perguntar."], ["Rústico", "A vida é dura, simples e cheia de gente teimosa."]],
+  months: ["Geadar", "Alvorim", "Florel", "Fornalha", "Nevério", "Ventínio", "Trevoso", "Brotório", "Colheral", "Degelo", "Semeador", "Estiado", "Vindimar", "Orvalim", "Brumeiro", "Lírio"],
+  weekdays: ["Brasal", "Lavradia", "Sereno", "Cintila", "Fecho", "Estrelim", "Terrâneo", "Solário", "Ouro", "Cinza"],
+  cal: ["Cômputo de", "Registro de", "Contagem de", "Almanaque de"], calN: ["Perova", "Ostrel", "Calvera", "Illa", "Tarsil"], yr: ["Coroa", "Fundação", "Paz", "Luz", "Travessia"],
+  relig: [["Ordem de Tavar", "Guerra"], ["Círculo de Mira", "Lar"], ["Vigília de Osen", "Guarda"], ["Coro de Illa", "Música"], ["Irmandade do Sal", "Mar"], ["Fé de Brasa", "Fogo"]],
+  types: ["vila", "cidade", "porto", "fortaleza", "ruína", "floresta", "montanha", "estalagem", "templo", "ilha"],
+  places: ["Norvale", "Pedraluz", "Cais de Orsa", "Brumel", "Tarsilha", "Ostral", "Vinhedo", "Calvera", "Ilmar", "Sorvino", "Fenda", "Aldrun"],
+};
+function generateWorld(seed) {
+  const r = rng(seed), pick = (a) => a[Math.floor(r() * a.length)], between = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const uniq = (a, n) => { const c = [...a], out = []; while (out.length < n) out.push(c.splice(Math.floor(r() * c.length), 1)[0]); return out; };
+  const era = pick(GEN.eras), tone = pick(GEN.tones), year = between(20, 1400);
+  return { schema: 1, name: `${pick(GEN.pre)} ${pick(GEN.suf)}`, era: { name: era[0], description: era[1] }, tone: { name: tone[0], description: tone[1] },
+    calendar: { name: `${pick(GEN.cal)} ${pick(GEN.calN)}`, year, era_label: `Ano ${year} da ${pick(GEN.yr)}`,
+      months: uniq(GEN.months, between(8, 14)).map((name) => ({ name, days: between(22, 34) })), weekdays: uniq(GEN.weekdays, between(5, 8)) },
+    religions: uniq(GEN.relig, between(1, 3)).map(([name, domain]) => ({ name, domain, description: `Seus fiéis seguem ritos simples ligados a ${domain.toLowerCase()} e se reúnem a cada lua nova.` })),
+    places: uniq(GEN.places, between(3, 5)).map((name, i) => { const t = pick(GEN.types); return { id: `lugar-${i + 1}`, name, type: t, description: pick([`${name}, ${t} onde todos se conhecem e os boatos viajam mais rápido que os viajantes.`, `${name}, ${t} marcado por uma disputa antiga que ninguém gosta de lembrar.`, `${name}, ${t} de muito movimento, onde forasteiros sempre chamam atenção.`, `${name}, ${t} que anda inquieto depois de acontecimentos recentes.`]) }; }) };
+}
+const blankWorld = () => ({ schema: 1, name: "", era: { name: "", description: "" }, tone: { name: "", description: "" },
+  calendar: { name: "", year: null, era_label: "", months: Array.from({ length: RULES.limits.months[0] }, () => ({ name: "", days: null })), weekdays: Array(RULES.limits.weekdays[0]).fill("") },
+  religions: [{ name: "", domain: "", description: "" }], places: [1, 2, 3].map((n) => ({ id: `lugar-${n}`, name: "", type: "", description: "" })) });
+
+const FULL_CHAR = () => ({
+  name: "Ilsa Corvalho", concept: "Mercenária endividada que busca redenção", appearance: "Alta, cabelo raspado, cicatriz no queixo.",
+  history: "<h3>Origens</h3><p>Cresceu numa vila de pescadores, onde aprendeu cedo que o mar cobra o que empresta.</p><h3>O que veio depois</h3><p>Partiu cedo para a guerra, atrás de soldo e de uma saída. Voltou com <b>cicatrizes</b> e um contrato por pagar.</p>", ambition: "Vingar o irmão morto na Ponte Velha", desire: "Concluir o contrato de escolta atual",
+  age: "32 anos", height: "1,82 m", origin: "Vila de Salinas", personality: "Reservada, leal, pragmática.",
+  convictions: [{ text: "Nunca abandonar quem luta ao meu lado", pillar: "Bram, meu antigo sargento" }, { text: "Pagar todas as minhas dívidas", pillar: "O anel da minha mãe" }, { text: "Proteger os mais fracos", pillar: "A vila onde nasci" }],
+  attributes: { forca: 2, agilidade: 4, vigor: 3, carisma: 1, determinacao: 3, astucia: 2 },
+  profile: "equilibrado",
+  skills: { lutar: 3, perceber: 3, atletismo: 2, furtividade: 2, sobrevivencia: 2, persuadir: 2, acrobacia: 1, atirar: 1, curar: 1, navegar: 1, intimidar: 1, consertar: 1 },
+});
+const EMPTY_CHAR = () => ({ name: "", concept: "", appearance: "", history: "", ambition: "", desire: "", age: "", height: "", origin: "", personality: "",
+  convictions: Array.from({ length: RULES.convictions }, () => ({ text: "", pillar: "" })),
+  attributes: Object.fromEntries(RULES.attrs.map((a) => [a.id, null])), profile: null, skills: {} });
+const PARTIAL_CHAR = () => { const c = EMPTY_CHAR(); Object.assign(c, { name: "Ilsa Corvalho", concept: "Mercenária endividada que busca redenção", ambition: "Vingar o irmão morto na Ponte Velha" });
+  c.attributes.agilidade = 4; c.attributes.vigor = 3; c.attributes.astucia = 2; c.convictions[0] = { text: "Nunca abandonar quem luta ao meu lado", pillar: "" }; return c; };
+
+/* ========================================================================= estado */
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const S = {
+  step: 0, world: null, saved: clone(SAVED_ALL), draft: null, sel: null, readonly: false, seed: "", generating: false, genError: false, startId: null, wtab: "geral", rtab: "mundo", jdesc: "", dirty: false,
+  form: EMPTY_CHAR(), ctab: "ident", idea: "", narrator: "ok", aiBusy: null, aiN: 0, undo: null, toast: null, forceAiError: false, portrait: { src: null, img: null, crop: { x: 0.5, y: 0.5, zoom: 1 } }, pdlg: null, jname: "", show: [false, false], creating: "idle", dialog: null, helpOpen: false,
+};
+const STEPS = [
+  { key: "mundo", label: "Mundo", title: "Passo 1 de 3: Escolha o Mundo", sub: "Gere o Mundo onde a sua Jornada vai acontecer e ajuste o que quiser.", icon: "globe",
+    note: "O Mundo define o cenário, a era, o tom e os lugares da sua história. É só ambientação, sem regras de jogo." },
+  { key: "protagonista", label: "Protagonista", title: "Passo 2 de 3: Crie o Protagonista", sub: "Quem é o personagem, o que ele busca e no que ele acredita.", icon: "user",
+    note: "Ambição é o que o personagem almeja a longo prazo. Desejo é o que ele quer agora. Convicções são princípios que ele recusa trair." },
+  { key: "revisao", label: "Revisão", title: "Passo 3 de 3: Revise", sub: "Confira o Mundo e o Protagonista antes de seguir.", icon: "book",
+    note: "Se algo estiver errado, use Editar. O nome e a descrição da Jornada vêm na próxima tela." },
+  { key: "iniciar", label: "Iniciar Jornada", title: "Pronto para começar", sub: "Dê um nome e uma descrição à sua Jornada.", icon: "spark", final: true,
+    note: "Ao iniciar, a Jornada começa em Cena no lugar inicial, com o Aduran abrindo a primeira Cena." },
+];
+
+/* ======================================================================== utilitários */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+const ICONS = {
+  check: ["........", "......#.", ".....##.", "#...##..", "##.##...", ".###....", "..#.....", "........"],
+  x: ["#......#", "##....##", ".##..##.", "..####..", "..####..", ".##..##.", "##....##", "#......#"],
+  plus: ["...##...", "...##...", "...##...", "########", "########", "...##...", "...##...", "...##..."],
+  dice: ["########", "#.#....#", "#......#", "#..##..#", "#..##..#", "#......#", "#....#.#", "########"],
+  pin: ["..####..", ".######.", ".##..##.", ".##..##.", ".######.", "..####..", "...##...", "...#...."],
+  back: ["...#....", "..##....", ".#######", "########", ".#######", "..##....", "...#....", "........"],
+  next: ["....#...", "....##..", "#######.", "########", "#######.", "....##..", "....#...", "........"],
+  book: [".#######", "#.#....#", "#.#.##.#", "#.#....#", "#.#.##.#", "#.#....#", ".#######", "........"],
+  user: ["..####..", ".######.", ".######.", "..####..", ".######.", "########", "########", "########"],
+  globe: ["..####..", ".#.##.#.", "#.####.#", "########", "########", "#.####.#", ".#.##.#.", "..####.."],
+  spark: ["...##...", "...##...", "..####..", "########", "########", "..####..", "...##...", "...##..."],
+  warn: ["...##...", "...##...", "..####..", "..#..#..", ".#.##.#.", ".#.##.#.", "########", "........"],
+  scroll: ["..######", ".#.....#", ".#.###.#", "..#...#.", "..#.#.#.", "..#...#.", ".#######", "#......."],
+};
+function icon(n) {
+  const m = ICONS[n]; let r = "";
+  m.forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1" height="1"/>`; }));
+  return `<svg class="px ic" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">${r}</svg>`;
+}
+const CORNER = `<svg class="px" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="5" height="1"/><rect x="0" y="1" width="1" height="4"/><rect x="2" y="2" width="2" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="1" y="1" width="1" height="1" fill="#a8701c"/></svg>`;
+function addCorners(el) { el.insertAdjacentHTML("beforeend", ["tl", "tr", "bl", "br"].map((p) => `<span class="corner ${p}">${CORNER}</span>`).join("")); }
+function setPath(obj, path, value) {
+  const keys = path.split("."); let o = obj;
+  keys.slice(0, -1).forEach((k) => { o = o[k]; });
+  o[keys[keys.length - 1]] = value;
+}
+const MARK = `<svg class="px mark" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7 0h2v5h2v2h5v2h-5v2H9v5H7v-5H5V9H0V7h5V5h2z"/></svg>`;
+
+/* ===================================================================== pendências */
+function worldIssues() {
+  const w = S.world, L = RULES.limits, out = []; if (!w) return [{ tab: "geral", msg: "Gere um Mundo para continuar." }];
+  const blank = (v) => !String(v ?? "").trim();
+  if (blank(w.name)) out.push({ tab: "geral", msg: "Dê um nome ao Mundo." });
+  if (blank(w.era.name) || blank(w.era.description)) out.push({ tab: "geral", msg: "Preencha o nome e a descrição da era." });
+  if (blank(w.tone.name) || blank(w.tone.description)) out.push({ tab: "geral", msg: "Preencha o nome e a descrição do tom." });
+  if (blank(w.calendar.name) || blank(w.calendar.era_label) || w.calendar.year == null) out.push({ tab: "calendario", msg: "Preencha o nome, o ano e o nome do ano do calendário." });
+  if (w.calendar.months.length < L.months[0]) out.push({ tab: "calendario", msg: `O calendário precisa de pelo menos ${L.months[0]} meses.` });
+  if (w.calendar.months.some((m) => blank(m.name) || m.days == null || m.days < L.monthDays[0] || m.days > L.monthDays[1])) out.push({ tab: "calendario", msg: `Todo mês precisa de nome e de ${L.monthDays[0]} a ${L.monthDays[1]} dias.` });
+  if (w.calendar.weekdays.length < L.weekdays[0] || w.calendar.weekdays.some(blank)) out.push({ tab: "calendario", msg: `A semana precisa de ${L.weekdays[0]} a ${L.weekdays[1]} dias, todos com nome.` });
+  if (w.religions.length < L.religions[0] || w.religions.some((r) => blank(r.name) || blank(r.domain) || blank(r.description))) out.push({ tab: "religioes", msg: "Toda religião precisa de nome, domínio e descrição." });
+  if (w.places.length < L.places[0] || w.places.some((p) => blank(p.name) || blank(p.type) || blank(p.description))) out.push({ tab: "lugares", msg: `Os ${L.places[0]} a ${L.places[1]} lugares precisam de nome, tipo e descrição.` });
+  if (!S.startId || !w.places.some((p) => p.id === S.startId)) out.push({ tab: "lugares", msg: "Escolha o lugar onde a Jornada começa." });
+  return out;
+}
+function counts(values) { const m = new Map(); values.forEach((v) => m.set(v, (m.get(v) || 0) + 1)); return m; }
+function attrTally() {
+  const used = counts(Object.values(S.form.attributes).filter((v) => v != null)), exp = counts(RULES.attrDist);
+  return [...new Set([...exp.keys(), ...used.keys()])].sort((a, b) => b - a).map((v) => ({ v, exp: exp.get(v) || 0, used: used.get(v) || 0 }));
+}
+function skillTally() {
+  const p = RULES.profiles.find((x) => x.id === S.form.profile); if (!p) return [];
+  const used = counts(Object.values(S.form.skills).filter((v) => v > 0)), exp = new Map(p.dist);
+  return [...new Set([...exp.keys(), ...used.keys()])].sort((a, b) => b - a).map((v) => ({ v, exp: exp.get(v) || 0, used: used.get(v) || 0 }));
+}
+const attrValue = (id) => S.form.attributes[id];
+function charSections() {
+  const f = S.form, blank = (v) => !String(v ?? "").trim();
+  const idn = ["name", "concept"].filter((k) => blank(f[k])).length;
+  const hist = blank(String(f.history ?? "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")) ? 1 : 0;
+  const obj = ["ambition", "desire"].filter((k) => blank(f[k])).length;
+  const conv = f.convictions.reduce((n, c) => n + (blank(c.text) ? 1 : 0) + (blank(c.pillar) ? 1 : 0), 0);
+  const at = attrTally(), atBad = at.some((t) => t.used !== t.exp);
+  const attrMissing = Object.values(f.attributes).filter((v) => v == null).length;
+  const sk = skillTally(), skBad = !f.profile || sk.some((t) => t.used !== t.exp);
+  return [
+    { id: "s-identidade", tab: "ident", label: "Identidade", n: idn, text: idn ? `${idn} em branco` : "" },
+    { id: "s-historia", tab: "hist", label: "História", n: hist, text: hist ? "em branco" : "" },
+    { id: "s-objetivos", tab: "obj", label: "Ambição e Desejo", n: obj, text: obj ? `${obj} em branco` : "" },
+    { id: "s-conviccoes", tab: "obj", label: "Convicções", n: conv, text: conv ? `${conv} em branco` : "" },
+    { id: "s-atributos", tab: "status", label: "Atributos", n: atBad ? Math.max(attrMissing, 1) : 0, text: atBad ? (attrMissing ? `${attrMissing} sem valor` : "valores repetidos demais") : "" },
+    { id: "s-pericias", tab: "status", label: "Perícias", n: skBad ? 1 : 0, text: !f.profile ? "escolha o perfil" : skBad ? "distribuição incompleta" : "" },
+  ];
+}
+function charIssues() { return charSections().filter((s) => s.n).map((s) => ({ ctab: s.tab, msg: `${s.label}: ${s.text}.` })); }
+const issuesFor = (step) => (step === 0 ? worldIssues() : step === 1 ? charIssues() : []);
+function derived() {
+  const v = attrValue("vigor"), d = attrValue("determinacao");
+  return { vida: v == null ? null : 3 + v, vontade: d == null ? null : 3 + d };
+}
+
+/* ======================================================================= renderização */
+function renderRail() {
+  const el = $("#rail"); if (!el.dataset.ready) { el.dataset.ready = "1"; el.innerHTML = `<div class="rail-top"></div><div class="rail-sep"></div><ol class="steps" id="steps"></ol><div class="rail-art"><canvas id="art" width="136" height="95"></canvas></div>`; addCorners(el); paintArt(); }
+  $(".rail-top", el).innerHTML = `${MARK}<h1>Nova Jornada</h1><p>Crie uma nova aventura em um Mundo gerado para você.</p>`;
+  $("#steps").innerHTML = STEPS.map((s, i) => {
+    const iss = issuesFor(i).length, visited = i < S.step, cur = i === S.step;
+    const done = visited && !iss, warn = (visited || S.show[i]) && iss > 0;
+    const status = cur ? "Em andamento" : done ? "Completo" : warn ? plural(iss, "pendência", "pendências") : i > S.step ? "A fazer" : "";
+    const can = i <= S.step;
+    return `<li><button class="step-btn ${done ? "done" : ""} ${warn ? "warn" : ""} ${s.final ? "final" : ""}" data-step="${i}" ${cur ? 'aria-current="step"' : ""} ${can ? "" : "disabled"}>
+      <span class="num">${done ? icon("check") : s.final ? icon("spark") : i + 1}</span><span class="lbl"><b>${s.label}</b><small>${status}</small></span></button></li>`;
+  }).join("");
+}
+function paintArt() {
+  const c = $("#art"), g = c.getContext("2d"), W = c.width, H = c.height;
+  const sky = ["#2a1840", "#3a2058", "#54306e", "#7a4a7a", "#b06a6a", "#e09a5a"]; const bh = H / sky.length;
+  sky.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, Math.floor(i * bh), W, Math.ceil(bh) + 1); });
+  g.fillStyle = "#f8d878"; g.fillRect(96, 54, 6, 6); g.fillStyle = "#f4e8d4"; for (let i = 0; i < 18; i++) g.fillRect((i * 37) % W, (i * 17) % 40, 1, 1);
+  const hill = (col, base, amp, ph) => { g.fillStyle = col; for (let x = 0; x < W; x++) { const y = Math.floor(base + Math.sin(x / 14 + ph) * amp + Math.sin(x / 5 + ph) * 1.5); g.fillRect(x, y, 1, H - y); } };
+  hill("#43285c", 66, 6, 0); hill("#2e1c42", 76, 5, 2);
+  g.fillStyle = "#1c1226"; const cx = 34, by = 66;
+  g.fillRect(cx, by - 18, 26, 22); g.fillRect(cx - 4, by - 26, 7, 30); g.fillRect(cx + 23, by - 30, 7, 34); g.fillRect(cx + 9, by - 36, 8, 40);
+  [[cx - 4, by - 28], [cx + 23, by - 32], [cx + 9, by - 38]].forEach(([x, y]) => { g.fillRect(x, y, 2, 2); g.fillRect(x + 5 - (x === cx + 9 ? 0 : 0), y, 2, 2); });
+  g.fillStyle = "#f0c050"; [[cx + 11, by - 28], [cx + 3, by - 12], [cx + 18, by - 12], [cx + 25, by - 22]].forEach(([x, y]) => g.fillRect(x, y, 2, 3));
+  hill("#150d1d", 84, 3, 4);
+  g.fillStyle = "#0e0911"; for (let i = 0; i < 9; i++) { const x = 6 + i * 15, h = 8 + (i % 3) * 3; g.fillRect(x, H - h - 4, 4, h); g.fillRect(x - 2, H - h - 1, 8, 3); }
+}
+function renderHead() {
+  const s = STEPS[S.step];
+  $("#head").innerHTML = `<div class="seal">${icon(s.icon).replace('class="px ic"', 'class="px"')}</div><div class="titles"><h2>${s.title}</h2><p>${s.sub}</p></div>
+    <div class="note" role="note"><span class="i">i</span><span>${s.note}</span></div>`;
+}
+function renderFoot() {
+  const last = S.step === 3, iss = issuesFor(S.step).length, busy = S.creating === "busy";
+  const pt = pendingTabs(S.step), status = last ? "" : iss ? (pt.length ? `Faltam: ${pt.map(([, l]) => l).join(", ")}` : `${plural(iss, "pendência", "pendências")} neste passo`) : "Passo completo";
+  $("#foot").innerHTML = `<button class="btn" id="b-cancel" ${busy ? "disabled" : ""}>${icon("x")} Cancelar</button><span class="sp"></span><span class="status" aria-live="polite">${status}</span>
+    <button class="btn" id="b-back" ${S.step === 0 || busy ? "disabled" : ""}>${icon("back")} Voltar</button>
+    ${last ? `<button class="btn primary" id="b-create" ${busy ? "disabled" : ""}>${busy ? '<span class="spin"></span> Criando…' : `${icon("spark")} Iniciar Jornada`}</button>`
+      : `<button class="btn primary" id="b-next">Avançar ${icon("next")}</button>`}`;
+}
+/* campos */
+const fld = (label, path, value, o = {}) => {
+  const tag = o.rows ? `<textarea rows="${o.rows}" data-bind="${path}"${S.readonly && path.startsWith("world.") ? " readonly" : ""} ${o.max ? `maxlength="${o.max}"` : ""} ${o.ph ? `placeholder="${esc(o.ph)}"` : ""}>${esc(value)}</textarea>`
+    : `<input type="${o.type || "text"}" data-bind="${path}" ${o.type === "number" ? 'data-num="1"' : ""} value="${esc(value ?? "")}"${S.readonly && path.startsWith("world.") ? " readonly" : ""} ${o.max ? `maxlength="${o.max}"` : ""} ${o.ph ? `placeholder="${esc(o.ph)}"` : ""} autocomplete="off">`;
+  const bad = o.required && !String(value ?? "").trim() && S.show[S.step];
+  return `<label class="field ${bad ? "bad" : ""}"><span class="l"><span>${label}</span>${o.ai ? aiBtn(path) : ""}</span>${tag}${o.hint ? `<span class="hint">${o.hint}</span>` : ""}${bad ? `<span class="err">Preencha este campo.</span>` : ""}</label>`;
+};
+/* ---- passo 1 */
+const usedText = (n) => (n ? `Usado em ${plural(n, "Jornada", "Jornadas")}` : "Ainda sem Jornadas");
+function metaChips() {
+  const w = S.world, start = w.places.find((p) => p.id === S.startId), seed = S.sel === "draft" ? S.draft._seed : S.saved.find((m) => m.id === S.sel)?.seed;
+  return `<span class="chip">${esc(w.era.name || "sem era")}</span><span class="chip">Tom: ${esc(w.tone.name || "sem tom")}</span><span class="chip">${esc(w.calendar.era_label || "sem ano")}</span>
+    <span class="chip">${icon("pin")} Começa em ${start ? esc(start.name) : "(escolha)"}</span><span class="chip gold">${seed ? `semente ${esc(seed)}` : "semente gerada ao criar a Jornada"}</span>`;
+}
+function renderWorld() {
+  const iss = worldIssues(), w = S.world, L = RULES.limits;
+  const items = [];
+  if (S.draft) items.push(`<button class="wi ${S.sel === "draft" ? "on" : ""}" role="option" aria-selected="${S.sel === "draft"}" data-sel="draft"><b>${esc(S.draft.name) || "Mundo sem nome"}</b><span>${esc(S.draft.era.name || "sem era")} · ${esc(S.draft.tone.name || "sem tom")}</span><span class="tagnew">Novo · salvo ao criar a Jornada</span></button>`);
+  S.saved.forEach((m) => items.push(`<button class="wi ${S.sel === m.id ? "on" : ""}" role="option" aria-selected="${S.sel === m.id}" data-sel="${m.id}"><b>${esc(m.name)}</b><span>${esc(m.era.name)} · ${esc(m.tone.name)}</span><span>semente ${m.seed} · ${usedText(m.used)}</span></button>`));
+  const left = `<aside class="gen sec"><h3>Mundos <span class="chip">${items.length}</span></h3>
+      <div class="wlist" role="listbox" aria-label="Mundos">${items.length ? items.join("") : `<p class="help wempty">Você ainda não tem Mundos salvos. Gere um ou crie do zero; ele é salvo quando a Jornada for criada.</p>`}</div>
+      <div class="genbox"><div class="seedrow"><label class="field"><span class="l">Semente</span><input id="seed" inputmode="numeric" value="${esc(S.seed)}" placeholder="Ex.: 476" autocomplete="off"></label>
+        <button class="btn" id="b-seed" ${S.generating || !S.seed.trim() ? "disabled" : ""}>Usar</button></div>
+        <div class="gbtns"><button class="btn primary" id="b-gen" ${S.generating ? "disabled" : ""}>${S.generating ? '<span class="spin"></span> Gerando…' : `${icon("dice")} Gerar mundo`}</button>
+        <button class="btn" id="b-blank" ${S.generating ? "disabled" : ""}>${icon("plus")} Criar do zero</button></div>
+        ${S.genError ? `<p class="callout danger" role="alert">${icon("warn")}<span>Não foi possível gerar o Mundo agora. Tente de novo; se persistir, confira o serviço no rodapé do menu.</span></p>` : ""}</div></aside>`;
+  if (!w) {
+    return `<div class="world">${left}<div class="wcol"><div class="empty-world">${icon("globe")}<p>Escolha um Mundo da lista, gere um novo com uma semente ou crie um do zero preenchendo os campos.</p></div></div></div>`;
+  }
+  const tabs = [["geral", "Visão geral"], ["calendario", "Calendário"], ["religioes", "Religiões"], ["lugares", "Lugares"]];
+  const badge = (t) => { const n = iss.filter((i) => i.tab === t).length; return n ? `<span class="badge" title="${plural(n, "pendência", "pendências")}">${n}</span>` : ""; };
+  const savedW = S.saved.find((m) => m.id === S.sel);
+  const notice = S.readonly ? `<p class="callout warn rono">${icon("warn")}<span>Este Mundo já está salvo${savedW && savedW.used ? ` e é usado em ${plural(savedW.used, "Jornada", "Jornadas")}` : ""}, então não muda. O lugar inicial você escolhe aqui. Para alterar o Mundo, duplique.</span><button class="btn sm" data-dup="${S.sel}">Duplicar e editar</button></p>` : "";
+  return `<div class="world">${left}<div class="wcol">
+    <section class="wcard"><div class="whead"><input class="wname" data-bind="world.name" value="${esc(w.name)}" aria-label="Nome do Mundo" placeholder="Nome do Mundo"${S.readonly ? " readonly" : ""}>
+      <div class="wmeta">${metaChips()}</div></div>
+      <div class="wtabs" role="tablist">${tabs.map(([k, l]) => `<button class="wtab" role="tab" aria-selected="${S.wtab === k}" data-wtab="${k}">${l}${badge(k)}</button>`).join("")}</div>
+      <div class="wpane" role="tabpanel">${notice}${renderWorldTab(w, L)}</div></section></div></div>`;
+}
+function renderWorldTab(w, L) {
+  const RO = S.readonly ? " readonly" : "", DIS = S.readonly;
+  const R = (s, key) => S.show[0] && !String(s ?? "").trim() && key;
+  if (S.wtab === "geral") {
+    return `<div class="grid2"><div class="stack">${fld("Nome da era", "world.era.name", w.era.name, { required: 1 })}${fld("Descrição da era", "world.era.description", w.era.description, { rows: 4, required: 1, hint: "A época em que a história se passa (texto de ambientação, sem mecânica)." })}</div>
+      <div class="stack">${fld("Nome do tom", "world.tone.name", w.tone.name, { required: 1 })}${fld("Descrição do tom", "world.tone.description", w.tone.description, { rows: 4, required: 1, hint: "O clima das histórias neste Mundo." })}</div></div>`;
+  }
+  if (S.wtab === "calendario") {
+    const c = w.calendar;
+    return `<div class="grid3">${fld("Nome do calendário", "world.calendar.name", c.name, { required: 1 })}${fld("Ano atual", "world.calendar.year", c.year, { type: "number" })}${fld("Nome do ano", "world.calendar.era_label", c.era_label, { required: 1, hint: "Por exemplo: Ano 476 da Fundação." })}</div>
+      <div class="rows"><div class="sub"><h4>Meses (${c.months.length})</h4><small>De ${L.months[0]} a ${L.months[1]} meses; de ${L.monthDays[0]} a ${L.monthDays[1]} dias cada.</small></div>
+      ${c.months.map((m, i) => `<div class="row"><input class="inp" style="background:var(--parch-100);border-color:var(--parch-500);color:var(--brown-900)" data-bind="world.calendar.months.${i}.name" value="${esc(m.name)}" placeholder="Nome do mês"${RO} aria-label="Nome do mês ${i + 1}">
+        <input class="inp" style="background:var(--parch-100);border-color:var(--parch-500);color:var(--brown-900)" type="number" data-num="1" data-bind="world.calendar.months.${i}.days" value="${m.days ?? ""}" placeholder="Dias"${RO} aria-label="Dias do mês ${i + 1}">
+        <button class="btn ghost sm" data-del="months.${i}" ${DIS || c.months.length <= L.months[0] ? "disabled" : ""} aria-label="Remover o mês ${i + 1}">Remover</button></div>`).join("")}
+      <div><button class="btn sm" data-add="months" ${DIS || c.months.length >= L.months[1] ? "disabled" : ""}>${icon("plus")} Adicionar mês</button></div></div>
+      <div class="rows"><div class="sub"><h4>Dias da semana (${c.weekdays.length})</h4><small>De ${L.weekdays[0]} a ${L.weekdays[1]} dias.</small></div>
+      <div class="wgrid">${c.weekdays.map((d, i) => `<div class="row one"><input class="inp" style="background:var(--parch-100);border-color:var(--parch-500);color:var(--brown-900)" data-bind="world.calendar.weekdays.${i}" value="${esc(d)}" placeholder="Nome do dia"${RO} aria-label="Dia ${i + 1} da semana">
+        <button class="btn ghost sm" data-del="weekdays.${i}" ${DIS || c.weekdays.length <= L.weekdays[0] ? "disabled" : ""} aria-label="Remover o dia ${i + 1}">Remover</button></div>`).join("")}</div>
+      <div><button class="btn sm" data-add="weekdays" ${DIS || c.weekdays.length >= L.weekdays[1] ? "disabled" : ""}>${icon("plus")} Adicionar dia</button></div></div>`;
+  }
+  if (S.wtab === "religioes") {
+    return `<div class="sub"><h4>Religiões (${w.religions.length})</h4><small>De ${L.religions[0]} a ${L.religions[1]} religiões.</small></div>
+      ${w.religions.map((r, i) => `<div class="item"><div class="top"><b class="grow" style="font-family:var(--font-serif);font-size:1.2rem">${esc(r.name) || `Religião ${i + 1}`}</b>
+        <button class="btn ghost sm" data-del="religions.${i}" ${DIS || w.religions.length <= L.religions[0] ? "disabled" : ""} aria-label="Remover a religião ${i + 1}">Remover</button></div>
+        <div class="grid2">${fld("Nome", `world.religions.${i}.name`, r.name, { required: 1 })}${fld("Domínio", `world.religions.${i}.domain`, r.domain, { required: 1, hint: "Do que a divindade cuida (por exemplo, Colheita)." })}</div>
+        ${fld("Descrição", `world.religions.${i}.description`, r.description, { rows: 3, required: 1 })}</div>`).join("")}
+      <div><button class="btn sm" data-add="religions" ${DIS || w.religions.length >= L.religions[1] ? "disabled" : ""}>${icon("plus")} Adicionar religião</button></div>`;
+  }
+  return `<div class="sub"><h4>Lugares (${w.places.length})</h4><small>De ${L.places[0]} a ${L.places[1]} lugares. Escolha onde a Jornada começa.</small></div>
+    ${w.places.map((p, i) => `<div class="item ${p.id === S.startId ? "start" : ""}"><div class="top"><b class="grow" style="font-family:var(--font-serif);font-size:1.2rem">${esc(p.name) || `Lugar ${i + 1}`} <small style="font-family:var(--font-pixel);font-size:.875rem;color:var(--brown-700)">${esc(p.type)}</small></b>
+      <button class="startbtn" data-start="${p.id}" aria-pressed="${p.id === S.startId}">${icon("pin")} ${p.id === S.startId ? "A Jornada começa aqui" : "Começar aqui"}</button>
+      <button class="btn ghost sm" data-del="places.${i}" ${DIS || w.places.length <= L.places[0] ? "disabled" : ""} aria-label="Remover o lugar ${i + 1}">Remover</button></div>
+      <div class="grid2">${fld("Nome", `world.places.${i}.name`, p.name, { required: 1 })}${fld("Tipo", `world.places.${i}.type`, p.type, { required: 1, hint: "Livre: vila, porto, ruína…" })}</div>
+      ${fld("Descrição", `world.places.${i}.description`, p.description, { rows: 3, required: 1 })}</div>`).join("")}
+    <div><button class="btn sm" data-add="places" ${DIS || w.places.length >= L.places[1] ? "disabled" : ""}>${icon("plus")} Adicionar lugar</button></div>`;
+}
+
+/* ---- passo 2 */
+/* ---- retrato: enquadramento {x, y, zoom} como no serviço (x e y de 0 a 1, zoom de 1 a 8) */
+const initials = (name) => (name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?");
+function drawCrop(cv, img, crop) {
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height; g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H);
+  const sc = Math.max(W / img.width, H / img.height) * crop.zoom, sw = W / sc, sh = H / sc;
+  const sx = Math.min(Math.max(crop.x * img.width - sw / 2, 0), img.width - sw), sy = Math.min(Math.max(crop.y * img.height - sh / 2, 0), img.height - sh);
+  g.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+}
+function paintPortraits() {
+  if (!S.portrait.img) return;
+  document.querySelectorAll("canvas[data-portrait]").forEach((cv) => drawCrop(cv, S.portrait.img, S.portrait.crop));
+}
+function portraitHtml(size, cls = "") {
+  const inner = S.portrait.img ? `<canvas data-portrait width="${size * 2}" height="${size * 2}" style="width:${size}px;height:${size}px"></canvas>` : `<span class="pinit" style="width:${size}px;height:${size}px;font-size:${Math.round(size / 2.6)}px">${esc(initials(S.form.name))}</span>`;
+  return `<span class="pframe ${cls}"><span class="pin">${inner}</span></span>`;
+}
+function sampleAvatar() {
+  const c = document.createElement("canvas"); c.width = c.height = 48; const g = c.getContext("2d"), px = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  ["#2a1840", "#3a2058", "#54306e", "#7a4a7a", "#b06a6a", "#e09a5a"].forEach((col, i) => px(col, 0, i * 8, 48, 8));
+  px("#f8d878", 36, 8, 4, 4);
+  px("#43285c", 6, 38, 36, 10); px("#2e1c42", 6, 38, 36, 2); px("#f0c050", 20, 38, 8, 3);
+  px("#c98f68", 20, 30, 8, 9); px("#e0b08a", 14, 12, 20, 22); px("#e0b08a", 16, 10, 16, 2); px("#e0b08a", 16, 34, 16, 2);
+  px("#c98f68", 12, 20, 2, 6); px("#c98f68", 34, 20, 2, 6);
+  px("#8d6a4a", 14, 10, 20, 4); px("#8d6a4a", 16, 8, 16, 2);
+  px("#221a26", 18, 21, 3, 3); px("#221a26", 27, 21, 3, 3); px("#fff", 19, 21, 1, 1); px("#fff", 28, 21, 1, 1);
+  px("#b8321f", 31, 24, 1, 8); px("#a44a3a", 22, 29, 5, 1);
+  return c.toDataURL("image/png");
+}
+function setPortrait(src, crop) {
+  const img = new Image(); img.onload = () => { S.portrait = { src, img, crop: crop || { x: 0.5, y: 0.5, zoom: 1 } }; render(); }; img.src = src;
+}
+/* diálogo do retrato: arrastar para enquadrar, deslizar para aproximar; a imagem original é a que se guarda */
+function openPortraitDialog() {
+  S.pdlg = { src: S.portrait.src || null, img: S.portrait.img || null, crop: { ...S.portrait.crop }, error: "" };
+  S.dialog = { type: "portrait" }; renderPortraitDialog();
+}
+function renderPortraitDialog() {
+  const el = $("#dlg"), p = S.pdlg;
+  el.innerHTML = `<div class="scrim" id="scrim"><div class="dialog pdialog" role="dialog" aria-modal="true" aria-labelledby="dt"><h3 id="dt">Retrato do personagem</h3>
+    <p>Escolha uma imagem do computador e enquadre o rosto: arraste para mover e use o controle para aproximar. A imagem original fica guardada, e o recorte pode ser refeito depois.</p>
+    <div class="pstage"><span class="pframe big"><span class="pin"><canvas id="pcv" width="320" height="320"></canvas>${p.img ? "" : `<span class="pempty">Nenhuma imagem</span>`}</span></span>
+      <div class="pctl"><label class="field"><span class="l">Aproximar</span><input type="range" id="pzoom" min="1" max="8" step="0.05" value="${p.crop.zoom}" ${p.img ? "" : "disabled"}></label>
+        <label class="btn" for="pfile">${icon("plus")} Escolher imagem</label><input class="sr" type="file" id="pfile" accept="image/png,image/jpeg,image/webp">
+        <button class="btn sm" id="p-sample">Usar imagem de exemplo</button><span class="hint">PNG, JPEG ou WebP, até 20 MB. O arquivo é conferido pelo conteúdo, não pela extensão.</span>
+        ${p.error ? `<p class="callout danger" role="alert">${icon("warn")}<span>${esc(p.error)}</span></p>` : ""}</div></div>
+    <div class="acts"><button class="btn danger sm" id="p-remove" ${S.portrait.img ? "" : "disabled"}>Remover retrato</button><span class="sp" style="flex:1"></span><button class="btn" id="p-cancel">Cancelar</button><button class="btn primary" id="p-ok" ${p.img ? "" : "disabled"}>Usar este recorte</button></div></div></div>`;
+  paintPdlg();
+  const cv = $("#pcv"); let drag = null;
+  cv.onpointerdown = (e) => { if (!p.img) return; drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove = (e) => {
+    if (!drag || !p.img) return; const D = cv.getBoundingClientRect().width, sc = Math.max(320 / p.img.width, 320 / p.img.height) * p.crop.zoom, fw = 320 / sc / p.img.width, fh = 320 / sc / p.img.height;
+    p.crop.x = Math.min(Math.max(p.crop.x - ((e.clientX - drag.x) / D) * fw, fw / 2), 1 - fw / 2); p.crop.y = Math.min(Math.max(p.crop.y - ((e.clientY - drag.y) / D) * fh, fh / 2), 1 - fh / 2); drag = { x: e.clientX, y: e.clientY }; paintPdlg();
+  };
+  cv.onpointerup = () => { drag = null; };
+  const z = $("#pzoom"); if (z) z.oninput = () => { p.crop.zoom = Number(z.value); paintPdlg(); };
+  $("#pfile").onchange = (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(f.type)) { p.error = "Formato não aceito. Use PNG, JPEG ou WebP."; return renderPortraitDialog(); }
+    if (f.size > 20 * 1024 * 1024) { p.error = "A imagem passa de 20 MB."; return renderPortraitDialog(); }
+    const r = new FileReader(); r.onload = () => loadPdlg(String(r.result)); r.readAsDataURL(f);
+  };
+  $("#p-sample").onclick = () => loadPdlg(sampleAvatar());
+}
+function loadPdlg(src) { const img = new Image(); img.onload = () => { S.pdlg = { src, img, crop: { x: 0.5, y: 0.5, zoom: 1 }, error: "" }; renderPortraitDialog(); }; img.onerror = () => { S.pdlg.error = "Não foi possível ler a imagem."; renderPortraitDialog(); }; img.src = src; }
+function paintPdlg() { const cv = $("#pcv"); if (cv && S.pdlg.img) drawCrop(cv, S.pdlg.img, S.pdlg.crop); }
+
+/* ---- passo 2 */
+/* ---- Narrador preenchendo dados (exemplo; o serviço real propõe e o jogador confere) */
+const AI = {
+  names: ["Ilsa Corvalho", "Tarsa Venn", "Bram Oquendo", "Marek Sol", "Neris Valdeni", "Orla Pedrazul", "Joren Falk", "Selda Maravale"],
+  concepts: ["Mercenária endividada que busca redenção", "Escriba exilado que carrega um segredo da corte", "Caçador de recompensas cansado de matar", "Curandeira andarilha que foge de uma dívida de sangue", "Contrabandista de rios com um passado de nobre", "Ex-guarda de torre que ouviu o que não devia"],
+  looks: ["Alta, cabelo raspado, cicatriz no queixo.", "Magro, olhos fundos, mãos manchadas de tinta.", "Ombros largos, barba rala, casaco de couro remendado.", "Baixa, tranças presas com fios de cobre, olhar atento."],
+  ambitions: ["Vingar o irmão morto na Ponte Velha", "Recuperar o nome da família que a corte apagou", "Fundar uma escola de cura em tempos de guerra", "Comprar de volta a casa onde nasceu"],
+  desires: ["Concluir o contrato de escolta atual", "Chegar a Vinarunde antes do inverno", "Descobrir quem enviou a carta sem remetente", "Quitar a próxima parcela da dívida"],
+  convs: ["Nunca abandonar quem luta ao meu lado", "Pagar todas as minhas dívidas", "Proteger os mais fracos", "Não mentir para quem confia em mim", "Nenhuma vida vale menos que uma promessa"],
+  pillars: ["Bram, meu antigo sargento", "O anel da minha mãe", "A vila onde nasci", "O velho barqueiro Orsen", "O caderno de meu mestre"],
+  stories: [
+    (w) => `<h3>Origens</h3><p>${w}Cresceu numa vila de pescadores, onde aprendeu cedo que o mar cobra o que empresta. O pai sumiu numa tempestade, e a mãe criou os filhos entre redes remendadas e dívidas.</p><h3>O que veio depois</h3><p>Partiu para a guerra antes de completar vinte anos, atrás de soldo e de uma saída. Voltou com cicatrizes, um posto perdido e um contrato que ainda não terminou de pagar.</p>`,
+    (w) => `<h3>Origens</h3><p>${w}Nasceu entre livros numa casa de escribas da corte. Aprendeu a ler antes de andar direito e a calar antes de aprender a mentir.</p><h3>O que veio depois</h3><p>Copiou uma carta que não devia ter visto. Desde então vive de cidade em cidade, trocando cópias por pousada e evitando quem pergunta demais.</p>`,
+    (w) => `<h3>Origens</h3><p>${w}Cresceu na estrada, de carroça em carroça, filho de gente que nunca ficou tempo bastante num lugar para ter nome de família.</p><h3>O que veio depois</h3><p>Aprendeu a rastrear, a negociar e a desconfiar. Hoje aceita trabalhos que ninguém quer e guarda o que ganha para um dia parar de andar.</p>`,
+  ],
+};
+const ATTR_PRESETS = [
+  { attributes: { forca: 3, agilidade: 4, vigor: 3, carisma: 1, determinacao: 2, astucia: 2 }, profile: "equilibrado", skills: { lutar: 3, perceber: 3, atletismo: 2, furtividade: 2, sobrevivencia: 2, persuadir: 2, acrobacia: 1, atirar: 1, curar: 1, navegar: 1, intimidar: 1, consertar: 1 } },
+  { attributes: { forca: 1, agilidade: 3, vigor: 2, carisma: 3, determinacao: 2, astucia: 4 }, profile: "especialista", skills: { perceber: 4, pesquisar: 3, erudicao: 3, persuadir: 2, mentir: 2, curar: 1, ocultismo: 1 } },
+  { attributes: { forca: 4, agilidade: 2, vigor: 3, carisma: 2, determinacao: 3, astucia: 1 }, profile: "generalista", skills: { lutar: 3, atletismo: 2, arremessar: 2, intimidar: 2, sobrevivencia: 2, cavalgar: 2, perceber: 2, acrobacia: 1, atirar: 1, furtividade: 1, curar: 1, consertar: 1, navegar: 1 } },
+];
+const qtip = (text) => `<span class="qtip" tabindex="0" role="img" aria-label="${esc(text)}" data-q="${esc(text)}">?</span>`;
+const stripTags = (h) => String(h ?? "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const wordCount = (h) => { const t = stripTags(h); return t ? t.split(" ").length : 0; };
+const narratorOk = () => S.narrator === "ok";
+const idea = () => S.idea.trim();
+const pickAI = (arr) => arr[S.aiN % arr.length];
+function aiValue(path) {
+  const n = S.aiN; let m;
+  if (path === "jname") { const f = S.form, place = S.world.places.find((p) => p.id === S.startId); const first = (f.name.trim().split(/\s+/)[0]) || "ela"; return [`A dívida de ${first}`, `O contrato em ${place ? place.name : "Norilunde"}`, `O que ${first} deixou para trás`, `${S.world.name}: a travessia`][S.aiN % 4]; }
+  if (path === "jdesc") {
+    const f = S.form, place = S.world.places.find((p) => p.id === S.startId), low = (t) => t.trim().replace(/^./, (c) => c.toLowerCase()).replace(/[.]$/, "");
+    return `${f.name.trim() || "O personagem"}, ${low(f.concept) || "viajante sem rumo certo"}, chega a ${place ? place.name : "um lugar sem nome"}, em ${S.world.name}, com um objetivo imediato: ${low(f.desire) || "sobreviver ao dia"}. No fundo, o que a história vai testar é a vontade de ${low(f.ambition) || "encontrar o seu lugar"}.`;
+  }
+  if (path === "form.name") return pickAI(AI.names);
+  if (path === "form.concept") return idea() ? idea().charAt(0).toUpperCase() + idea().slice(1) : pickAI(AI.concepts);
+  if (path === "form.appearance") return pickAI(AI.looks);
+  if (path === "form.ambition") return pickAI(AI.ambitions);
+  if (path === "form.desire") return pickAI(AI.desires);
+  if ((m = path.match(/^form\.convictions\.(\d)\.text$/))) return AI.convs[(n + Number(m[1])) % AI.convs.length];
+  if ((m = path.match(/^form\.convictions\.(\d)\.pillar$/))) return AI.pillars[(n + Number(m[1])) % AI.pillars.length];
+  return "";
+}
+const aiStory = (append) => {
+  const note = stripTags(S.form.history), first = note.split(/(?<=[.!?])\s/)[0].slice(0, 160), w = !append && first ? `${esc(first)} ` : "";
+  const f = AI.stories[S.aiN % AI.stories.length](w);
+  return append ? (S.form.history || "") + f.replace(/<h3>Origens<\/h3>/, "<h3>Mais adiante</h3>") : f;
+};
+function aiBtn(path, label = "Sugerir") {
+  const busy = S.aiBusy === path, dis = !narratorOk() || S.aiBusy;
+  return `<button type="button" class="aibtn ${busy ? "busy" : ""}" data-ai="${path}" ${dis ? "disabled" : ""} title="${narratorOk() ? "Pedir uma sugestão ao Narrador" : "Carregue um modelo em Modelos"}">${busy ? '<span class="spin"></span>' : icon("spark")}${label}</button>`;
+}
+function aiFillBtn(kind, label) {
+  const busy = S.aiBusy === `fill:${kind}`, dis = !narratorOk() || S.aiBusy;
+  return `<button type="button" class="aibtn ${busy ? "busy" : ""}" data-aifill="${kind}" ${dis ? "disabled" : ""} title="${narratorOk() ? "Pedir uma sugestão ao Narrador" : "Carregue um modelo em Modelos"}">${busy ? '<span class="spin"></span> Pensando…' : `${icon("spark")} ${label}`}</button>`;
+}
+function aiBar(kind, label) {
+  const busy = S.aiBusy === `fill:${kind}`, dis = !narratorOk() || S.aiBusy;
+  return `<div class="aibar"><label class="field" title="O Narrador só preenche o que está em branco; você confere tudo antes de seguir."><span class="l"><span>Ideia para o Narrador (opcional)</span></span><input data-bind="idea" value="${esc(S.idea)}" placeholder="Ex.: mercenária endividada em busca de redenção" autocomplete="off"></label>
+    <button type="button" class="aibtn big ${busy ? "busy" : ""}" data-aifill="${kind}" ${dis ? "disabled" : ""}>${busy ? '<span class="spin"></span> Pensando…' : `${icon("spark")} ${label}`}</button>
+    ${S.narrator === "off" ? `<p class="aihint">Nenhum modelo carregado. Abra <b>Modelos</b> no menu para o Narrador poder ajudar.</p>` : ``}</div>`;
+}
+function toast(msg, undo = false, error = false) {
+  S.toast = { msg, undo, error }; renderToast(); clearTimeout(toast.t); toast.t = setTimeout(() => { S.toast = null; renderToast(); }, 9000);
+}
+function renderToast() {
+  const el = $("#toast"), t = S.toast; if (!t) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="toast ${t.error ? "err" : ""}" role="status">${icon(t.error ? "warn" : "spark")}<span>${esc(t.msg)}</span>${t.undo ? `<button class="btn sm" id="t-undo">Desfazer</button>` : ""}<button class="btn sm ghost" id="t-close" aria-label="Fechar">${icon("x")}</button></div>`;
+}
+function runAI(key, apply) {
+  if (S.aiBusy || !narratorOk()) return;
+  S.aiBusy = key; render();
+  setTimeout(() => {
+    S.aiBusy = null; S.aiN++;
+    if (S.forceAiError) { render(); return toast("O Narrador não respondeu. Tente de novo; se persistir, confira o modelo em Modelos.", false, true); }
+    S.undo = clone({ form: S.form }); const n = apply(); render();
+    toast(n ? `O Narrador preencheu ${plural(n, "campo", "campos")}.` : "Nada a preencher: os campos já estavam preenchidos.", n > 0);
+  }, 850);
+}
+function aiFillTab(kind) {
+  const f = S.form, blank = (v) => !stripTags(v);
+  return runAI(`fill:${kind}`, () => {
+    let n = 0; const set = (k, v) => { f[k] = v; n++; };
+    if (kind === "ident") { if (blank(f.name)) set("name", aiValue("form.name")); if (blank(f.concept)) set("concept", aiValue("form.concept")); if (blank(f.appearance)) set("appearance", aiValue("form.appearance")); }
+    if (kind === "hist" && blank(f.history)) set("history", aiStory(false));
+    if (kind === "obj") {
+      if (blank(f.ambition)) set("ambition", aiValue("form.ambition")); if (blank(f.desire)) set("desire", aiValue("form.desire"));
+      f.convictions.forEach((c, i) => { if (blank(c.text)) { c.text = aiValue(`form.convictions.${i}.text`); n++; } if (blank(c.pillar)) { c.pillar = aiValue(`form.convictions.${i}.pillar`); n++; } });
+    }
+    if (kind === "attr" && Object.values(f.attributes).every((v) => v == null)) { Object.assign(f.attributes, ATTR_PRESETS[S.aiN % ATTR_PRESETS.length].attributes); n += 6; }
+    if (kind === "skill" && !f.profile) { const p = ATTR_PRESETS[S.aiN % ATTR_PRESETS.length]; f.profile = p.profile; f.skills = { ...p.skills }; n += Object.keys(p.skills).length; }
+    return n;
+  });
+}
+function aiField(path) {
+  return runAI(path, () => { setPath(S, path, aiValue(path)); return 1; });
+}
+function aiStoryRun(append) {
+  runAI(append ? "hist:more" : "hist:new", () => { S.form.history = aiStory(append); return 1; });
+}
+function undoAI() { if (S.undo) { S.form = S.undo.form; S.undo = null; S.toast = null; renderToast(); render(); } }
+
+/* ---- editor de texto da História (barra estilo processador de texto) */
+const RTE_BTNS = [["bold", "N", "Negrito (Ctrl+B)"], ["italic", "I", "Itálico (Ctrl+I)"], ["underline", "S", "Sublinhado (Ctrl+U)"], ["strikeThrough", "T", "Tachado"], "|",
+  ["insertUnorderedList", "•", "Lista com marcadores"], ["insertOrderedList", "1.", "Lista numerada"], ["formatBlock:blockquote", "❝", "Citação"], "|",
+  ["justifyLeft", "⇤", "Alinhar à esquerda"], ["justifyCenter", "↔", "Centralizar"], ["justifyRight", "⇥", "Alinhar à direita"], ["justifyFull", "☰", "Justificar"], "|",
+  ["undo", "↶", "Desfazer (Ctrl+Z)"], ["redo", "↷", "Refazer (Ctrl+Y)"], ["removeFormat", "✕", "Limpar formatação"]];
+function rteHtml() {
+  const f = S.form, words = wordCount(f.history), chars = stripTags(f.history).length, over = chars > 4000;
+  const bar = RTE_BTNS.map((b) => b === "|" ? `<span class="sep"></span>` : `<button type="button" class="rb ${b[0] === "bold" ? "b" : b[0] === "italic" ? "i" : b[0] === "underline" ? "u" : b[0] === "strikeThrough" ? "s" : ""}" data-cmd="${b[0]}" title="${b[2]}" aria-label="${b[2]}" aria-pressed="false">${b[1]}</button>`).join("");
+  const ai = `<span class="aigroup"><button type="button" class="aibtn ${S.aiBusy === "hist:new" ? "busy" : ""}" data-aihist="new" ${!narratorOk() || S.aiBusy ? "disabled" : ""} title="${narratorOk() ? "Desenvolver com o Narrador o que está escrito (ou escrever do zero, se estiver vazio)" : "Carregue um modelo em Modelos"}">${S.aiBusy === "hist:new" ? '<span class="spin"></span>' : icon("spark")}Escrever</button>
+    <button type="button" class="aibtn ${S.aiBusy === "hist:more" ? "busy" : ""}" data-aihist="more" ${!narratorOk() || S.aiBusy ? "disabled" : ""} title="${narratorOk() ? "Continuar o texto a partir do que está escrito" : "Carregue um modelo em Modelos"}">${S.aiBusy === "hist:more" ? '<span class="spin"></span>' : icon("spark")}Continuar</button></span>`;
+  return `<div class="rte ${S.show[1] && !stripTags(f.history) ? "bad" : ""}"><div class="rte-bar" role="toolbar" aria-label="Formatação do texto">
+      <select class="rsel" data-block aria-label="Estilo do parágrafo"><option value="p">Parágrafo</option><option value="h2">Título</option><option value="h3">Subtítulo</option></select>${bar}${ai}</div>
+    <div class="rte-area" contenteditable="true" data-rte id="hist-area" role="textbox" aria-multiline="true" aria-label="História do personagem" data-ph="Conte de onde o personagem vem e o que viveu até aqui…">${f.history || ""}</div>
+    <div class="rte-foot"><span class="rte-count ${over ? "over" : ""}">${plural(words, "palavra", "palavras")} · ${chars}/4000 caracteres</span><span>${S.show[1] && !stripTags(f.history) ? "Escreva a história para avançar." : ""}</span></div></div>`;
+}
+
+const tallyHtml = (t, what) => `<div class="tally" aria-live="polite"><span>${what}:</span>${t.map((x) => `<span class="t ${x.used === x.exp ? "full" : x.used > x.exp ? "over" : ""}"><b>${x.v}</b> ${x.used}/${x.exp}</span>`).join("")}</div>`;
+function valBtns(kind, id, options, current, avail) {
+  return `<div class="vals" role="group">${options.map((v) => { const on = current === v; const dis = !on && avail && !avail(v);
+    return `<button class="val ${v === 0 ? "zero" : ""}" aria-pressed="${on}" ${dis ? "disabled" : ""} data-${kind}="${id}" data-v="${v}" aria-label="${v}">${v}</button>`; }).join("")}</div>`;
+}
+const CTABS = [["ident", "Identidade"], ["hist", "História"], ["obj", "Objetivos"], ["status", "Status"]];
+const ctabCount = (k) => charSections().filter((s) => s.tab === k).reduce((n, s) => n + s.n, 0);
+const ctabBadge = (k) => { const n = ctabCount(k); return n ? `<span class="badge" title="${plural(n, "pendência", "pendências")}">${n}</span>` : `<span class="tick">${icon("check")}</span>`; };
+function renderCharPane() {
+  const f = S.form, at = attrTally(), sk = skillTally(), attrOpts = [...new Set(RULES.attrDist)].sort((a, b) => a - b);
+  const attrAvail = (v) => { const t = at.find((x) => x.v === v); return t && t.used < t.exp; };
+  const prof = RULES.profiles.find((p) => p.id === f.profile);
+  const skAvail = (v) => { if (!prof) return false; const t = sk.find((x) => x.v === v); return !!t && t.used < t.exp; };
+  const skOpts = Array.from({ length: RULES.creationMax + 1 }, (_, i) => i);
+  if (S.ctab === "ident") {
+    return `${aiBar("ident", "Preencher o que falta")}
+      <div class="grid2">${fld("Nome", "form.name", f.name, { required: 1, max: 200, ai: 1 })}${fld("Conceito", "form.concept", f.concept, { required: 1, max: 300, ai: 1, hint: "Quem é o personagem em poucas palavras: origem, ocupação, o que o move." })}</div>
+      ${fld("Aparência (opcional)", "form.appearance", f.appearance, { rows: 3, max: 4000, ai: 1, hint: "Como os outros o veem: traços, roupas, marcas." })}
+      <details class="more" ${f.age || f.height || f.origin || f.personality ? "open" : ""}><summary>Descrição opcional (idade, altura, origem, personalidade)</summary>
+        <p class="help" style="margin-bottom:10px">Não têm efeito de regra; ajudam o Narrador a descrever o personagem.</p>
+        <div class="grid3">${fld("Idade", "form.age", f.age, { max: 100 })}${fld("Altura", "form.height", f.height, { max: 100 })}${fld("Origem", "form.origin", f.origin, { max: 200 })}</div>
+        <div style="margin-top:12px">${fld("Personalidade", "form.personality", f.personality, { rows: 2, max: 1000 })}</div></details>`;
+  }
+  if (S.ctab === "hist") {
+    return rteHtml();
+  }
+  if (S.ctab === "obj") {
+    return `${aiBar("obj", "Preencher o que falta")}<div class="sub"><h4>Ambição e Desejo</h4></div><p class="help">A Ambição é o que o personagem almeja a longo prazo (vingar o irmão). O Desejo é o que ele quer alcançar agora (concluir o contrato atual).</p>
+      <div class="grid2">${fld("Ambição", "form.ambition", f.ambition, { required: 1, max: 300, ai: 1 })}${fld("Desejo", "form.desire", f.desire, { required: 1, max: 300, ai: 1 })}</div>
+      <div class="sub"><h4>Convicções (${RULES.convictions})</h4></div><p class="help">Uma Convicção é um princípio que o personagem se recusa a trair: um limite de conduta, não um objetivo. O Pilar é a pessoa, o lugar ou o objeto concreto da história que a encarna.</p>
+      ${f.convictions.map((c, i) => `<div class="item"><div class="top"><b class="grow" style="font-family:var(--font-serif);font-size:1.2rem">Convicção ${i + 1}</b></div><div class="grid2">${fld("Convicção", `form.convictions.${i}.text`, c.text, { required: 1, max: 300, ai: 1 })}${fld("Pilar", `form.convictions.${i}.pillar`, c.pillar, { required: 1, max: 300, ai: 1 })}</div></div>`).join("")}`;
+  }
+  const attrHtml = () => {
+    return `<div class="tbar"><p class="help">Distribua os valores ${RULES.attrDist.join(", ")} entre os ${RULES.attrs.length} Atributos, um para cada.</p><span class="tbtns"><button class="btn sm" id="b-rattr">${icon("dice")} Sortear</button>${aiFillBtn("attr", "Sugerir")}</span></div>${tallyHtml(at, "Valores usados")}
+      <div class="acats">${RULES.cats.map((cat) => `<section class="acat"><div class="cat">${cat.name}</div>${RULES.attrs.filter((a) => a.cat === cat.id).map((a) => {
+        const sks = RULES.skills.filter((s) => s.attr === a.id).map((s) => s.name), extra = a.id === "vigor" ? " · define a Vida (3 + Vigor)" : a.id === "determinacao" ? " · define a Vontade (3 + Determinação)" : "";
+        return `<div class="arow ${attrValue(a.id) != null ? "set" : ""}" ><div class="aname"><b>${a.name}${qtip(`${a.desc}${extra}${sks.length ? `. Perícias: ${sks.join(", ")}` : ""}`)}</b></div>${valBtns("attr", a.id, attrOpts, attrValue(a.id), attrAvail)}<em class="aval">${attrValue(a.id) ?? "–"}</em></div>`; }).join("")}</section>`).join("")}</div>`;
+  }
+  const skillHtml = () => `<div class="tbar"><p class="help">O perfil diz quantas Perícias recebem cada valor. As demais ficam em 0.</p><span class="tbtns"><button class="btn sm" id="b-rskill">${icon("dice")} Sortear</button>${aiFillBtn("skill", "Sugerir")}</span></div>
+    <div class="profiles" role="group" aria-label="Perfil de Perícias">${RULES.profiles.map((p) => `<button class="prof" aria-pressed="${f.profile === p.id}" data-prof="${p.id}"><b>${p.name}</b><small>${p.dist.reduce((a, [, n]) => a + n, 0)} Perícias: ${p.dist.map(([v, n]) => `${n} com ${v}`).join(", ")}</small></button>`).join("")}</div>
+    ${prof ? tallyHtml(sk, "Valores usados") : `<p class="callout warn">${icon("warn")}<span>Escolha um perfil para distribuir os valores.</span></p>`}
+    <div class="skflat">${RULES.skills.map((s) => { const v = f.skills[s.id] || 0, an = RULES.attrs.find((x) => x.id === s.attr);
+      return `<div class="srow ${v > 0 ? "has" : ""}"><span class="sname">${s.name}${qtip(`${an.name} (${attrValue(an.id) ?? "–"}) · ${s.desc}`)}</span><span class="pips" role="group" aria-label="${esc(s.name)}">${[1, 2, 3, 4].map((i) => { const dis = v !== i && !skAvail(i); return `<button class="pip ${i <= v ? "on" : ""}" aria-pressed="${v === i}" ${dis ? "disabled" : ""} data-skill="${s.id}" data-v="${i}" aria-label="${esc(s.name)}: valor ${i}"></button>`; }).join("")}</span><em>${v || ""}</em></div>`; }).join("")}</div>`;
+  return `<div class="sub"><h4>Atributos</h4></div>${attrHtml()}<div class="sub"><h4>Perícias</h4></div>${skillHtml()}`;
+}
+function sideHtml() {
+  const f = S.form, d = derived(), secs = charSections();
+  const cell = (n) => Array.from({ length: Math.max(n ?? 0, 3) }, (_, i) => `<i class="${n != null && i < n ? "f" : ""}"></i>`).join("");
+  return `<div class="pcard-top"><button class="pbtn" id="b-portrait" aria-label="${S.portrait.img ? "Trocar o retrato" : "Escolher o retrato"}" data-tip="${S.portrait.img ? "Trocar o retrato" : "Escolher o retrato"}">${portraitHtml(112)}</button><div class="pname"><b>${esc(f.name) || "Sem nome ainda"}</b><span>${esc(f.concept) || "Conceito em branco"}</span></div></div>
+    <div class="box"><h4>Trilhas</h4>
+      <div class="trail v"><div class="tl"><b>Vida</b><span>${d.vida ?? "—"}</span></div><div class="cells">${cell(d.vida)}</div><small>3 + Vigor${d.vida == null ? " (escolha o Vigor)" : ""}</small></div>
+      <div class="trail w"><div class="tl"><b>Vontade</b><span>${d.vontade ?? "—"}</span></div><div class="cells">${cell(d.vontade)}</div><small>3 + Determinação${d.vontade == null ? " (escolha a Determinação)" : ""}</small></div></div>
+`;
+}
+function renderChar() {
+  return `<div class="world pw"><aside class="gen sec pside" aria-label="Resumo do personagem">${sideHtml()}</aside><div class="wcol">
+    <section class="wcard pcard"><div class="wtabs" role="tablist">${CTABS.map(([k, l]) => `<button class="wtab" role="tab" aria-selected="${S.ctab === k}" data-ctab="${k}">${l}${ctabBadge(k)}</button>`).join("")}</div>
+      <div class="wpane ${S.ctab === "hist" ? "fillpane" : ""}" role="tabpanel">${renderCharPane()}</div></section></div></div>`;
+}
+
+/* ---- passo 3 */
+function reviewWorld() {
+  const w = S.world, c = w.calendar, start = w.places.find((p) => p.id === S.startId);
+  const seed = (S.sel === "draft" ? S.draft._seed : S.saved.find((m) => m.id === S.sel)?.seed) || "gerada ao criar a Jornada";
+  return `<div class="rtop"><h3>${esc(w.name)}</h3><button class="btn sm" data-step="0">Editar Mundo</button></div>
+    <div class="rgrid"><dl class="facts"><dt>Era</dt><dd>${esc(w.era.name)}</dd><dt>Tom</dt><dd>${esc(w.tone.name)}</dd><dt>Calendário</dt><dd>${esc(c.name)}, ${esc(c.era_label)}</dd><dt>Começa em</dt><dd>${start ? `${esc(start.name)} (${esc(start.type)})` : "não escolhido"}</dd>
+      <dt>Situação</dt><dd>${S.sel === "draft" ? "Mundo novo, salvo ao criar a Jornada" : "Mundo salvo, já existente"}</dd><dt>Semente</dt><dd>${esc(seed)}</dd></dl>
+      <div class="rtxt"><p><b>${esc(w.era.name)}.</b> ${esc(w.era.description)}</p><p><b>${esc(w.tone.name)}.</b> ${esc(w.tone.description)}</p></div></div>
+    <h4>Calendário</h4><div class="skchips">${c.months.map((m) => `<span>${esc(m.name)} <b>${m.days}</b></span>`).join("")}</div>
+    <p class="rsmall">Semana: ${c.weekdays.map(esc).join(", ")}.</p>
+    <h4>Religiões</h4><div class="rcards">${w.religions.map((r) => `<div class="rcardi"><b>${esc(r.name)}</b><small>${esc(r.domain)}</small><p>${esc(r.description)}</p></div>`).join("")}</div>
+    <h4>Lugares</h4><div class="rcards">${w.places.map((p) => `<div class="rcardi ${p.id === S.startId ? "start" : ""}"><b>${esc(p.name)}</b><small>${esc(p.type)}${p.id === S.startId ? " · a Jornada começa aqui" : ""}</small><p>${esc(p.description)}</p></div>`).join("")}</div>`;
+}
+function reviewChar() {
+  const f = S.form, d = derived(), prof = RULES.profiles.find((p) => p.id === f.profile);
+  const optional = (v) => (v.trim() ? `<dd>${esc(v)}</dd>` : `<dd class="none">não informada</dd>`);
+  return `<div class="rtop"><h3>${esc(f.name)}</h3><button class="btn sm" data-step="1">Editar Personagem</button></div>
+    <div class="revhead">${portraitHtml(112)}<dl class="facts"><dt>Conceito</dt><dd>${esc(f.concept)}</dd><dt>Ambição</dt><dd>${esc(f.ambition)}</dd><dt>Desejo</dt><dd>${esc(f.desire)}</dd>
+      <dt>Idade</dt>${optional(f.age)}<dt>Altura</dt>${optional(f.height)}<dt>Origem</dt>${optional(f.origin)}<dt>Personalidade</dt>${optional(f.personality)}</dl></div>
+    ${f.appearance.trim() ? `<h4>Aparência</h4><p class="rtxt">${esc(f.appearance)}</p>` : ""}
+    <h4>História</h4><div class="rtxt">${f.history}</div>
+    <div class="rgrid2"><div><h4>Convicções</h4><ol>${f.convictions.map((c) => `<li>${esc(c.text)}<small>Pilar: ${esc(c.pillar)}</small></li>`).join("")}</ol></div>
+      <div><h4>Atributos</h4><div class="mini">${RULES.attrs.map((a) => `<div class="mr"><span>${a.name}</span><div class="bar">${Array.from({ length: 5 }, (_, i) => `<i class="${i < (attrValue(a.id) || 0) ? "f" : ""}"></i>`).join("")}</div><b>${attrValue(a.id) ?? "–"}</b></div>`).join("")}</div>
+        <p class="rsmall">Vida <b>${d.vida ?? "–"}</b> · Vontade <b>${d.vontade ?? "–"}</b></p></div></div>
+    <h4>Perícias${prof ? ` <small class="rsmall">perfil ${prof.name}</small>` : ""}</h4>
+    <div class="skchips">${RULES.skills.filter((s) => (f.skills[s.id] || 0) > 0).sort((a, b) => f.skills[b.id] - f.skills[a.id]).map((s) => `<span>${s.name} <b>${f.skills[s.id]}</b></span>`).join("")}</div>`;
+}
+function renderReview() {
+  return `<div class="wcol rev"><section class="wcard rcard"><div class="wtabs" role="tablist">${[["mundo", "Mundo"], ["pers", "Personagem"]].map(([k, l]) => `<button class="wtab" role="tab" aria-selected="${S.rtab === k}" data-rtab="${k}">${l}</button>`).join("")}</div>
+    <div class="wpane rpane" role="tabpanel">${S.rtab === "mundo" ? reviewWorld() : reviewChar()}</div></section></div>`;
+}
+function renderStart() {
+  if (S.creating === "done") return `<div class="created"><svg class="px" viewBox="0 0 8 8" fill="var(--gold-400)" style="width:72px;height:72px">${ICONS.spark.map((row, y) => [...row].map((ch, x) => (ch !== "." ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : "")).join("")).join("")}</svg>
+    <h3>${esc(S.jname.trim() || defName())} foi criada</h3><p>No app real, a tela da Jornada abre agora, em Cena em ${esc(S.world.places.find((p) => p.id === S.startId)?.name)}, com o Aduran preparando a abertura. Use o painel Protótipo para voltar.</p></div>`;
+  const w = S.world, f = S.form, start = w.places.find((p) => p.id === S.startId);
+  const err = S.creating === "error" ? `<p class="callout danger" role="alert" style="margin-bottom:12px">${icon("warn")}<span>Não foi possível iniciar a Jornada. Nada foi gravado pela metade; confira o serviço e tente de novo. Os dados do assistente continuam aqui.</span></p>` : "";
+  return `<div class="world pw"><aside class="gen sec pside" aria-label="Resumo">
+      <div class="pcard-top">${portraitHtml(112)}<div class="pname"><b>${esc(f.name)}</b><span>${esc(f.concept)}</span></div></div>
+      <div class="box"><h4>Onde tudo começa</h4><dl class="sfacts"><dt>Mundo</dt><dd>${esc(w.name)}</dd><dt>Lugar</dt><dd>${start ? `${esc(start.name)} (${esc(start.type)})` : "—"}</dd><dt>Abertura</dt><dd>Em Cena, em um período sorteado pelo jogo</dd></dl></div></aside>
+    <div class="wcol">${err}<section class="wcard pcard"><div class="wpane startpane"><div class="sub"><h4>Dê vida à sua Jornada</h4></div>
+      <p class="help">O nome e a descrição são seus. O Narrador lê a descrição para conduzir a história; os dois podem ser mudados depois, dentro da Jornada.</p>
+      ${fld("Nome da Jornada (opcional)", "jname", S.jname, { ph: defName(), max: 200, ai: 1, hint: `Se ficar em branco, será “${esc(defName())}”.` })}
+      ${fld("Descrição (opcional)", "jdesc", S.jdesc, { rows: 6, max: 2000, ai: 1, ph: "Em poucas linhas: o ponto de partida, o clima e o que está em jogo.", hint: "Por exemplo: de onde o personagem parte, o que o espera e o tom que você quer." })}
+      <p class="callout warn">${icon("spark")}<span>Ao iniciar, o Mundo e o personagem são gravados e o Aduran abre a primeira Cena em ${start ? esc(start.name) : "o lugar inicial"}.</span></p></div></section></div></div>`;
+}
+const defName = () => `A Jornada de ${S.form.name.trim() || "seu personagem"}`;
+
+function renderBody(keepScroll = true) {
+  const b = $("#body"), top = b.scrollTop;
+  b.classList.toggle("fill", S.step <= 3 && S.creating !== "done");
+  b.innerHTML = S.step === 0 ? renderWorld() : S.step === 1 ? renderChar() : S.step === 2 ? renderReview() : renderStart();
+  if (keepScroll) b.scrollTop = top;
+}
+function renderChrome() { renderRail(); renderHead(); renderFoot(); renderProto(); }
+function render(keep = true) { renderChrome(); renderBody(keep); paintPortraits(); }
+/* atualiza só o que depende de pendências, sem tirar o foco dos campos */
+function softRefresh() {
+  renderRail(); renderFoot(); renderProto();
+  if (S.step === 1) {
+    const tmp = document.createElement("div"); tmp.innerHTML = renderChar();
+    const side = $(".pside"), nside = $(".pside", tmp); if (side && nside) side.innerHTML = nside.innerHTML;
+    const tabs = $(".wtabs"), ntabs = $(".wtabs", tmp); if (tabs && ntabs) tabs.innerHTML = ntabs.innerHTML;
+    paintPortraits();
+  }
+  if (S.step === 0) { document.querySelectorAll(".wtab .badge").forEach((x) => x.remove()); const iss = worldIssues(); document.querySelectorAll(".wtab").forEach((t) => { const n = iss.filter((i) => i.tab === t.dataset.wtab).length; if (n) t.insertAdjacentHTML("beforeend", `<span class="badge">${n}</span>`); }); }
+}
+
+/* ================================================================== ações */
+function useWorld(world, sel, readonly) {
+  S.world = world; S.sel = sel; S.readonly = readonly; S.wtab = "geral";
+  if (!world.places.some((p) => p.id === S.startId)) S.startId = null;
+}
+function selectWorld(id) {
+  if (id === "draft") return useWorld(S.draft, "draft", false);
+  useWorld(clone(S.saved.find((m) => m.id === id)), id, true);
+}
+function generate(seedValue) {
+  if (S.generating) return;
+  S.generating = true; S.genError = false; render();
+  setTimeout(() => {
+    S.generating = false;
+    if (S.forceGenError) { S.genError = true; render(); return; }
+    const n = seedValue != null ? Number(seedValue) : Math.floor(Math.random() * 900000) + 1000;
+    S.draft = generateWorld(n); S.draft._seed = String(n); S.seed = String(n); S.dirty = false; S.startId = null;
+    useWorld(S.draft, "draft", false); render(false);
+  }, 650);
+}
+function blank() {
+  S.draft = blankWorld(); S.draft._seed = null; S.seed = ""; S.dirty = false; S.startId = null; S.genError = false;
+  useWorld(S.draft, "draft", false); render(false);
+}
+function duplicate(id) {
+  const src = S.saved.find((m) => m.id === id) || S.draft;
+  S.draft = clone(src); delete S.draft.id; delete S.draft.used; S.draft.name = `${src.name} (cópia)`; S.draft._seed = null; S.seed = ""; S.dirty = false;
+  useWorld(S.draft, "draft", false); render(false);
+}
+/* trocar o Mundo em edição por outro pede confirmação só se ele foi editado e ainda não está salvo */
+function runNext(n) {
+  if (n.kind === "gen") generate(n.seed); else if (n.kind === "blank") blank(); else if (n.kind === "dup") duplicate(n.id);
+}
+function requestNext(n) { if (S.draft && S.dirty) { S.dialog = { type: "regen", next: n }; renderDialog(); } else runNext(n); }
+function shuffle(a) { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function randomAttrs() { const v = shuffle(RULES.attrDist); RULES.attrs.forEach((a, i) => { S.form.attributes[a.id] = v[i]; }); }
+function randomSkills() {
+  const p = RULES.profiles.find((x) => x.id === S.form.profile) || RULES.profiles[1]; S.form.profile = p.id;
+  const vals = p.dist.flatMap(([v, n]) => Array(n).fill(v)); const ids = shuffle(RULES.skills.map((s) => s.id)); S.form.skills = {}; vals.forEach((v, i) => { S.form.skills[ids[i]] = v; });
+}
+const WTABS = [["geral", "Visão geral"], ["calendario", "Calendário"], ["religioes", "Religiões"], ["lugares", "Lugares"]];
+/* abas do passo com pendências, na ordem; a "atual" decide por onde a busca recomeça */
+function pendingTabs(step) {
+  if (step === 0) { const t = new Set(worldIssues().map((i) => i.tab)); return WTABS.filter(([k]) => t.has(k)); }
+  if (step === 1) return CTABS.filter(([k]) => ctabCount(k) > 0);
+  return [];
+}
+function advance() {
+  if (S.step < 2) {
+    const tabs = S.step === 0 ? WTABS : CTABS, key = S.step === 0 ? "wtab" : "ctab", all = tabs.map(([k]) => k), cur = all.indexOf(S[key]);
+    const pend = new Set(pendingTabs(S.step).map(([k]) => k));
+    if ((S.step === 0 && !S.world) || pend.has(S[key])) { S.show[S.step] = true; render(false); return; } /* aba atual incompleta: fica e marca o que falta */
+    const next = [...all.slice(cur + 1), ...all.slice(0, cur)].find((k) => pend.has(k));
+    if (next) { S[key] = next; render(false); const pn = $(".wpane"); if (pn) pn.scrollTop = 0; return; }
+  }
+  goTo(S.step + 1);
+}
+function goTo(n) {
+  if (n > S.step) { const iss = issuesFor(S.step); if (iss.length) { S.show[S.step] = true; render(false); $("#body").scrollTop = 0; return; } }
+  S.step = n; S.creating = n === 3 ? S.creating : "idle"; render(false); $("#body").scrollTop = 0;
+}
+function create() {
+  if (S.creating === "busy") return;
+  S.creating = "busy"; render();
+  setTimeout(() => { S.creating = S.forceCreateError ? "error" : "done"; S.forceCreateError ? render() : render(false); }, 1100);
+}
+function openDialog(d) { S.dialog = d; renderDialog(); }
+function renderDialog() {
+  const el = $("#dlg"), d = S.dialog; if (!d) { el.innerHTML = ""; return; }
+  if (d.type === "portrait") return renderPortraitDialog();
+  const cfg = d.type === "cancel"
+    ? { danger: true, title: "Descartar a Nova Jornada?", text: "O Mundo e o personagem preenchidos até aqui serão perdidos.", keep: "Continuar editando", ok: "Descartar", okCls: "danger" }
+    : { danger: false, title: "Descartar o Mundo em edição?", text: "O Mundo novo que você editou ainda não foi salvo e será descartado.", keep: "Manter este", ok: "Descartar e continuar", okCls: "primary" };
+  el.innerHTML = `<div class="scrim" id="scrim"><div class="dialog ${cfg.danger ? "danger" : ""}" role="dialog" aria-modal="true" aria-labelledby="dt"><h3 id="dt">${cfg.title}</h3><p>${cfg.text}</p>
+    <div class="acts"><button class="btn" id="d-keep">${cfg.keep}</button><button class="btn ${cfg.okCls}" id="d-ok">${cfg.ok}</button></div></div></div>`;
+  $("#d-keep").focus();
+}
+function closeDialog() { S.dialog = null; renderDialog(); }
+
+/* ================================================================ eventos */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button, summary, .scrim"); if (!t) return;
+  if (t.id === "scrim" && e.target === t) { S.pdlg = null; return closeDialog(); }
+  const d = t.dataset;
+  if (t.id === "b-cancel") return openDialog({ type: "cancel" });
+  if (t.id === "d-keep") return closeDialog();
+  if (t.id === "d-ok") { const dlg = S.dialog; closeDialog(); if (dlg.type === "regen") runNext(dlg.next); else { Object.assign(S, { step: 0, world: null, draft: null, sel: null, readonly: false, seed: "", startId: null, dirty: false, form: EMPTY_CHAR(), ctab: "ident", portrait: { src: null, img: null, crop: { x: 0.5, y: 0.5, zoom: 1 } }, jname: "", jdesc: "", show: [false, false], creating: "idle" }); render(false); } return; }
+  if (t.id === "b-back") return goTo(S.step - 1);
+  if (t.id === "b-next") return advance();
+  if (t.id === "b-create") return create();
+  if (t.id === "b-gen") return requestNext({ kind: "gen", seed: null });
+  if (t.id === "b-blank") return requestNext({ kind: "blank" });
+  if (d.sel) { selectWorld(d.sel); return render(false); }
+  if (d.dup) return requestNext({ kind: "dup", id: d.dup });
+  if (t.id === "b-seed") { const n = S.seed.trim(); if (!/^\d+$/.test(n)) { S.genError = false; return alert("A semente deve ser um número inteiro."); } return requestNext({ kind: "gen", seed: n }); }
+  if (t.id === "b-rattr") { randomAttrs(); return render(); }
+  if (t.id === "b-rskill") { randomSkills(); return render(); }
+  if (d.step !== undefined) return goTo(Number(d.step));
+  if (d.rtab) { S.rtab = d.rtab; return render(false); }
+  if (d.wtab) { S.wtab = d.wtab; return render(false); }
+  if (d.start) { S.startId = d.start; return render(); }
+  if (d.attr) { const v = Number(d.v); S.form.attributes[d.attr] = S.form.attributes[d.attr] === v ? null : v; return render(); }
+  if (d.skill) { const v = Number(d.v); if (v === 0) delete S.form.skills[d.skill]; else S.form.skills[d.skill] = S.form.skills[d.skill] === v ? 0 : v; return render(); }
+  if (d.prof) { if (S.form.profile !== d.prof) { S.form.profile = d.prof; S.form.skills = {}; } return render(); }
+  if (d.goTab) { S.wtab = d.goTab; render(false); return; }
+  if (d.goCtab) { S.ctab = d.goCtab; render(false); return; }
+  if (d.ctab) { S.ctab = d.ctab; render(false); const pn = $(".wpane"); if (pn) pn.scrollTop = 0; return; }
+  if (t.id === "b-portrait") return openPortraitDialog();
+  if (t.id === "t-undo") return undoAI();
+  if (t.id === "t-close") { S.toast = null; return renderToast(); }
+  if (d.ai) return aiField(d.ai);
+  if (d.aifill) return aiFillTab(d.aifill);
+  if (d.aihist) return aiStoryRun(d.aihist === "more");
+  if (d.cmd) { const area = $("#hist-area"); if (!area) return; area.focus(); const [c, v] = d.cmd.split(":"); document.execCommand(c === "formatBlock" ? "formatBlock" : c, false, v || null); S.form.history = area.innerHTML; softRefresh(); updateRte(); return; }
+  if (t.id === "p-cancel") { S.pdlg = null; return closeDialog(); }
+  if (t.id === "p-remove") { S.portrait = { src: null, img: null, crop: { x: 0.5, y: 0.5, zoom: 1 } }; S.pdlg = null; closeDialog(); return render(); }
+  if (t.id === "p-ok") { const q = S.pdlg; S.pdlg = null; closeDialog(); S.portrait = { src: q.src, img: q.img, crop: q.crop }; return render(); }
+  if (false) { const el = document.getElementById(d.goSec || d.sec); if (el) { el.scrollIntoView({ block: "start" }); const i = el.querySelector("input,textarea,button"); i && i.focus({ preventScroll: true }); } return; }
+  if (d.add) { const w = S.world, k = d.add; S.dirty = true; S.draft._seed = null;
+    if (k === "months") w.calendar.months.push({ name: "", days: null }); if (k === "weekdays") w.calendar.weekdays.push("");
+    if (k === "religions") w.religions.push({ name: "", domain: "", description: "" });
+    if (k === "places") { let n = w.places.length + 1; while (w.places.some((p) => p.id === `lugar-${n}`)) n++; w.places.push({ id: `lugar-${n}`, name: "", type: "", description: "" }); }
+    return render(); }
+  if (d.del) { const [k, i] = d.del.split("."), w = S.world, idx = Number(i); S.dirty = true; S.draft._seed = null;
+    if (k === "months") w.calendar.months.splice(idx, 1); if (k === "weekdays") w.calendar.weekdays.splice(idx, 1);
+    if (k === "religions") w.religions.splice(idx, 1); if (k === "places") { const [r] = w.places.splice(idx, 1); if (r && r.id === S.startId) S.startId = null; }
+    return render(); }
+});
+document.addEventListener("mousedown", (e) => { if (e.target.closest(".rte-bar button")) e.preventDefault(); });
+document.addEventListener("change", (e) => { const t = e.target; if (t.dataset.block !== undefined) { const area = $("#hist-area"); area.focus(); document.execCommand("formatBlock", false, t.value); S.form.history = area.innerHTML; softRefresh(); updateRte(); } });
+document.addEventListener("selectionchange", () => updateRte(true));
+function updateRte(onlyState) {
+  document.querySelectorAll(".rte-bar [data-cmd]").forEach((b) => { const c = b.dataset.cmd; if (c.includes(":") || ["undo", "redo", "removeFormat"].includes(c)) return; try { b.setAttribute("aria-pressed", document.queryCommandState(c)); } catch (e) { /* sem seleção */ } });
+  if (onlyState) return;
+  const cnt = $(".rte-count"); if (cnt) { const w = wordCount(S.form.history), ch = stripTags(S.form.history).length; cnt.textContent = `${plural(w, "palavra", "palavras")} · ${ch}/4000 caracteres`; cnt.classList.toggle("over", ch > 4000); }
+}
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.dataset.rte !== undefined) { S.form.history = t.innerHTML; updateRte(); softRefresh(); return; }
+  if (t.id === "seed") { S.seed = t.value; $("#b-seed").disabled = S.generating || !S.seed.trim(); return; }
+  if (!t.dataset.bind) return;
+  const val = t.dataset.num ? (t.value.trim() === "" || !Number.isFinite(Number(t.value)) ? null : Number(t.value)) : t.value;
+  setPath(S, t.dataset.bind, val);
+  if (t.dataset.bind.startsWith("world.") && S.sel === "draft") { S.dirty = true; S.draft._seed = null; }
+  if (t.dataset.bind.startsWith("world.")) {
+    const m = document.querySelector(".wmeta"); if (m) m.innerHTML = metaChips();
+    const li = document.querySelector('.wi[data-sel="draft"]'); if (li) { li.querySelector("b").textContent = S.draft.name || "Mundo sem nome"; li.querySelectorAll("span")[0].textContent = `${S.draft.era.name || "sem era"} · ${S.draft.tone.name || "sem tom"}`; }
+  }
+  if (t.dataset.bind === "form.name") { const p = document.querySelector('[data-bind="jname"]'); if (p) p.placeholder = defName(); }
+  softRefresh();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && S.dialog) { S.pdlg = null; return closeDialog(); }
+  if (e.key === "Enter" && e.target.id === "seed") { e.preventDefault(); const n = S.seed.trim(); if (/^\d+$/.test(n)) requestNext({ kind: "gen", seed: n }); }
+});
+
+/* ============================================================ caixa do protótipo */
+const PROTO = {
+  step: [["Mundo", () => goTo0(0)], ["Protagonista", () => goTo0(1)], ["Revisão", () => goTo0(2)], ["Iniciar", () => goTo0(3)]],
+  world: [["Nenhum", () => { S.sel = null; S.world = null; S.readonly = false; S.step = 0; S.genError = false; S.forceGenError = false; render(false); }],
+    ["Salvo", () => { selectWorld("mundo-1"); S.startId = "lugar-1"; S.step = 0; S.forceGenError = false; S.genError = false; render(false); }],
+    ["Novo gerado", () => { S.draft = generateWorld(476); S.draft._seed = "476"; S.seed = "476"; S.dirty = false; useWorld(S.draft, "draft", false); S.startId = S.draft.places[0].id; S.step = 0; render(false); }],
+    ["Do zero", () => { blank(); S.step = 0; render(false); }],
+    ["Sem lugar inicial", () => { if (!S.world) selectWorld("mundo-2"); S.startId = null; S.wtab = "lugares"; S.step = 0; render(false); }],
+    ["Lista vazia", () => { S.saved = []; if (S.readonly) { S.world = null; S.sel = null; S.readonly = false; } S.step = 0; render(false); }],
+    ["Lista cheia", () => { S.saved = clone(SAVED_ALL); S.step = 0; render(false); }],
+    ["Erro ao gerar", () => { S.forceGenError = true; S.genError = true; S.step = 0; render(); }], ["Gerando…", () => { S.step = 0; S.generating = true; render(); setTimeout(() => { S.generating = false; render(); }, 1800); }]],
+  char: [["Vazio", () => { S.form = EMPTY_CHAR(); S.step = 1; render(false); }], ["Parcial", () => { S.form = PARTIAL_CHAR(); S.step = 1; render(false); }], ["Completo", () => { S.form = FULL_CHAR(); S.step = 1; render(false); }]],
+  portrait: [["Sem retrato", () => { S.portrait = { src: null, img: null, crop: { x: 0.5, y: 0.5, zoom: 1 } }; render(); }], ["Retrato de exemplo", () => setPortrait(sampleAvatar())], ["Abrir recorte", () => { S.step = 1; render(false); openPortraitDialog(); }]],
+  tab: [["Identidade", () => { S.step = 1; S.ctab = "ident"; render(false); }], ["História", () => { S.step = 1; S.ctab = "hist"; render(false); }], ["Objetivos", () => { S.step = 1; S.ctab = "obj"; render(false); }], ["Status", () => { S.step = 1; S.ctab = "status"; render(false); }]],
+  narrator: [["Pronto", () => { S.narrator = "ok"; S.forceAiError = false; render(); }], ["Sem modelo", () => { S.narrator = "off"; render(); }], ["Com erro", () => { S.narrator = "ok"; S.forceAiError = true; render(); }]],
+  rtab: [["Mundo", () => { ensureReady(2); S.step = 2; S.rtab = "mundo"; render(false); }], ["Personagem", () => { ensureReady(2); S.step = 2; S.rtab = "pers"; render(false); }]],
+  pend: [["Mostrar", () => { S.show = [true, true]; render(); }], ["Esconder", () => { S.show = [false, false]; render(); }]],
+  create: [["Normal", () => { S.forceCreateError = false; S.creating = "idle"; render(false); }], ["Criando…", () => { ensureReady(3); S.step = 3; S.creating = "busy"; render(false); }],
+    ["Erro ao criar", () => { ensureReady(3); S.forceCreateError = true; S.step = 3; S.creating = "error"; render(false); }], ["Criada", () => { ensureReady(3); S.step = 3; S.creating = "done"; render(false); }]],
+  dlg: [["Descartar", () => openDialog({ type: "cancel" })], ["Mundo em edição", () => openDialog({ type: "regen", next: { kind: "gen", seed: null } })]],
+};
+function goTo0(n) { S.step = n; S.creating = n === 3 ? S.creating : "idle"; render(false); $("#body").scrollTop = 0; }
+function ensureReady(n) { if (n >= 1 && !S.world) { selectWorld("mundo-1"); S.startId = "lugar-1"; } if (n >= 2) { if (S.form.name === "") S.form = FULL_CHAR(); if (!S.startId) S.startId = "lugar-1"; } }
+function renderProto() {
+  document.querySelectorAll(".proto .opts").forEach((box) => {
+    const g = box.dataset.g; if (box.dataset.ready) { if (g === "step") [...box.children].forEach((b, i) => b.setAttribute("aria-pressed", S.step === i)); return; }
+    box.dataset.ready = "1";
+    PROTO[g].forEach(([label, fn], i) => { const b = document.createElement("button"); b.textContent = label; b.setAttribute("aria-pressed", g === "step" ? S.step === i : "false");
+      b.onclick = () => { if (g === "step") ensureReady(i); fn(); box.querySelectorAll("button").forEach((x) => g !== "step" && x.setAttribute("aria-pressed", "false")); if (g !== "step" && g !== "dlg") b.setAttribute("aria-pressed", "true"); }; box.appendChild(b); });
+  });
+}
+$("#protobtn").onclick = () => { const b = $("#protobox"), open = b.hidden; b.hidden = !open; $("#protobtn").setAttribute("aria-expanded", open); $("#protobtn").textContent = open ? "Protótipo ▾" : "Protótipo ▴"; };
+addCorners($("#panel"));
+render(false);
+</script>
+<script>
+/* ===== Tela de Mundos: registro da tela implementada (docs/ui-ux/13-mundos.md). Reaproveita o passo Mundo da Nova Jornada em modo biblioteca. ===== */
+"use strict";
+S.step = 0; S.notice = null; S.sel = null; S.world = null; S.draft = null; S.readonly = false; S.startId = null;
+const PERSONALIZED = (() => { const m = clone(SAVED_ALL[1]); m.id = "mundo-4"; m.name = "Marvelhar de Inverno"; m.seed = null; m.used = 0; return m; })();
+S.saved = [...clone(SAVED_ALL), PERSONALIZED];
+const _worldIssues = worldIssues;
+worldIssues = () => (S.world ? _worldIssues().filter((i) => !/lugar onde a Jornada/.test(i.msg)) : []);
+const _selectWorld = selectWorld;
+selectWorld = (id) => { S.notice = null; if (id !== "draft" && !S.saved.some((m) => m.id === id)) S.saved = [...clone(SAVED_ALL), clone(PERSONALIZED)]; _selectWorld(id); };
+
+const seedOf = (m) => (m.seed ? `semente ${m.seed}` : "Mundo personalizado");
+function metaChips() {
+  const w = S.world, m = S.sel === "draft" ? null : S.saved.find((x) => x.id === S.sel);
+  const seed = S.sel === "draft" ? S.draft._seed : m && m.seed;
+  return `<span class="chip">${esc(w.era.name || "sem era")}</span><span class="chip">Tom: ${esc(w.tone.name || "sem tom")}</span><span class="chip">${esc(w.calendar.era_label || "sem ano")}</span>
+    <span class="chip gold">${seed ? `semente ${esc(seed)}` : "Mundo personalizado"}</span><span class="chip">${m ? usedText(m.used) : "Novo · ainda não salvo"}</span>`;
+}
+function renderHead() {
+  $("#head").innerHTML = `<div class="seal">${icon("globe").replace('class="px ic"', 'class="px"')}</div><div class="titles"><h2>Mundos</h2><p>Os Mundos salvos ficam disponíveis para novas Jornadas. Crie, duplique ou exclua aqui.</p></div>`;
+}
+function renderFoot() {}
+function renderRail() {}
+function renderChrome() { renderHead(); renderProto(); }
+function renderWorld() {
+  const iss = worldIssues(), w = S.world, L = RULES.limits, items = [];
+  if (S.draft) items.push(`<button class="wi ${S.sel === "draft" ? "on" : ""}" role="option" aria-selected="${S.sel === "draft"}" data-sel="draft"><b>${esc(S.draft.name) || "Mundo sem nome"}</b><span>${esc(S.draft.era.name || "sem era")} · ${esc(S.draft.tone.name || "sem tom")}</span><span class="tagnew">Novo · ainda não salvo</span></button>`);
+  S.saved.forEach((m) => items.push(`<button class="wi ${S.sel === m.id ? "on" : ""}" role="option" aria-selected="${S.sel === m.id}" data-sel="${m.id}"><b>${esc(m.name)}</b><span>${esc(m.era.name)} · ${esc(m.tone.name)}</span><span>${seedOf(m)} · ${usedText(m.used)}</span></button>`));
+  const notice = S.notice ? `<p class="callout ok" role="status">${icon("check")}<span>${esc(S.notice)}</span></p>` : "";
+  const left = `<aside class="gen sec"><h3>Mundos <span class="chip">${items.length}</span></h3>
+      <div class="wlist" role="listbox" aria-label="Mundos">${items.length ? items.join("") : `<p class="help wempty">Você ainda não tem Mundos salvos. Gere um ou crie do zero e use Salvar Mundo.</p>`}</div>
+      <div class="genbox"><div class="seedrow"><label class="field"><span class="l">Semente</span><input id="seed" inputmode="numeric" value="${esc(S.seed)}" placeholder="Ex.: 476" autocomplete="off"></label>
+        <button class="btn" id="b-seed" ${S.generating || !S.seed.trim() ? "disabled" : ""}>Usar</button></div>
+        <div class="gbtns"><button class="btn primary" id="b-gen" ${S.generating ? "disabled" : ""}>${S.generating ? '<span class="spin"></span> Gerando…' : `${icon("dice")} Gerar mundo`}</button>
+        <button class="btn" id="b-blank" ${S.generating ? "disabled" : ""}>${icon("plus")} Criar do zero</button></div>
+        ${S.genError ? `<p class="callout danger" role="alert">${icon("warn")}<span>Não foi possível gerar o Mundo agora. Tente de novo.</span></p>` : ""}</div></aside>`;
+  if (!w) return `<div class="world">${left}<div class="wcol">${notice}<div class="empty-world">${icon("globe")}<p>Escolha um Mundo da lista, gere um novo com uma semente ou crie um do zero preenchendo os campos.</p></div></div></div>`;
+  const tabs = [["geral", "Visão geral"], ["calendario", "Calendário"], ["religioes", "Religiões"], ["lugares", "Lugares"]];
+  const badge = (t) => { const n = iss.filter((i) => i.tab === t).length; return n ? `<span class="badge">${n}</span>` : ""; };
+  const m = S.saved.find((x) => x.id === S.sel);
+  const bar = S.sel === "draft"
+    ? `<div class="libbar"><span>Mundo novo, ainda não salvo. ${S.draft._seed ? `Gerado com a semente ${esc(S.draft._seed)}.` : "Mundo personalizado (sem semente)."}</span><button class="btn sm primary" id="b-save">${icon("check")} Salvar Mundo</button></div>`
+    : `<div class="libbar"><span>Mundo salvo, somente leitura.</span><span class="tbtns2"><button class="btn sm" data-dup="${S.sel}">Duplicar e editar</button><button class="btn sm danger" id="b-del">${icon("x")} Excluir</button></span></div>`;
+  return `<div class="world">${left}<div class="wcol">${notice}<section class="wcard">${bar}<div class="whead"><input class="wname" data-bind="world.name" value="${esc(w.name)}" aria-label="Nome do Mundo" placeholder="Nome do Mundo"${S.readonly ? " readonly" : ""}>
+      <div class="wmeta">${metaChips()}</div></div>
+      <div class="wtabs" role="tablist">${tabs.map(([k, l]) => `<button class="wtab" role="tab" aria-selected="${S.wtab === k}" data-wtab="${k}">${l}${badge(k)}</button>`).join("")}</div>
+      <div class="wpane" role="tabpanel">${renderWorldTab(w, L).replace(/<button class="startbtn"[\s\S]*?<\/button>/g, "").replace(" Escolha onde a Jornada começa.", "")}</div></section></div></div>`;
+}
+function renderDialog() {
+  const el = $("#dlg"), d = S.dialog; if (!d) { el.innerHTML = ""; return; }
+  if (d.type === "portrait") return renderPortraitDialog();
+  let cfg;
+  if (d.type === "delete") {
+    const m = d.world, used = m.used > 0;
+    cfg = { danger: true, title: `Excluir “${m.name}”?`, text: used ? `Este Mundo é usado em ${plural(m.used, "Jornada", "Jornadas")} e não pode ser excluído enquanto elas existirem.` : "Isto apaga o Mundo do disco e não pode ser desfeito. Jornadas futuras não poderão usá-lo.", keep: "Cancelar", ok: "Excluir do disco", okId: "d-del", okCls: "danger", okDisabled: used };
+  } else cfg = { danger: false, title: "Descartar o Mundo em edição?", text: "O Mundo novo que você editou ainda não foi salvo e será descartado.", keep: "Manter este", ok: "Descartar e continuar", okId: "d-ok", okCls: "primary", okDisabled: false };
+  el.innerHTML = `<div class="scrim" id="scrim"><div class="dialog ${cfg.danger ? "danger" : ""}" role="dialog" aria-modal="true" aria-labelledby="dt"><h3 id="dt">${cfg.title}</h3><p>${cfg.text}</p>
+    <div class="acts"><button class="btn" id="d-keep">${cfg.keep}</button><button class="btn ${cfg.okCls}" id="${cfg.okId}" ${cfg.okDisabled ? "disabled" : ""}>${cfg.ok}</button></div></div></div>`;
+  $("#d-keep").focus();
+}
+/* ações próprias da biblioteca (em captura, antes dos tratadores da Nova Jornada) */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "b-save") {
+    e.stopPropagation(); const iss = worldIssues();
+    if (iss.length) { S.show[0] = true; S.wtab = iss[0].tab; render(false); return; }
+    const id = `mundo-${S.saved.length + 5}`, w = clone(S.draft); delete w._seed;
+    S.saved.push({ ...w, id, used: 0, seed: S.draft._seed ? Number(S.draft._seed) : null });
+    S.notice = `Mundo “${w.name}” salvo.`; S.draft = null; S.dirty = false; S.seed = ""; S.show[0] = false; selectWorld(id); S.notice = `Mundo “${w.name}” salvo.`; render(false);
+  } else if (t.id === "b-del") {
+    e.stopPropagation(); S.dialog = { type: "delete", world: S.saved.find((x) => x.id === S.sel) }; renderDialog();
+  } else if (t.id === "d-del") {
+    e.stopPropagation(); const m = S.dialog.world; S.saved = S.saved.filter((x) => x.id !== m.id); S.sel = null; S.world = null; S.notice = `Mundo “${m.name}” excluído.`; S.dialog = null; renderDialog(); render(false);
+  }
+}, true);
+/* caixa do protótipo */
+const PROTO2 = {
+  lista: [["Com Mundos", () => { S.saved = [...clone(SAVED_ALL), clone(PERSONALIZED)]; render(false); }], ["Vazia", () => { S.saved = []; S.sel = S.sel === "draft" ? "draft" : null; if (S.sel !== "draft") S.world = null; render(false); }]],
+  selecao: [["Nenhum", () => { S.sel = null; S.world = null; S.readonly = false; render(false); }], ["Salvo sem Jornadas", () => { selectWorld("mundo-2"); render(false); }], ["Salvo em uso", () => { selectWorld("mundo-1"); render(false); }], ["Personalizado", () => { selectWorld("mundo-4"); render(false); }]],
+  novo: [["Gerado", () => { S.draft = generateWorld(476); S.draft._seed = "476"; S.seed = "476"; S.dirty = false; useWorld(S.draft, "draft", false); render(false); }], ["Do zero", () => { blank(); render(false); }], ["Editado", () => { S.draft = generateWorld(9100); S.draft._seed = null; S.dirty = true; useWorld(S.draft, "draft", false); render(false); }]],
+  avisos: [["Salvo", () => { S.notice = "Mundo “Planícies de Rosilha” salvo."; render(false); }], ["Excluído", () => { S.notice = "Mundo “Costa de Marvelhar” excluído."; render(false); }], ["Erro ao gerar", () => { S.genError = true; render(false); }]],
+  dialogos: [["Excluir livre", () => { selectWorld("mundo-2"); render(false); S.dialog = { type: "delete", world: S.saved.find((x) => x.id === "mundo-2") }; renderDialog(); }], ["Excluir em uso", () => { selectWorld("mundo-1"); render(false); S.dialog = { type: "delete", world: S.saved.find((x) => x.id === "mundo-1") }; renderDialog(); }], ["Descartar edição", () => { S.dirty = true; S.dialog = { type: "regen", next: { kind: "blank" } }; renderDialog(); }]],
+};
+function renderProto() {
+  const box = $("#protobox"); if (box.dataset.m2) return; box.dataset.m2 = "1";
+  const names = { lista: "Lista", selecao: "Mundo selecionado", novo: "Mundo novo", avisos: "Avisos", dialogos: "Diálogos" };
+  box.innerHTML = Object.keys(PROTO2).map((g) => `<div><h5>${names[g]}</h5><div class="opts" data-g2="${g}"></div></div>`).join("");
+  box.querySelectorAll("[data-g2]").forEach((o) => PROTO2[o.dataset.g2].forEach(([label, fn]) => { const b = document.createElement("button"); b.textContent = label; b.onclick = fn; o.appendChild(b); }));
+}
+const css2 = document.createElement("style");
+css2.textContent = `.app { grid-template-columns: 1fr; } .rail, #foot { display: none; } .callout.ok { background: rgba(47,122,60,.25); border-color: var(--green-300); } .wcol .callout { margin-bottom: 10px; }
+.libbar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 8px 14px; background: var(--parch-300); border-bottom: 3px solid var(--parch-500); font-family: var(--font-serif); font-size: 1.05rem; color: var(--brown-900); } .tbtns2 { display: inline-flex; gap: 8px; }`;
+document.head.appendChild(css2);
+$("#panel").querySelectorAll(".corner").forEach((c) => c.remove()); addCorners($("#panel"));
+S.wtab = "geral"; render(false);
+</script>

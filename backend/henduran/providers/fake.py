@@ -56,8 +56,53 @@ def default_aduran_proposal(messages: list[ChatMessage], number: int = 1) -> dic
     }
 
 
+FILL_TEXT = "Sugestão de teste"
+FILL_HISTORY = "<p>História de teste do provedor falso.</p>"
+
+
+def fill_completion(json_schema: dict) -> dict:
+    """Resposta válida para os esquemas do Narrador que preenche dados (``title`` ``preenchimento_*``).
+
+    Textos: um texto de teste cortado no limite; Atributos e Perícias: os valores que faltam da
+    distribuição do catálogo (``const`` = já escolhido), em ordem; História: um parágrafo.
+    """
+    from collections import Counter
+
+    from henduran.rules import fatia1 as R
+
+    title = json_schema.get("title")
+    props = json_schema.get("properties", {})
+    if title == "preenchimento_atributos":
+        attrs = props["attributes"]["properties"]
+        fixed = {k: v["const"] for k, v in attrs.items() if "const" in v}
+        left = sorted((Counter(R.ATTRIBUTE_DISTRIBUTION) - Counter(fixed.values())).elements(), reverse=True)
+        out = dict(fixed)
+        for key in attrs:
+            if key not in out:
+                out[key] = left.pop(0)
+        return {"attributes": out}
+    if title == "preenchimento_pericias":
+        prof = props["skill_profile"]
+        profile = R.SKILL_PROFILES_BY_ID[prof.get("const") or prof["enum"][0]]
+        skills = props["skills"]["properties"]
+        fixed = {k: v["const"] for k, v in skills.items() if "const" in v}
+        left = sorted((Counter(profile.counts) - Counter(fixed.values())).elements(), reverse=True)
+        out = dict(fixed)
+        for key in skills:
+            if not left:
+                break
+            if key not in out:
+                out[key] = left.pop(0)
+        return {"skill_profile": profile.id, "skills": out}
+    if title == "preenchimento_historia":
+        return {"history": FILL_HISTORY}
+    return {key: f"{FILL_TEXT} ({key})"[: spec.get("maxLength", 200)] for key, spec in props.items()}
+
+
 def default_completion(json_schema: dict | None, messages: list[ChatMessage] | None = None, number: int = 1) -> str:
-    """JSON válido para os esquemas conhecidos (Cena inicial, proposta do Aduran ou resumo); sem esquema, um texto fixo."""
+    """JSON válido para os esquemas conhecidos (Cena inicial, proposta do Aduran, resumo ou preenchimento); sem esquema, um texto fixo."""
+    if str((json_schema or {}).get("title", "")).startswith("preenchimento"):
+        return json.dumps(fill_completion(json_schema or {}), ensure_ascii=False)
     properties = (json_schema or {}).get("properties", {})
     if "summary" in properties:
         return json.dumps(DEFAULT_SCENE_SUMMARY, ensure_ascii=False)

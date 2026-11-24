@@ -1,0 +1,201 @@
+/* Editor da História (TipTap). Pergaminho. `.rte__area` é a caixa com rolagem; `.rte__doc`, o documento editável. */
+.rte {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  background: var(--color-parchment-light);
+  color: var(--color-text-on-parchment);
+  border: 3px solid var(--color-parchment-edge);
+}
+
+.rte--invalid {
+  border-color: var(--color-danger-text-on-parchment);
+}
+
+.rte__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--space-1);
+  padding: 6px var(--space-1);
+  background: var(--color-parchment-deep);
+  border-bottom: 3px solid var(--color-parchment-edge);
+}
+
+.rte__group {
+  display: inline-flex;
+  gap: 4px;
+  padding-right: var(--space-1);
+  border-right: 2px solid var(--color-parchment-edge);
+}
+
+.rte__group:last-of-type {
+  border-right: 0;
+}
+
+.rte__btn,
+.rte__select {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border: 2px solid var(--color-parchment-edge);
+  border-radius: var(--radius);
+  background: var(--color-parchment-light);
+  color: var(--color-text-on-parchment);
+  font: 600 15px/1 var(--font-pixel);
+  cursor: pointer;
+}
+
+.rte__select {
+  font-size: var(--font-size-xs);
+}
+
+.rte__btn:hover:not(:disabled),
+.rte__select:hover:not(:disabled) {
+  border-color: var(--color-input-border-on-parchment);
+}
+
+.rte__btn[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-accent-light);
+  border-color: var(--color-frame);
+}
+
+.rte__btn:disabled,
+.rte__select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rte__btn:focus-visible,
+.rte__select:focus-visible {
+  outline: 3px solid var(--color-focus-on-parchment);
+  outline-offset: 2px;
+}
+
+.rte__btn--bold {
+  font-weight: 700;
+}
+
+.rte__btn--italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+}
+
+.rte__btn--underline {
+  text-decoration: underline;
+}
+
+.rte__btn--strike {
+  text-decoration: line-through;
+}
+
+.rte__extra {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.rte__area {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  overflow: auto;
+}
+
+.rte__area:focus-within {
+  box-shadow: inset 0 0 0 3px var(--color-focus-on-parchment);
+}
+
+.rte__doc {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
+  outline: none;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* Placeholder do TipTap: no primeiro parágrafo do documento vazio. */
+.rte__doc p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--color-text-on-parchment-muted);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.rte--disabled .rte__doc {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.rte__doc h2 {
+  margin: 0.6em 0 0.3em;
+  font-family: var(--font-serif);
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--color-text-on-parchment);
+}
+
+.rte__doc h3 {
+  margin: 0.6em 0 0.3em;
+  font-family: var(--font-serif);
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--px-purple-800);
+}
+
+.rte__doc p,
+.rte__doc ul,
+.rte__doc ol,
+.rte__doc blockquote {
+  margin: 0 0 0.7em;
+}
+
+.rte__doc ul,
+.rte__doc ol {
+  padding-left: 1.5em;
+}
+
+.rte__doc blockquote {
+  padding: 2px var(--space-2);
+  border-left: 4px solid var(--px-purple-500);
+  color: var(--color-text-on-parchment-muted);
+  font-style: italic;
+}
+
+.rte__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  padding: 4px var(--space-1);
+  background: var(--color-parchment-deep);
+  border-top: 2px solid var(--color-parchment-edge);
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-on-parchment-muted);
+}
+
+.rte__count--over,
+.rte__error {
+  color: var(--color-danger-text-on-parchment);
+  font-weight: 600;
+}
+
+.rte__error::before {
+  content: "! ";
+}
+
+.rte__doc li > p {
+  margin: 0;
+}
+
+.rte__doc blockquote > p:last-child {
+  margin-bottom: 0;
+}

@@ -1,7 +1,7 @@
 # 12 — Nova Jornada (assistente)
 
 **Data:** 2026-11-23
-**Estado:** **aprovado pelo responsável em 2026-11-23** depois de várias rodadas do protótipo. Ainda **não implementado**: o app continua com o assistente atual (`app/src/screens/newJourney/`) até a tarefa de implementação.
+**Estado:** **aprovado pelo responsável em 2026-11-23** depois de várias rodadas do protótipo. **Rodada 1 implementada** em `app/src/screens/newJourney/` (seção 9); a rodada 2 (Narrador que preenche dados e editor TipTap) está pendente.
 **Protótipo de referência:** [`prototipos/nova-jornada.html`](prototipos/nova-jornada.html) (botão **Protótipo**: passo, estado do Mundo, do Protagonista, pendências, criação e diálogos). Processo em [`10-prototipagem.md`](10-prototipagem.md).
 **Substitui:** a Nova Jornada em `esbocos/ANALISE-ESBOCOS.md` (seção 2.2, assistente de 5 passos) e o layout atual do assistente (formulário em coluna única).
 **Relacionados:** `09-tela-da-jornada.md` e `11-menu-inicial.md` (mesma linguagem visual), `ESCOPO-MVP.md` (itens 1 a 3), ADR-075 e ADR-076 (Mundo gerado, Cena inicial).
@@ -35,9 +35,9 @@
 
 Os dois painéis ocupam **toda a altura útil** do passo, cada um com a sua rolagem interna; só o conteúdo de dentro rola.
 
-- **Esquerda, "Mundos"**: lista dos Mundos **já salvos** (nome, era e tom, semente e "Usado em N Jornadas" ou "Ainda sem Jornadas") e, por cima, o **Mundo novo em edição**, quando há, marcado "Novo · salvo ao criar a Jornada". Escolher um item mostra os detalhes à direita. Embaixo, fixo: campo de **semente** com **Usar**, **Gerar mundo** (sorteia uma semente nova) e **Criar do zero**. Erro de geração em aviso vermelho. Sem Mundos salvos, a lista mostra um texto convidando a gerar ou criar.
+- **Esquerda, "Mundos"**: lista dos Mundos **já salvos** (nome, era e tom, semente ou "Mundo personalizado" e "Usado em N Jornadas" ou "Ainda sem Jornadas") e, por cima, o **Mundo novo em edição**, quando há, marcado "Novo · salvo ao criar a Jornada". Escolher um item mostra os detalhes à direita. Embaixo, fixo: campo de **semente** com **Usar**, **Gerar mundo** (sorteia uma semente nova) e **Criar do zero**. Erro de geração em aviso vermelho. Sem Mundos salvos, a lista mostra um texto convidando a gerar ou criar.
 - **Direita, detalhes do Mundo** em pergaminho: o nome editável direto no título; chips de era, tom, ano, lugar inicial e semente; abas *Visão geral*, *Calendário*, *Religiões* e *Lugares*, cada uma com selo de pendências. **Os dados são campos que o jogador preenche à mão**, seja num Mundo gerado, duplicado ou criado do zero.
-- **Semente**: um Mundo gerado mostra a semente usada. Se o jogador **editar** o Mundo, ou criá-lo do zero, a semente passa a "gerada ao criar a Jornada": o jogo grava o Mundo e atribui a semente no fim da criação. Na Revisão, a semente aparece (ou "gerada ao criar a Jornada").
+- **Semente**: um Mundo gerado mostra a semente usada. Se o jogador **editar** o Mundo, criá-lo do zero ou duplicá-lo, ele vira **"Mundo personalizado"**, sem semente (nenhuma semente o reproduz; decisão de 2026-11-24, refinando o ADR-077, item 5). Na Revisão, aparece a semente ou "Mundo personalizado".
 - **Criar do zero**: formulário vazio já com as linhas mínimas do esquema (8 meses, 5 dias da semana, 1 religião, 3 lugares).
 - **Mundos salvos** (**proposta**): ficam somente leitura, porque o Mundo é lido sem alteração pelas Jornadas (ADR-075). Um aviso explica isso e oferece **Duplicar e editar**, que cria um Mundo novo (cópia, sem semente) para editar. O **lugar inicial** continua sendo escolhido por Jornada, mesmo num Mundo salvo.
 - **Lugares**: cartões, cada um com **Começar aqui** (destaque dourado) e Remover. As contagens do esquema aparecem como dica e desabilitam Adicionar e Remover nos limites.
@@ -65,7 +65,7 @@ Mesma estrutura do passo 1: dois painéis em **altura total**, cartão de pergam
 
 Mesma estrutura dos outros passos: cartão de pergaminho em altura total com **duas abas**, *Mundo* e *Personagem*.
 
-- **Mundo**: título com o nome e **Editar Mundo** (volta ao passo 1); era, tom, calendário, lugar inicial, situação ("Mundo salvo, já existente" ou "Mundo novo, salvo ao criar a Jornada") e semente (ou "gerada ao criar a Jornada"); descrições da era e do tom; o calendário (meses com os dias e a semana); as religiões e os lugares em cartões, com o lugar inicial destacado.
+- **Mundo**: título com o nome e **Editar Mundo** (volta ao passo 1); era, tom, calendário, lugar inicial, situação ("Mundo salvo, já existente" ou "Mundo novo, salvo ao criar a Jornada") e semente (ou "Mundo personalizado"); descrições da era e do tom; o calendário (meses com os dias e a semana); as religiões e os lugares em cartões, com o lugar inicial destacado.
 - **Personagem**: título com o nome e **Editar Personagem** (volta ao passo 2); retrato ao lado dos dados (conceito, Ambição, Desejo e os campos opcionais); aparência, história formatada, Convicções com Pilares, Atributos em barras com Vida e Vontade, e as Perícias com valor.
 - **Nome da Jornada (opcional)**: faixa fixa no pé do cartão, visível nas duas abas, com o padrão "A Jornada de <nome>" no *placeholder*.
 - **Criar Jornada** (rodapé): "Criando…", depois abre a tela da Jornada em Cena no lugar inicial (ADR-076). Em erro, aviso vermelho dizendo que nada foi gravado pela metade e que os dados continuam no assistente.
@@ -76,6 +76,7 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 
 - **Esquerda**: retrato, nome e Conceito do personagem e o quadro **Onde tudo começa** (Mundo, lugar inicial e "Em Cena, em um período sorteado pelo jogo", ADR-076).
 - **Direita, cartão**: **Nome da Jornada** (opcional; padrão "A Jornada de <nome>" no *placeholder* e na dica) e **Descrição** (opcional, até 2.000 caracteres), cada um com o botão **Sugerir** do Narrador (que usa o Mundo, o lugar inicial e o personagem). O texto de ajuda diz que o Narrador lê a descrição e que os dois podem ser mudados depois, dentro da Jornada. Um aviso lembra que, ao iniciar, o Mundo e o personagem são gravados e o Aduran abre a primeira Cena.
+- **Narrador e modelo (2026-11-24)**: na lateral esquerda, o quadro **Narrador** mostra se o modelo está pronto (ou o aviso do motor) e o botão **Configurar modelo**, que abre a tela **Modelos** num diálogo, **sem sair da criação**: o que já foi preenchido não se perde, e o estado do modelo se atualiza ao voltar (**Voltar à criação**).
 - **Rodapé**: Cancelar, **Voltar** (à Revisão) e **Iniciar Jornada**. "Criando…" desabilita tudo; em erro, aviso vermelho dizendo que nada foi gravado pela metade e que os dados continuam no assistente; em sucesso, abre a tela da Jornada em Cena no lugar inicial.
 - **Dado novo (proposta)**: a **descrição da Jornada** não existe hoje no modelo de dados. Proposta: guardá-la em `journey_meta` (ADR-075) e incluí-la no contexto do Narrador. Precisa de aprovação.
 
@@ -84,7 +85,7 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 - Formulário em coluna única, com um painel por bloco, vira passos com trilho, abas e resumo de progresso.
 - O Mundo deixa de ser uma pilha de painéis e passa a ser um cartão com abas.
 - Os Atributos e as Perícias deixam de ser listas de selects e passam a botões de valor com contadores.
-- **Propostas desta rodada, a aprovar**: lista de Mundos salvos no próprio passo, Mundos salvos somente leitura com Duplicar e editar, semente gerada ao criar para Mundos editados à mão; lista de pendências ligada ao resumo de progresso; trilhas Vida e Vontade visíveis durante a criação; lugar inicial escolhido no próprio cartão do lugar; paisagem no trilho; retrato no assistente, ao lado do resumo do personagem; abas no Protagonista e na Revisão; aba própria de História com editor de texto; botões do Narrador para preencher dados.
+- **Propostas desta rodada, a aprovar**: lista de Mundos salvos no próprio passo, Mundos salvos somente leitura com Duplicar e editar, "Mundo personalizado" (sem semente) para Mundos editados à mão; lista de pendências ligada ao resumo de progresso; trilhas Vida e Vontade visíveis durante a criação; lugar inicial escolhido no próprio cartão do lugar; paisagem no trilho; retrato no assistente, ao lado do resumo do personagem; abas no Protagonista e na Revisão; aba própria de História com editor de texto; botões do Narrador para preencher dados.
 
 ## 8. Pendências para a implementação
 
@@ -93,3 +94,43 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 - Reaproveitar `app/src/ui/` (Button, Panel, Tabs, Dialog, FieldGroup, RadioGroup, TrailBoxes) e criar o que faltar (valores em botões, moldura com cantos); nada do HTML do protótipo vai para `app/src/`.
 - Manter `GET /rules/creation` e `GET /worlds/schema` como fonte de verdade; o protótipo codifica os valores só para exemplo.
 - Verificar leitor de tela (abas, grupos de botões), foco ao clicar numa pendência, DPI de 125% a 200% e reflow a 320 px.
+
+## 9. Implementação (rodada 1)
+
+**Data:** 2026-11-24. Código em `app/src/screens/newJourney/` (`NewJourneyWizard`, `WorldStep`, `CharacterStep`, `ReviewStep`, `StartStep`, `parts`, `NewJourney.css`) e `app/src/ui/HistoryEditor/`; serviço em `backend/henduran/richtext.py`, `services/journey_creation.py`, `storage/worlds.py` e nas migrações `journey/0005` e `world/0002`.
+
+**Feito:** trilho com os 3 passos e o item Iniciar Jornada; cartão de pergaminho com abas e altura total; Avançar que vai à próxima aba incompleta (e fica na atual, mostrando os erros, quando ela está incompleta); selos nas abas e "Faltam: …" no rodapé; lista de Mundos salvos (`GET /worlds`) com o Mundo novo em edição, semente, Gerar mundo e Criar do zero; Mundos salvos somente leitura com Duplicar e editar; lugar inicial no cartão do lugar; Protagonista em 4 abas com retrato (recorte local, enviado depois de criar a Jornada), Trilhas, Atributos em botões de valor e Perícias com quatro quadradinhos; Revisão em 2 abas; tela Iniciar Jornada com nome e descrição; descrição da Jornada e História formatada no serviço.
+
+**Diferenças em relação ao protótipo, e por quê:**
+
+- **Sem lista de pendências** no topo (seções 1 e 4 do texto ainda a citam): ficou como no protótipo final, com selos nas abas, campos em vermelho depois da primeira tentativa e "Faltam: …" no rodapé. Os selos contam os **erros do servidor** de cada aba (`POST /worlds/validate` e `POST /characters/validate`), não as seções do protótipo; por isso o número pode ser maior (por exemplo, um erro por Atributo sem valor).
+- **Aparência continua obrigatória** *(resolvido na rodada 2: migração `journey/0006`)*: o protótipo a marca como opcional, mas o servidor e o `journey.db` exigiam o texto.
+- **Editor da História provisório**: `contenteditable` com `execCommand` atrás do componente `HistoryEditor` (mesma interface que o TipTap vai usar). Colar e soltar inserem só texto. O TipTap espera a aprovação da dependência.
+- **Botões do Narrador** (Sugerir, Preencher o que falta, Escrever, Continuar, Sugerir Atributos e Perícias, Sugerir nome e descrição): não entram nesta rodada. A barra do editor tem o espaço deles (`toolbarExtra`), e os botões de Sortear ficam na linha do texto de ajuda, onde o Sugerir vai entrar.
+- **Trocar de Mundo zera o lugar inicial** (o protótipo mantinha o mesmo id se ele existisse no outro Mundo): os ids `lugar-N` se repetem entre Mundos, e manter a escolha levaria a um lugar que o jogador não escolheu.
+- **Mundos salvos ilegíveis** (danificados ou de versão mais nova) não aparecem na lista; um aviso diz quantos são.
+- **Retrato**: o recorte usa o diálogo da tela da Jornada (`PortraitDialog`, em modo local), com aproximação até 4 (o serviço aceita até 8). O arquivo é conferido já no assistente (tamanho e bytes iniciais) e de novo pelo serviço, ao enviar com a Jornada aberta. Se o envio falhar, a Jornada abre sem retrato (sem aviso na tela; ver pendências).
+- **Moldura**: borda dourada simples, sem os cantos em pixel do protótipo; paisagem do trilho com o céu do `SkyBackdrop` (entardecer), sem os castelos.
+- **Limite da descrição** (2.000) está também no cliente (`maxLength`), porque o serviço ainda não o expõe numa rota.
+
+**Pendências desta rodada:** rota e botões do Narrador que preenche dados (ADR-077, item 3) e o editor TipTap (rodada 2); edição do nome e da descrição dentro da Jornada (não há rota de edição do resumo hoje; a descrição só é gravada na criação); aparência opcional; aviso na tela da Jornada quando o retrato não puder ser enviado; leitor de tela, DPI de 125% a 200% e reflow a 320 px não verificados.
+
+
+## 10. Implementação (rodada 2)
+
+**Data:** 2026-11-24. Branch `feat/nova-jornada-narrador`.
+
+**Feito:**
+
+- **Editor da História: TipTap 3.35.0** (MIT) atrás do mesmo `HistoryEditor`, carregado sob demanda (pacote próprio). Conjunto do ADR-077: parágrafo, Título (h2) e Subtítulo (h3), negrito, itálico, sublinhado, tachado, listas, citação, alinhamento, desfazer, refazer, limpar formatação e placeholder; links, código, bloco de código, linha horizontal e quebra manual desligados. Colar passa pelo esquema do editor; o servidor continua saneando. O contador usa a derivação de texto puro do serviço.
+- **Narrador que preenche dados** (`POST /narrator/fill`): Sugerir em cada campo de texto (nome, Conceito, aparência, Ambição, Desejo, cada Convicção e Pilar, nome e descrição da Jornada), "Ideia para o Narrador (opcional)" com **Preencher o que falta** nas abas Identidade e Objetivos, **Sugerir Atributos** e **Sugerir perfil e Perícias** no Status, **Escrever** e **Continuar** na barra do editor. "Pensando…" com indicador, botões desabilitados durante o pedido, aviso com **Desfazer**, erro claro, e "Carregue um modelo em Modelos" sem modelo pronto. Trocar de passo ou sair do assistente cancela o pedido.
+- **Aparência opcional** (migração `journey/0006`, que reconstrói `character` preservando tudo).
+- **Retrato não enviado**: a Jornada abre e um aviso na tela oferece Tentar de novo e Escolher outro (o diálogo do retrato da ficha).
+- **Mundo personalizado**: Mundo editado, criado do zero ou duplicado não recebe semente; a lista, o chip e a Revisão mostram "Mundo personalizado".
+
+**Diferenças em relação ao protótipo, e por quê:**
+
+- **Atributos e Perícias**: "Sugerir" preenche **só o que falta** e mantém o que o jogador já escolheu (o protótipo só agia com tudo em branco). Assim segue a regra "o Narrador só preenche o que está em branco" sem descartar escolhas.
+- **Continuar** fica desabilitado com a História vazia (o protótipo deixava clicar); **Escrever** com texto desenvolve o que está escrito (como na dica do protótipo).
+- **Contador**: palavras e caracteres do texto puro do serviço, sem a extensão de contagem do TipTap.
+- **Sugerir** dos campos fica na linha do rótulo, fora do `<label>` (acessibilidade); o aviso some sozinho depois de 9 s, como no protótipo.

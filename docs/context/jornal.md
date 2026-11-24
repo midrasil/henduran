@@ -13,6 +13,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Validações: em worktree temporário com apenas as mudanças da tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal, mudanças concorrentes da Nova Jornada causaram falhas fora deste escopo (`App.tsx` importa `CreatedExtras` inexistente; `model.test.ts` espera `history_html`); foram deixadas de fora do commit. Conferência visual no app real fica com o responsável. Revalidado após o ajuste de gap/sombra: 15/15, 285/285 e `typecheck` OK no worktree do PR.
 - Arquivos: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
 - Entrega: branch `fix/rodape-menu-modelo`; PR [#29](https://github.com/midrasil/henduran/pull/29) foi merged; o ajuste posterior de gap e sombra foi entregue no PR [#31](https://github.com/midrasil/henduran/pull/31).
+- Conflito do PR #31 resolvido em 2026-11-24: PR #29 e PR #30 tinham tocado `docs/context/handoff.md` e `docs/ui-ux/11-menu-inicial.md`. Preservado o estado atual da `main` (Nova Jornada, Mundos, PR #32/#34) junto com o ajuste do menu; o protótipo do menu também passou a incluir o botão Mundos para acompanhar a spec. Revalidado após o merge: `typecheck` OK, 17/17 no teste do menu e 321/321 na suíte.
 
 ## 2026-11-23 — `largura-mensagens-chat`
 
@@ -280,3 +281,35 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Decisões fechadas depois da aprovação e registradas no ADR-077: editor TipTap enxuto para a História (o responsável perguntou por uma experiência próxima a um processador de texto, e escolheu a opção recomendada), História em HTML saneado com texto puro derivado, rota do Narrador que preenche dados (a IA propõe, o motor valida) e descrição da Jornada em `journey_meta`. Pendente na implementação: licença e tamanho do TipTap, aprovação da dependência. O texto dos botões do Narrador no protótipo é só exemplo.
 - Arquivos principais: `docs/ui-ux/12-nova-jornada.md`, `docs/ui-ux/prototipos/nova-jornada.html`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`, `docs/main/decisoes/ADR-077-nova-jornada-historia-formatada-descricao-e-narrador-que-preenche.md`.
 - Entrega: PR [#28](https://github.com/midrasil/henduran/pull/28) aberto contra `main`.
+
+## 2026-11-24 — `nova-jornada` (rodada 1)
+
+- Rota: conversa com o planejador → Dev (rodada 1 de 2) → teste e validação do responsável → Entrega.
+- Resultado: assistente de Nova Jornada implementado conforme o protótipo aprovado (PR #28) e o ADR-077: 3 passos e Iniciar Jornada, Mundos salvos, Protagonista em abas com retrato e editor provisório de História, Revisão em abas, descrição da Jornada, História em HTML saneado com texto puro derivado, criação em Mundo existente, semente do Mundo. Detalhes e diferenças no handoff e na seção 9 de `12-nova-jornada.md`.
+- Decisões do responsável (2026-11-24): instalar o TipTap na rodada 2; aparência opcional com migração na rodada 2; aviso na tela se o envio do retrato falhar; botão no menu para uma lista de Mundos com criação lá dentro (precisa de protótipo).
+- Decisões do dev nesta rodada: sanitizador próprio com `html.parser`, sem dependência; `formatacao_demais` para HTML saneado acima de 40.000 caracteres; semente pedida só vale se gera exatamente o conteúdo enviado; Mundos ilegíveis ficam fora da lista com um aviso.
+- TipTap (só consultado): licença MIT nos pacotes que entrariam; `@tiptap/core` com 3,3 MB descompactado no npm; o StarterKit v3 traz `link` e `code`, que serão desligados.
+- Ocorrência: troca de branch da pasta principal durante o trabalho (PR #29); alterações recolocadas em `feat/nova-jornada` sem conflito. O dev deixou um backend de teste na porta 8765, que pode ser fechado.
+- Arquivos principais: `app/src/screens/newJourney/*`, `app/src/ui/HistoryEditor/*`, `backend/henduran/richtext.py`, `backend/henduran/services/journey_creation.py`, `backend/henduran/storage/{worlds,character,journeys}.py`, `backend/henduran/api/app.py`, migrações `journey/0005` e `world/0002`, `docs/ui-ux/12-nova-jornada.md`.
+- Entrega: PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
+
+## 2026-11-24 — `nova-jornada` (rodada 2)
+
+- Rota: conversa com o planejador → Dev (interrompido uma vez pelo limite de uso e retomado do ponto salvo) → teste do responsável → Entrega. A rodada 1 foi o PR #30.
+- Resultado: TipTap no editor da História, rota e botões do Narrador que preenche dados, aparência opcional, aviso do retrato, Mundo personalizado, Editar Jornada e modelo inicial provisório da tela de Mundos (detalhes no handoff).
+- Decisões do responsável (2026-11-24): instalar o TipTap; aparência opcional na rodada 2; aviso do retrato; botão **Mundos** no menu com lista e criação de Mundo; editar nome e descrição dentro da Jornada (opção b); Mundo editado é "Mundo personalizado" e não recebe semente; o dev cria um modelo inicial da tela de Mundos **sem protótipo**, que será feito em 2026-11-25 em outra máquina; excluir Jornada não apaga o Mundo.
+- Decisões do dev aprovadas pelo responsável: editor sob demanda (o TipTap soma 404,7 kB ao JS); `extension-character-count` removido; `world/0002` não reescrita (checksum); Sugerir Atributos e Perícias só preenche o que falta; limites do Narrador (ideia 500 caracteres, 120 s, 2 novas tentativas).
+- Ocorrências: o dev parou por limite de uso e foi retomado com o escopo completo; a porta 8765 já estava ocupada por outro backend, que o dev não tocou.
+- Pendências: protótipo de Mundos; teste do Narrador com modelo local real; TipTap em navegador real.
+- Arquivos principais: `app/src/ui/HistoryEditor/*`, `app/src/screens/newJourney/narrator.tsx`, `app/src/screens/WorldsScreen.tsx`, `app/src/screens/journey/EditJourneyDialog.tsx`, `backend/henduran/narrative/fill.py`, `backend/henduran/services/{fill,journey_edit,world_library,journey_deletion}.py`, migração `journey/0006`, `docs/ui-ux/13-mundos.md`.
+- Entrega: PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.
+- Acréscimo (2026-11-24): botão **Configurar modelo** na tela Iniciar Jornada, abrindo Modelos num diálogo sem sair da criação (pedido do responsável); `App.tsx`, `NewJourneyWizard.tsx`, `StartStep.tsx`; 321 testes passando.
+
+## 2026-11-24 — `prototipo-mundos` (registro)
+
+- Rota: conversa com o planejador → protótipo → Entrega. Só documentação.
+- Contexto: a tela de Mundos foi implementada pelo dev como modelo provisório, sem protótipo, por decisão do responsável (PR #32). Depois de vê-la funcionando, o responsável a aprovou **como está** e pediu um protótipo só para manter o registro.
+- Resultado: `docs/ui-ux/prototipos/mundos.html` reproduz a tela implementada (lista, detalhes em abas, Gerar mundo, Criar do zero, Salvar Mundo, Duplicar e editar, Excluir com os dois diálogos, Mundo em uso, Mundo personalizado, avisos); `13-mundos.md`, `10-prototipagem.md`, README e backlog atualizados. Única mudança no app: a remoção da nota "Tela provisória".
+- Decisão do responsável: remover a nota "Tela provisória" do cabeçalho; feito no app (`WorldsScreen.tsx`) e no protótipo, que reaproveita o desenho do passo Mundo da Nova Jornada, como a implementação.
+- Entrega: PR [#34](https://github.com/midrasil/henduran/pull/34) aberto contra `main`.
+- Arquivos: `docs/ui-ux/prototipos/mundos.html`, `docs/ui-ux/13-mundos.md`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`.
