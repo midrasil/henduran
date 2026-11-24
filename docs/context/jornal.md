@@ -402,3 +402,11 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Validações: typecheck limpo; vitest 326/326; pytest 701 passando e 1 pulado (reexecutados pelo planejador). Não verificado: app real, `.gguf` real, leitor de tela, DPI.
 - Em aberto: conflito entre `14-modelos.md` e `auditoria-caliope.md` sobre a lista de sugestões; seletor nativo de pasta; licenças das skills (lançamento).
 - Arquivos: `app/src/components/ModelsView.tsx`, `app/src/components/models/`, `app/src/api/engine.ts`, `backend/henduran/ai/{gguf,hardware,engine,modelhub}.py`, `backend/henduran/api/app.py`, `backend/henduran/settings.py`, `backend/README.md`, `docs/ui-ux/14-modelos.md`.
+
+## 2026-11-24 — `handoff-consolidado`
+
+- Rota: checagem a pedido do responsável → ajuste direto → Entrega. Só documentação.
+- Motivo: o `HANDOFF` foi sobrescrito pela tarefa `rodape-modelos-status` (PR #44, opencode) e perdeu o registro da frente de planejamento e prototipagem (protótipos aprovados, ADR-078 e ADR-079, skills por Cena, Modelos rodada 1, pontos de retorno).
+- Resultado: handoff reescrito juntando as duas frentes, com estado, pendências, decisões vigentes e próximos passos; corrigida a nota sobre o PR #31, que já estava mergeado.
+- Arquivos: `docs/context/handoff.md`, `docs/context/jornal.md`.
+
