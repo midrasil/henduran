@@ -30,13 +30,13 @@ Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
 - `app/src/`: navegação por telas (`navigation.ts`): `menu`, `jornadas`, `nova-jornada`, `modelos` e `jornada` (abas Chat, Ficha, Mundo, Objetivos). Telas em `screens/` (`MainMenu`, `JourneysScreen`, `newJourney/`, `journey/`), cliente de API em `api/journeys.ts`, validação do servidor em `hooks/useServerValidation.ts`, componentes novos em `ui/` (`Select`, `RadioGroup`, `FieldGroup`, `Stepper`, `TrailBoxes`), tudo na galeria. A interface não duplica regras: vem de `GET /rules/creation`. O fixture de testes `app/src/test/gameData.ts` é gerado do backend e precisa ser regerado se as regras mudarem. `app/src-tauri/`: gera o token, inicia o Python e o encerra junto, com Job Object do Windows.
 - Registro das importações: `docs/main/importacoes-caliope.md`. O `llama-server` baixado só escuta em loopback e exige chave por execução; o download do motor exige SHA-256 verificado.
 - `ai/modelhub.py` (do Caliope): busca no Hugging Face, arquivos por quantização com tamanho e licença, download retomável com SHA-256, remoção e pastas extras; rotas `/hub/*` e `/models/folders`. No app, a aba Modelos ganhou busca, painel de downloads e pastas de modelos.
-- Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`.
+- Rodar: `cd app; npm run tauri dev`. Testes: `backend\.venv\Scripts\python -m pytest` e `npm run test`; `npm run typecheck` também passou nesta tarefa.
 - Formato do evento `done` provisório (`reason`: completed ou cancelled); ADR-072 segue aberto nesse ponto.
-
-- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens.
+- **Base de UI** (`docs/ui-ux/08-guia-de-componentes.md`): `app/src/styles/` (tokens, fontes, base, shell), `app/src/ui/` (Button, Panel, Tabs, ProgressBar, ListCard, TextField, Badge, Dialog, ChatBubble, SkyBackdrop), fontes locais em `app/src/assets/fonts/` e galeria em `app/gallery.html` (só em desenvolvimento). O `docs/ui-ux/02-design-system.md` (Franuka) não vale mais para os tokens. As mensagens da Jornada usam `.msgs`/`.msg` em `app/src/screens/journey/JourneyScreen.css`, não o `ChatBubble` da galeria; desde esta tarefa ocupam 100% da coluna.
 
 ## Pendências relevantes
 
+- Conferir visualmente a largura das mensagens no app real (1024×768 e maximizado), com narração longa, fala curta e longa do jogador, ações, rolagem e streaming.
 - Testar com modelo local real: se o Aduran usa a marcação `[[propor_cena]]` só quando a ação pede Cena e se não resolve ações incertas; revisar as instruções em `backend/henduran/narrative/context.py`.
 - A rolagem da coluna da Ficha apareceu fora do topo numa captura do dev, sem reprodução (provável efeito da emulação de largura); ficou só `overflow-anchor: none`. Reavaliar se acontecer no uso real.
 - Backups da Jornada não incluem `assets\` (retrato); o backend não expõe o estado das trilhas nem o máximo de Fraturas (a interface usa `FRACTURE_SLOTS = 2`). Ambos no backlog.

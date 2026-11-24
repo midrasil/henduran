@@ -52,6 +52,7 @@
 
 ### 2.4 Mensagens e campo de escrita
 
+- As mensagens usam a **largura disponível da coluna central**; as falas do jogador ficam à direita, com o balão ajustado ao texto e limite de 100% da coluna.
 - **Ações da mensagem** só aparecem **ao passar o mouse** ou com foco do teclado: ícones pequenos num canto, com dica. **Copiar** (todas), **Regenerar** (só a última resposta do Narrador; a nova substitui a anterior) e **Continuar** (resposta interrompida). Editar e apagar ficam para depois.
 - **Campo de escrita**: começa com **uma linha** e **cresce** com o texto ou com **Shift+Enter** (até um limite, depois rola). **Enter envia.** O envio é um **ícone** dentro do campo; durante a resposta vira **parar**.
 - **Barras de rolagem** em pixel: douradas no tema escuro, marrons no pergaminho e roxas na margem do Aduran.
