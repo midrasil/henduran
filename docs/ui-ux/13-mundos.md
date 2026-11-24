@@ -1,6 +1,6 @@
 # 13 — Tela de Mundos (menu inicial)
 
-**Estado: modelo inicial PROVISÓRIO**, implementado em 2026-11-24 **sem protótipo**, por decisão explícita do responsável (exceção à regra de `10-prototipagem.md`). O protótipo será feito em **2026-11-25, em outra máquina**; depois a tela será ajustada a ele. Item no `docs/backlog.md`.
+**Estado: aprovado como está (2026-11-24).** O modelo inicial foi implementado em 2026-11-24 **sem protótipo** (exceção à regra de `10-prototipagem.md`, decisão do responsável); depois de vê-lo funcionando, o responsável o aprovou **sem pedir mudanças**, e o protótipo [`prototipos/mundos.html`](prototipos/mundos.html) foi feito **só como registro** da tela implementada. A nota "Tela provisória" do cabeçalho foi removida do app e do protótipo.
 
 ## O que existe
 
@@ -13,7 +13,7 @@
   - **Excluir**: diálogo de confirmação; Mundo usado por alguma Jornada não pode ser excluído (o diálogo explica e o botão fica desabilitado; o serviço também recusa com `mundo_em_uso`).
 - **Excluir uma Jornada não apaga mais o Mundo dela** (o Mundo continua na lista, pronto para outra Jornada).
 
-## O que o protótipo deve decidir
+## Pontos que ficam para uma revisão futura (não bloqueiam)
 
 - Layout da lista (cartões, filtro, ordenação, Mundos ilegíveis) e do detalhe.
 - O fluxo de criação: na própria tela, num diálogo ou num assistente; o que acontece com um Mundo novo não salvo ao sair.
