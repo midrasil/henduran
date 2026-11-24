@@ -300,3 +300,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrências: o dev parou por limite de uso e foi retomado com o escopo completo; a porta 8765 já estava ocupada por outro backend, que o dev não tocou.
 - Pendências: protótipo de Mundos; teste do Narrador com modelo local real; TipTap em navegador real.
 - Arquivos principais: `app/src/ui/HistoryEditor/*`, `app/src/screens/newJourney/narrator.tsx`, `app/src/screens/WorldsScreen.tsx`, `app/src/screens/journey/EditJourneyDialog.tsx`, `backend/henduran/narrative/fill.py`, `backend/henduran/services/{fill,journey_edit,world_library,journey_deletion}.py`, migração `journey/0006`, `docs/ui-ux/13-mundos.md`.
+- Entrega: PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.
