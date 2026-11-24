@@ -257,3 +257,4 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrência: `test_bloqueio_contra_outro_processo_e_liberado_ao_matar` falhou uma vez na execução completa do backend e passou isolado; teste de bloqueio entre processos, arquivo não alterado.
 - Em paralelo: protótipo da Nova Jornada em revisão, em outro worktree (não faz parte deste PR).
 - Arquivos principais: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/*`, `backend/henduran/storage/journeys.py`, `backend/henduran/api/app.py`, `docs/ui-ux/11-menu-inicial.md`.
+- Entrega: PR [#27](https://github.com/midrasil/henduran/pull/27) aberto contra `main`.

@@ -10,7 +10,7 @@ Atualizado em 2026-11-23 após a tarefa `menu-inicial` (implementação do redes
 - Diferenças em relação ao protótipo (registradas em `11-menu-inicial.md`, seção 5): rodapé "Henduran · v<versão>", estados extras do indicador (carregando o modelo, baixando o motor, erro do serviço), retrato de 64 px, estado de primeira vez sem botão "Criar a primeira Jornada", Sair só no Tauri.
 - Validações: `npm run typecheck` sem erros; `npm run test` 285/285; `pytest` 591 passando, 1 pulado e 1 falha em `test_storage.py::test_bloqueio_contra_outro_processo_e_liberado_ao_matar` na execução completa (teste de bloqueio entre processos, arquivo não alterado nesta tarefa), que passou isolado; `vite build` sem erro (relatado pelo dev). O responsável validou o menu no app.
 - Não verificado: animação em movimento em todos os períodos, DPI de 125% a 200%, leitor de tela, hover e foco dos botões em detalhe, 1024×768 do Tauri com barra de título.
-- Branch: `feat/menu-inicial`; PR aberto contra `main` (link no jornal).
+- Branch: `feat/menu-inicial`; PR [#27](https://github.com/midrasil/henduran/pull/27) aberto contra `main`.
 - **Em paralelo, ainda não entregue:** o protótipo da **Nova Jornada** (`docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html`) está em revisão (Mundo e Protagonista revisados; falta a Revisão) num worktree separado, `../henduran-proto`, branch `docs/prototipo-nova-jornada`, sem commit. Decisões em aberto dele: formato da História (hoje texto simples de 4.000 caracteres; o editor produz formatação) e a rota do Narrador para preencher dados.
 - Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
 
