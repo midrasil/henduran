@@ -443,6 +443,29 @@ svg.px { shape-rendering: crispEdges; display: block; }
 .controw { display: flex; gap: 8px; margin-top: 8px; } .msg.cont .btn { background: var(--parch-300); color: var(--brown-900); border: 3px solid var(--parch-500); } .msg.cont .btn.ghost { background: none; border-color: transparent; text-decoration: underline dotted; }
 .field.answering { box-shadow: 0 0 0 3px var(--purple-500); }
 .contfs { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; } .contop { display: flex; gap: 10px; align-items: flex-start; background: var(--ink-800); border: 3px solid var(--ink-600); padding: 8px 12px; } .contop span { display: grid; gap: 2px; } .contop small { color: var(--muted); font-size: var(--fs-xs); } .contop i { color: var(--gold-200); font-style: normal; }
+
+/* ---------------------------------------- Diário do jogador (anotações, o que sei, NPCs) */
+.pbtns { display: inline-flex; gap: 4px; align-items: center; } .stp-h .ficha { width: auto; margin-left: auto; padding: 0 8px; font-size: 11px; color: var(--gold-200); }
+.dlg.wide.xl { width: min(1120px, 100%); height: min(700px, 94%); }
+.ddiary svg { width: 44px; height: 44px; color: var(--gold-200); } .dhelp, .dsm { font-family: var(--font-serif); font-size: var(--fs-md); color: var(--brown-700); margin: 0; line-height: 1.35; } .dsm { font-size: var(--fs-sm); }
+.dform { display: grid; gap: 6px; } .dform textarea { width: 100%; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 6px 10px; font-family: var(--font-serif); font-size: var(--fs-md); color: var(--brown-900); resize: vertical; } .dform textarea:focus { outline: none; border-color: var(--brown-700); } .dform .btn { justify-self: start; } .drow { display: flex; gap: 8px; }
+.fs-main .btn { background: var(--parch-300); color: var(--brown-900); border: 3px solid var(--parch-500); box-shadow: 2px 2px 0 var(--brown-700); } .fs-main .btn.primary { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); } .fs-main .btn.ghost { background: none; box-shadow: none; border-color: transparent; text-decoration: underline dotted; }
+.dnotes, .dfacts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .dnotes li, .dfacts li { background: var(--parch-100); border: 3px solid var(--parch-500); padding: 8px 12px; display: grid; gap: 4px; font-family: var(--font-serif); font-size: var(--fs-md); } .dnotes p { margin: 0; } .dat, .dsc { font: 400 11px/1 var(--font-pixel); color: var(--brown-700); font-style: normal; }
+.dtags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .dtag { font: 600 11px/1 var(--font-pixel); font-style: normal; padding: 3px 7px; background: var(--parch-300); border: 2px solid var(--parch-500); color: var(--brown-900); } .dtag.viu, .dtag.here { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); } .dtag.ouviu { background: #e6d3a0; } .dtag.suspeita { border-style: dashed; } .dtag.mentira { background: var(--red-400); color: var(--ink-950); }
+.dnpcs { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 14px; align-items: start; } .dfil { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; } .chip2d { background: var(--parch-300); border: 2px solid var(--parch-500); padding: 3px 10px; font-size: var(--fs-xs); color: var(--brown-900); min-height: 30px; } .chip2d.on { background: var(--purple-600); color: var(--gold-200); border-color: var(--gold-600); }
+.dnlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; } .dnlist button { width: 100%; text-align: left; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 8px 10px; display: grid; gap: 2px; color: var(--brown-900); } .dnlist button.on { border-color: var(--purple-600); box-shadow: 0 0 0 3px var(--gold-400); } .dnlist b { font-family: var(--font-serif); font-size: var(--fs-md); } .dnlist small { color: var(--brown-700); font-size: 12px; }
+.dndetail { display: grid; gap: 8px; background: var(--parch-100); border: 3px solid var(--parch-500); padding: 12px 14px; font-family: var(--font-serif); font-size: var(--fs-md); } .nhead { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; } .nrole { color: var(--brown-700); font-size: var(--fs-sm); } .ntags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ndl { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 2px 12px; margin: 0; } .ndl dt { color: var(--brown-700); font-style: italic; } .ndl dd { margin: 0; } .dul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; } .chipsd { display: flex; gap: 6px; flex-wrap: wrap; } .chipsd span { background: var(--parch-300); border: 2px solid var(--parch-500); padding: 2px 8px; font-family: var(--font-pixel); font-size: var(--fs-xs); } .dquote { margin: 0; font-style: italic; border-left: 4px solid var(--purple-500); padding-left: 10px; } .dunk { color: var(--parch-500); font-style: italic; }
+.dsecret { display: grid; gap: 6px; justify-items: start; background: var(--parch-200); border: 3px dashed var(--brown-700); padding: 8px 12px; } .dsecret.open { border-style: solid; border-color: var(--red-800); } .dsecret small { color: var(--red-800); font-family: var(--font-pixel); font-size: 12px; } .dsecret > span { color: var(--brown-700); font-size: var(--fs-sm); }
+@media (max-width: 900px) { .dnpcs { grid-template-columns: 1fr; } }
+
+.ntabs { display: flex; gap: 4px; border-bottom: 3px solid var(--parch-500); margin: 2px 0 4px; } .ntabs button { background: var(--parch-300); border: 3px solid var(--parch-500); border-bottom: 0; padding: 6px 16px; min-height: 38px; color: var(--brown-900); font-weight: 600; margin-bottom: -3px; } .ntabs button[aria-selected="true"] { background: var(--parch-100); border-color: var(--brown-700); }
+.stline, .stgd { display: grid; gap: 6px; } .stgd { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .stcell, .stline { background: var(--parch-200); border: 3px solid var(--parch-500); padding: 6px 10px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; } .stcell b, .stline b { font-family: var(--font-pixel); font-size: var(--fs-lg); color: var(--purple-800); } .stlab { font-family: var(--font-serif); color: var(--brown-700); }
+
+.dshead { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; } .mini.eye { width: 32px; height: 32px; color: var(--brown-700); background: var(--parch-300); border: 2px solid var(--parch-500); } .mini.eye:hover { border-color: var(--brown-700); } .mini.eye svg { width: 18px; height: 18px; }
+.dsecret { padding: 6px 10px; gap: 4px; } .fs-main .btn.danger { background: var(--red-800); color: var(--ivory-100); border-color: var(--red-400); }
+
+.str.know { grid-template-columns: 5.2em minmax(0, 1fr); } .stv .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; font-size: var(--fs-xs); } .kitem { display: block; } .kitem + .kitem { margin-top: 2px; } .stfromf { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-family: var(--font-pixel); } .stv .linkish, .stfromf .linkish { background: none; border: 0; padding: 0; color: var(--gold-200); text-decoration: underline dotted; cursor: pointer; font: inherit; }
 </style>
 
 <header class="top" id="top">
@@ -814,7 +837,7 @@ function trackHTML(kind) {
 function attrsHTML() { return `<div class="attrs">${ATTRS.map(([n, v, g]) => `<div class="attr ${g === "esp" ? "esp" : ""}"><span class="gem">${v}</span><span><span class="an">${n}</span>${pips(v)}</span></div>`).join("")}</div>`; }
 function skillsHTML(all, two) { const list = all ? SKILLS : SKILLS.filter((s) => s[2] > 0); return `<ul class="skills ${two ? "two" : ""}">${list.map(([n, a, v]) => `<li class="${v ? "" : "zero"}"><span class="sn">${n}</span><span class="sa">${AB[a]}</span>${pips(v)}</li>`).join("")}</ul>`; }
 function renderSheet() {
-  $("#sheet").innerHTML = `<div class="phead"><h2>Ficha</h2><button class="mini" data-open="ficha" data-tip="Ficha completa" aria-label="Abrir a ficha completa" style="color:var(--gold-200)">${IC.expand}</button></div><div class="scroll">
+  $("#sheet").innerHTML = `<div class="phead"><h2>Ficha</h2><span class="pbtns"><button class="mini" data-d="open" data-tip="Diário" aria-label="Abrir o diário" style="color:var(--gold-200)">${IC.diary}</button><button class="mini" data-open="ficha" data-tip="Ficha completa" aria-label="Abrir a ficha completa" style="color:var(--gold-200)">${IC.expand}</button></span></div><div class="scroll">
     <div class="hero">${portraitHTML(false)}<div><div class="name">Ilsa de Vel</div><div class="concept">Barqueira do pântano em busca do assassino do irmão</div></div></div>
     <div class="sec"><span class="sec-title">Trilhas</span>${trackHTML("v")}${trackHTML("w")}</div>
     <div class="sec"><span class="sec-title">Atributos</span>${attrsHTML()}</div>
@@ -966,6 +989,154 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("#laye
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderTop(); renderStage(); }, 120); });
 $('.proto .seg[data-k="period"]').innerHTML = PERIODS.map((p) => `<button data-v="${p}">${PLABEL[p]}</button>`).join("");
 
+
+/* ====================================================== Diário do jogador: anotações, o que sei e NPCs que conheço */
+IC.eye = L(["........", "..####..", ".#....#.", "#..##..#", "#..##..#", ".#....#.", "..####..", "........"]);
+IC.eyeoff = L(["#.......", ".#.###..", "..#...#.", "#..#.#.#", "#.#.#..#", ".#..#..#", "..####.#", ".......#"]);
+const eyeBtn = (act, id, kind, open, label) => `<button class="mini eye" data-d="${act}" data-id="${id}" data-k="${kind}" data-tip="${label}" aria-label="${label}">${open ? IC.eyeoff : IC.eye}</button>`;
+IC.diary = L([".#######", "##.....#", "#.###..#", "#......#", "#.###..#", "#......#", "########", "........"]);
+const SRC_TAG = { viu: "viu pessoalmente", ouviu: "ouviu dizer", suspeita: "suspeita", mentira: "foi dito, pode ser mentira" };
+S.diary = { tab: "notas", npc: "tab", filter: "todos", reveal: {}, editNote: null, notes: [
+  { id: 1, t: "Quem mandou a carta com o selo da garça? Só o irmão usava aquele selo.", at: "Dia 1 · Noite" },
+  { id: 2, t: "Os dois homens de capa cinzenta do canto: um deles perguntou por mim no cais. Seguir quando saírem?", at: "Dia 1 · Noite" },
+  { id: 3, t: "Pagar o caldo do rapaz antes que ele fuja.", at: "Dia 1 · Noite" },
+] };
+S.know = [
+  { g: "A carta", facts: [{ t: "O selo é a garça de três penas, a mesma que o irmão de Ilsa usava nas cartas da guarnição.", src: "viu", scene: 3 }, { t: "Um rapaz magro e encharcado a trouxe até a taverna e não quis dizer quem o mandou.", src: "viu", scene: 3 }] },
+  { g: "Os homens de capa cinzenta", facts: [{ t: "Alguém de capa cinzenta perguntou por Ilsa no cais.", src: "ouviu", scene: 2 }, { t: "Dois deles estão na taverna agora e pararam de conversar quando a carta chegou.", src: "viu", scene: 3 }, { t: "Podem ter ligação com a morte do irmão.", src: "suspeita", scene: 3 }] },
+  { g: "Norilunde", facts: [{ t: "O Corvo Manco é uma taverna perto do cais, de um taberneiro resmungão.", src: "viu", scene: 3 }, { t: "Os barqueiros do cais pagam em abrigo quando falta dinheiro.", src: "ouviu", scene: 2 }] },
+];
+S.npcs = [
+  { id: "tab", name: "Osvaldo Breu", role: "Taberneiro do Corvo Manco", here: true, known: "bem", looks: "Corpulento, avental manchado, bigode grisalho.", where: "Atrás do balcão da taverna.",
+    traits: ["Resmungão", "Prático", "Desconfiado de forasteiros"], quirks: ["Limpa o mesmo copo enquanto fala", "Fala baixo quando o assunto é dinheiro"], line: "“Aqui ninguém come de graça, mas ninguém passa fome.”", never: "Expulsar quem paga.",
+    wants: "Manter a taverna aberta e longe de confusão.", fears: "A guarda fechar o Corvo Manco.", secrets: ["Vende o que ouve no balcão aos homens de capa cinzenta."],
+    knows: [{ t: "Ilsa chegou ontem e dormiu no quarto dos fundos.", src: "viu" }, { t: "Os homens de capa cinzenta pagam bem e não perguntam o preço.", src: "viu" }], remembers: [{ t: "Ilsa pagou a primeira noite adiantado.", scene: 3 }],
+    att: { label: "Neutra", note: "Tolera Ilsa enquanto ela pagar." }, rel: ["Rapaz da carta: o conhece de vista", "Homens de capa cinzenta: bons clientes"], st: { onde: "Atrás do balcão", humor: "resmungão", carrega: "um pano úmido", vivo: "vivo" }, myNote: "Parece saber mais do que diz." },
+  { id: "rapaz", name: "Tibo, o rapaz da carta", role: "Mensageiro", here: true, known: "bem", looks: "Magro, encharcado, não deve ter mais de quinze anos.", where: "Anda entre o cais e as tavernas.",
+    traits: ["Assustado", "Esperto", "Faminto"], quirks: ["Come olhando para a porta", "Aperta a bainha da camisa quando mente"], line: "“Eu só entrego, moça. Não pergunto de quem.”", never: "Trair quem o alimentou.",
+    wants: "Ser pago e sumir da cidade.", fears: "Os homens que o mandaram.", secrets: ["Foi pago por um dos homens de capa cinzenta e sabe o nome dele."],
+    knows: [{ t: "A carta foi lacrada no Porto Velho.", src: "viu" }], remembers: [{ t: "Ilsa lhe deu um caldo quente antes de pegar a carta.", scene: 3 }],
+    att: { label: "Amigável", note: "Está grato pelo caldo." }, rel: ["Homens de capa cinzenta: tem medo"], st: { onde: "À mesa de Ilsa", humor: "assustado", carrega: "tigela de caldo", vivo: "vivo" }, myNote: "" },
+  { id: "maro", name: "Maro, o barqueiro", role: "Barqueiro do cais", here: false, known: "bem", looks: "Braços fortes, boné de lã, cheira a piche.", where: "No cais de Norilunde.",
+    traits: ["Direto", "Justo", "Orgulhoso"], quirks: ["Mede as pessoas dos pés à cabeça", "Cospe antes de fechar negócio"], line: "“Braço bom eu pago em teto e sopa.”", never: "Tirar proveito de quem está sem nada.",
+    wants: "Tripulação confiável.", fears: "A maré virar contra o negócio.", secrets: ["Já viu o homem de capa cinzenta que perguntou por Ilsa e sabe onde ele dorme."],
+    knows: [{ t: "Um homem de capa cinzenta rondou o cais antes de Ilsa chegar.", src: "viu" }], remembers: [{ t: "Ilsa ajudou a descarregar uma barca em troca de abrigo.", scene: 2 }],
+    att: { label: "Amigável", note: "Gostou do trabalho de Ilsa." }, rel: ["Taberneiro Osvaldo: freguês antigo"], st: { onde: "No cais", humor: "satisfeito", carrega: "um cabo de amarração", vivo: "vivo" }, myNote: "Pode saber onde o homem de capa cinzenta dorme." },
+  { id: "capa", name: "Homem de capa cinzenta", role: "Desconhecido", here: false, known: "pouco", looks: "Capa cinzenta, rosto escondido pelo capuz.", where: "Visto no cais e na taverna.", traits: null, quirks: null, line: null, never: null, wants: null, fears: null, secrets: null,
+    knows: null, remembers: [{ t: "Perguntou por Ilsa no cais e depois apareceu na taverna.", scene: 2 }], att: { label: "Desconhecida", note: "" }, rel: [], st: null, myNote: "" },
+];
+/* Stats block do NPC (valores de exemplo; a ficha de regras só será definida na fatia 3 do Astra) */
+const ATTR_ORDER = ["Força", "Agilidade", "Vigor", "Carisma", "Determinação", "Astúcia"];
+const STATS = {
+  tab: { patamar: "Capanga", attrs: [2, 1, 3, 2, 2, 3], skills: [["Persuadir", 2], ["Perceber", 3], ["Intimidar", 1]], vida: 5, vontade: 4, found: { patamar: "ouviu", Vigor: "viu", Perceber: "viu" } },
+  rapaz: { patamar: "Capanga", attrs: [1, 3, 1, 2, 2, 3], skills: [["Furtividade", 3], ["Atletismo", 2], ["Mentir", 2]], vida: 3, vontade: 4, found: {} },
+  maro: { patamar: "Par", attrs: [4, 2, 3, 2, 3, 2], skills: [["Atletismo", 3], ["Lutar", 2], ["Navegar", 3]], vida: 6, vontade: 4, found: { patamar: "viu", Força: "viu", Vigor: "viu", Atletismo: "viu", Navegar: "ouviu" } },
+  capa: { patamar: "Veterano", attrs: [3, 3, 3, 2, 4, 3], skills: [["Lutar", 3], ["Furtividade", 3], ["Intimidar", 2]], vida: 7, vontade: 6, found: {} },
+};
+S.diary.ntab = "narr"; S.diary.revealStats = {};
+const npcById = (id) => S.npcs.find((n) => n.id === id);
+function npcStats(n) {
+  const st = STATS[n.id], rev = !!S.diary.revealStats[n.id], known = (k) => (rev ? (st.found[k] || "spoiler") : st.found[k]);
+  const val = (k, v) => { const f = known(k); return f ? `<b>${v}</b><i class="dtag ${f === "spoiler" ? "mentira" : f}">${f === "spoiler" ? "spoiler" : SRC_TAG[f]}</i>` : `<span class="dunk">?</span>`; };
+  const nfound = Object.keys(st.found).length;
+  return `<p class="dhelp">${nfound ? `Você descobriu ${nfound} ${nfound === 1 ? "informação" : "informações"} sobre as capacidades de ${esc2(n.name.split(",")[0])}. O resto continua escondido, como na história.` : `Você ainda não descobriu nada sobre as capacidades de ${esc2(n.name.split(",")[0])}. Isso se aprende observando a pessoa em ação, ouvindo falar dela ou por outros meios na história.`}</p>
+    <span class="sec-title">Patamar</span><div class="stline"><span class="stlab">Patamar</span>${val("patamar", st.patamar)}</div>
+    <span class="sec-title">Atributos</span><div class="stgd">${ATTR_ORDER.map((a, i) => `<div class="stcell"><span class="stlab">${a}</span>${val(a, st.attrs[i])}</div>`).join("")}</div>
+    <span class="sec-title">Perícias</span><div class="stgd">${st.skills.map(([a, v]) => `<div class="stcell"><span class="stlab">${a}</span>${val(a, v)}</div>`).join("")}</div>
+    <span class="sec-title">Trilhas</span><div class="stgd"><div class="stcell"><span class="stlab">Vida</span>${val("Vida", st.vida)}</div><div class="stcell"><span class="stlab">Vontade</span>${val("Vontade", st.vontade)}</div></div>
+    <div class="dsecret ${rev ? "open" : ""}"><span class="dshead"><b>Stats completos</b>${rev ? eyeBtn("hidestats", n.id, "stats", true, "Esconder os stats de novo") : eyeBtn("askreveal", n.id, "stats", false, "Revelar os stats (spoiler)")}</span>${rev ? `<small>Spoiler: o que você ainda não descobriu aparece marcado. Na história, só o Narrador sabe.</small>` : `<span>Escondidos de você até descobrir, como os segredos.</span>`}</div>
+    <p class="dsm">Dados de exemplo: a ficha de regras do NPC (patamar, atributos e o que couber no orçamento, sem Capacidades) será definida na fatia 3 do Astra. O Aduran vê tudo.</p>`;
+}
+function diaryNotas() {
+  return `<h4>Anotações</h4><p class="dhelp">Seu diário é seu: só você escreve aqui. O Narrador não lê estas anotações, a menos que você as comente no chat.</p>
+    <form class="dform" data-dform="note"><textarea id="dnote" rows="3" placeholder="Anote uma pista, uma dúvida ou um plano…" aria-label="Nova anotação"></textarea><button class="btn primary" type="submit">Salvar anotação</button></form>
+    <ul class="dnotes">${S.diary.notes.map((n) => `<li><span class="dat">${n.at}</span>${S.diary.editNote === n.id ? `<form class="dform" data-dform="edit" data-id="${n.id}"><textarea id="dnoteedit" rows="3" aria-label="Editar anotação">${esc2(n.t)}</textarea><span class="drow"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" data-d="editcancel">Cancelar</button></span></form>` : `<p>${esc2(n.t)}</p><span class="drow"><button class="btn sm" data-d="editnote" data-id="${n.id}">Editar</button><button class="btn sm ghost" data-d="delnote" data-id="${n.id}">Apagar</button></span>`}</li>`).join("") || `<li><p>Nenhuma anotação ainda.</p></li>`}</ul>`;
+}
+function diarySei() {
+  return `<h4>O que sei</h4><p class="dhelp">O que Ilsa descobriu até agora, com a origem de cada informação. É o que a <b>personagem</b> sabe; o Narrador pode saber mais.</p>
+    ${S.know.map((g) => `<span class="sec-title">${g.g}</span><ul class="dfacts">${g.facts.map((f) => `<li><span>${esc2(f.t)}</span><span class="dtags"><i class="dtag ${f.src}">${SRC_TAG[f.src]}</i><i class="dsc">Cena ${f.scene}</i></span></li>`).join("")}</ul>`).join("")}`;
+}
+function npcNarr(n) {
+  const unk = (x) => `<span class="dunk">Você ainda não sabe.</span>`, rev = !!S.diary.reveal[n.id], here = n.here;
+  const sec = (t, inner) => `<span class="sec-title">${t}</span>${inner}`;
+  return `    ${sec("Identidade", `<dl class="ndl"><dt>Aparência</dt><dd>${esc2(n.looks)}</dd><dt>Costuma estar</dt><dd>${esc2(n.where)}</dd></dl>`)}
+    ${sec("Personalidade e voz", n.traits ? `<div class="chipsd">${n.traits.map((t) => `<span>${esc2(t)}</span>`).join("")}</div><ul class="dul">${n.quirks.map((q) => `<li>${esc2(q)}</li>`).join("")}</ul><p class="dquote">${esc2(n.line)}</p><p class="dsm"><b>Nunca faria:</b> ${esc2(n.never)}</p>` : unk())}
+    ${sec("Motivações", n.wants ? `<dl class="ndl"><dt>Quer</dt><dd>${esc2(n.wants)}</dd><dt>Teme</dt><dd>${esc2(n.fears)}</dd></dl>
+      <div class="dsecret ${rev ? "open" : ""}"><span class="dshead"><b>Segredos</b>${rev ? eyeBtn("hide", n.id, "secrets", true, "Esconder os segredos de novo") : eyeBtn("askreveal", n.id, "secrets", false, "Revelar os segredos (spoiler)")}</span>${rev ? `<ul class="dul">${n.secrets.map((x) => `<li>${esc2(x)}</li>`).join("")}</ul><small>Spoiler: só o Narrador sabe disto na história.</small>` : `<span>Escondidos de você, como na história. O Narrador conhece.</span>`}</div>` : unk())}
+    ${sec("O que sabe e lembra", `${n.knows ? `<ul class="dfacts">${n.knows.map((f) => `<li><span>${esc2(f.t)}</span><span class="dtags"><i class="dtag ${f.src}">${SRC_TAG[f.src]}</i></span></li>`).join("")}</ul>` : unk()}<p class="dsm"><b>Lembra de você:</b></p>${n.remembers.length ? `<ul class="dfacts">${n.remembers.map((m) => `<li><span>${esc2(m.t)}</span><span class="dtags"><i class="dsc">Cena ${m.scene}</i></span></li>`).join("")}</ul>` : `<span class="dunk">Ainda não lembra de nada.</span>`}`)}
+    ${sec("Relações", `<dl class="ndl"><dt>Com você</dt><dd><b>${esc2(n.att.label)}</b>${n.att.note ? ` · ${esc2(n.att.note)}` : ""}</dd></dl>${n.rel.length ? `<ul class="dul">${n.rel.map((r) => `<li>${esc2(r)}</li>`).join("")}</ul>` : ""}`)}
+    ${sec("Estado atual", n.st ? `<dl class="ndl"><dt>Onde</dt><dd>${esc2(n.st.onde)}</dd><dt>Humor</dt><dd>${esc2(n.st.humor)}</dd><dt>Carrega</dt><dd>${esc2(n.st.carrega)}</dd><dt>Situação</dt><dd>${esc2(n.st.vivo)}</dd></dl>` : unk())}
+    ${sec("Suas anotações sobre este personagem", `<form class="dform" data-dform="npcnote" data-id="${n.id}"><textarea rows="2" aria-label="Suas anotações sobre ${esc2(n.name)}" data-npcnote="${n.id}">${esc2(n.myNote)}</textarea><button class="btn sm" type="submit">Salvar</button></form>`)}`;
+}
+function npcDetail(n) {
+  const tab = S.diary.ntab;
+  return `<div class="nhead"><div><h4>${esc2(n.name)}</h4><span class="nrole">${esc2(n.role)}</span></div><span class="ntags">${n.here ? `<i class="dtag here">Nesta Cena</i>` : `<i class="dtag">Fora da Cena</i>`}${n.known === "pouco" ? `<i class="dtag suspeita">Pouco conhecido</i>` : ""}</span></div><div class="ntabs" role="tablist"><button role="tab" aria-selected="${tab === "narr"}" data-d="ntab" data-k="narr">Narrativa</button><button role="tab" aria-selected="${tab === "stats"}" data-d="ntab" data-k="stats">Stats</button></div>${tab === "stats" ? npcStats(n) : npcNarr(n)}`;
+}
+function diaryNpcs() {
+  const f = S.diary.filter, list = S.npcs.filter((n) => f === "todos" || (f === "cena" && n.here) || (f === "fora" && !n.here));
+  const cur = npcById(S.diary.npc) || list[0] || S.npcs[0];
+  return `<h4>NPCs que conheço</h4><p class="dhelp">Quem Ilsa já encontrou, com o que ela sabe sobre cada um. Os NPCs são criados pelo Narrador conforme a história; você pode anotar e corrigir.</p>
+    <div class="dnpcs"><div><div class="dfil" role="group" aria-label="Filtro">${[["todos", "Todos"], ["cena", "Nesta Cena"], ["fora", "Fora da Cena"]].map(([k, l]) => `<button class="chip2d ${f === k ? "on" : ""}" aria-pressed="${f === k}" data-d="filter" data-k="${k}">${l}</button>`).join("")}</div>
+        <ul class="dnlist">${list.map((n) => `<li><button class="${cur.id === n.id ? "on" : ""}" data-d="npc" data-id="${n.id}"><b>${esc2(n.name)}</b><small>${esc2(n.role)}</small>${n.here ? `<i class="dtag here">Nesta Cena</i>` : ""}</button></li>`).join("") || `<li><small>Ninguém neste filtro.</small></li>`}</ul></div>
+      <div class="dndetail">${cur ? npcDetail(cur) : ""}</div></div>
+    <p class="dsm">O Aduran, o narrador geral, tem acesso a todas as fichas, inclusive aos segredos; o Narrador da Cena recebe só as fichas de quem está presente.</p>`;
+}
+function askReveal(kind, id) {
+  const n = npcById(id), what = kind === "secrets" ? "os segredos" : "os stats", first = n.name.split(",")[0];
+  let l2 = $("#layer2"); if (!l2) { l2 = document.createElement("div"); l2.id = "layer2"; document.body.appendChild(l2); }
+  l2.innerHTML = `<div class="dlg-back confirm2" data-c2="back" style="z-index:70"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="c2t" aria-describedby="c2d" style="width:min(460px,100%);height:auto"><h3 id="c2t">Tem certeza?</h3>
+    <div class="in" id="c2d"><p style="margin:0;font-family:var(--font-serif);font-size:var(--fs-md)">Revelar ${what} de ${esc2(first)} é <b>spoiler</b>: na história, só o Narrador sabe disso. Depois de ler, não dá para desler, mesmo que você esconda de novo.</p>
+    <div class="row"><button class="btn" id="c2no" data-c2="no">Cancelar</button><button class="btn danger" data-c2="yes" data-k="${kind}" data-id="${id}">Revelar mesmo assim</button></div></div></div></div>`;
+  $("#c2no").focus();
+}
+const closeAsk = () => { const l = $("#layer2"); if (l) l.innerHTML = ""; };
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-c2]"); if (!t) return;
+  if (t.dataset.c2 === "back" && e.target !== t) return;
+  e.stopPropagation(); e.preventDefault();
+  if (t.dataset.c2 === "yes") { if (t.dataset.k === "secrets") S.diary.reveal[t.dataset.id] = true; else S.diary.revealStats[t.dataset.id] = true; closeAsk(); openDiary(); }
+  else closeAsk();
+}, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("#layer2") && $("#layer2").innerHTML) { e.stopPropagation(); closeAsk(); } }, true);
+const DTABS = [["notas", "Anotações", IC.tabGoal], ["sei", "O que sei", IC.tabConv], ["npcs", "NPCs que conheço", IC.tabDesc]];
+function openDiary(tab, npc) {
+  if (tab) S.diary.tab = tab; if (npc) { if (S.diary.npc !== npc) S.diary.ntab = "narr"; S.diary.npc = npc; S.diary.filter = "todos"; }
+  const main = S.diary.tab === "notas" ? diaryNotas() : S.diary.tab === "sei" ? diarySei() : diaryNpcs();
+  const keep = $(".fs-main"), top = keep ? keep.scrollTop : 0;
+  $("#layer").innerHTML = `<div class="dlg-back" data-dlg="back"><div class="dlg wide xl" role="dialog" aria-modal="true" aria-label="Diário">
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Diário de Ilsa<button class="mini" data-dlg="close" aria-label="Fechar" style="color:var(--gold-200)">✕</button></h3>
+    <div class="fsheet"><div class="fs-side"><span class="ddiary">${IC.diary}</span><div><div class="fs-name">Diário</div><div class="fs-concept">Anotações, o que Ilsa sabe e quem ela conhece</div></div>
+      <div class="fs-tabs" role="tablist" aria-orientation="vertical">${DTABS.map(([id, l, ic]) => `<button role="tab" aria-selected="${S.diary.tab === id}" data-d="tab" data-k="${id}">${ic}${l}</button>`).join("")}</div></div>
+      <div class="fs-main" role="tabpanel">${main}</div></div></div></div>`;
+  const m = $(".fs-main"); if (m && keep) m.scrollTop = top;
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-d]"); if (!t) return;
+  e.stopPropagation(); e.preventDefault(); const a = t.dataset.d, id = t.dataset.id;
+  if (a === "open") openDiary();
+  else if (a === "tab") openDiary(t.dataset.k);
+  else if (a === "sei") openDiary("sei");
+  else if (a === "npc") openDiary("npcs", id);
+  else if (a === "filter") { S.diary.filter = t.dataset.k; openDiary(); }
+  else if (a === "npcstats") { S.diary.ntab = "stats"; S.diary.npc = id; S.diary.filter = "todos"; S.diary.tab = "npcs"; openDiary(); }
+  else if (a === "askreveal") askReveal(t.dataset.k, id);
+  else if (a === "ntab") { S.diary.ntab = t.dataset.k; openDiary(); }
+  else if (a === "revstats") { S.diary.revealStats[id] = true; openDiary(); }
+  else if (a === "hidestats") { S.diary.revealStats[id] = false; openDiary(); }
+  else if (a === "reveal") { S.diary.reveal[id] = true; openDiary(); }
+  else if (a === "hide") { S.diary.reveal[id] = false; openDiary(); }
+  else if (a === "editnote") { S.diary.editNote = Number(id); openDiary(); }
+  else if (a === "editcancel") { S.diary.editNote = null; openDiary(); }
+  else if (a === "delnote") { S.diary.notes = S.diary.notes.filter((n) => n.id !== Number(id)); openDiary(); }
+}, true);
+document.addEventListener("submit", (e) => {
+  const f = e.target.closest("[data-dform]"); if (!f) return; e.preventDefault(); e.stopPropagation();
+  const k = f.dataset.dform, v = f.querySelector("textarea").value.trim();
+  if (k === "note") { if (!v) return; S.diary.notes.unshift({ id: Date.now(), t: v, at: "Dia 1 · Noite" }); openDiary(); toast("Anotação salva"); }
+  else if (k === "edit") { if (v) S.diary.notes.find((n) => n.id === Number(f.dataset.id)).t = v; S.diary.editNote = null; openDiary(); }
+  else if (k === "npcnote") { npcById(f.dataset.id).myNote = v; toast("Anotação salva"); }
+}, true);
+
 /* ====================================================== Estado da Cena e dúvida de continuidade (ADR-078, proposta) */
 const esc2 = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 IC.doubt = L(["..####..", ".#....#.", "......#.", "....##..", "...#....", "........", "...#....", "........"]);
@@ -987,8 +1158,13 @@ S.dbt = { status: "aberta", show: false, q: "Ilsa está de pé ou sentada?", why
 S.doubts = [{ scene: 2, q: "O homem de capa cinzenta era o mesmo que perguntou por Ilsa no cais?", ans: "Sim, o mesmo.", by: "jogador", at: "Dia 1 · Entardecer" }];
 const CONTMODE = { sempre: "Sempre perguntar", contradicao: "Só em contradição clara", nunca: "Nunca (o Narrador escolhe e segue)" };
 const nowLabel = () => "Dia 1 · Noite";
+/* "Sabe" não é um campo do Quadro: só leva à ficha do NPC (ou ao "O que sei" do diário, no caso do jogador) */
+function knowsRow(p) {
+  return `<div class="str know"><span class="stk">Sabe</span><span class="stv"><button class="linkish" data-d="${p.you ? "sei" : "npc"}" data-id="${p.id}">${p.you ? "ver no diário" : "ver na ficha"}</button></span></div>`;
+}
 function personHTML(p) {
-  return `<div class="stp"><div class="stp-h"><b>${esc2(p.name)}</b>${p.you ? `<span class="stag">você</span>` : ""}</div>${Object.entries(p.f).map(([k, v]) => {
+  return `<div class="stp"><div class="stp-h"><b>${esc2(p.name)}</b>${p.you ? `<span class="stag">você</span>` : `<button class="mini ficha" data-d="npc" data-id="${p.id}" data-tip="Ver a ficha no diário" aria-label="Ver a ficha de ${esc2(p.name)} no diário">ver ficha</button>`}</div>${Object.entries(p.f).map(([k, v]) => {
+    if (k === "Sabe") return knowsRow(p);
     const key = `${p.id}|${k}`, editing = S.stEdit === key, chg = p.changed.includes(k), fixed = (p.fixed || []).includes(k);
     return `<div class="str ${chg ? "chg" : ""}"><span class="stk">${k}</span>${editing ? `<form class="stedit" data-cform="${key}"><input id="stin" value="${esc2(v)}" maxlength="80" aria-label="${k} de ${esc2(p.name)}"><button class="mini ok" type="submit" aria-label="Salvar">✓</button><button class="mini" type="button" data-c="stcancel" aria-label="Cancelar">✕</button></form>`
       : `<span class="stv">${esc2(v)}${chg ? ` <i class="stnew">novo</i>` : ""}${fixed ? ` <i class="stfix">corrigido por você</i>` : ""}</span><button class="mini" data-c="stedit" data-key="${key}" data-tip="Isso está errado? Corrija" aria-label="Corrigir ${k} de ${esc2(p.name)}">${IC.pen}</button>`}</div>`;
@@ -1078,7 +1254,8 @@ document.addEventListener("submit", (e) => {
 document.addEventListener("change", (e) => { if (e.target.name === "contmode") S.contMode = e.target.value; });
 $("#cogmenu").insertAdjacentHTML("afterbegin", `<button role="menuitem" data-c="contmenu">Continuidade<small>Perguntas do Narrador: ${CONTMODE.contradicao.toLowerCase()}</small></button>`);
 {
-  const box = $("#protobox"), d = document.createElement("span");
+  const box = $("#protobox"), dd = document.createElement("span"); dd.innerHTML = `Diário <span class="seg"><button data-d="tab" data-k="notas">Anotações</button><button data-d="tab" data-k="sei">O que sei</button><button data-d="npc" data-id="tab">NPC</button><button data-d="npc" data-id="capa">NPC pouco conhecido</button><button data-d="npcstats" data-id="maro">Stats parcial</button><button data-d="npcstats" data-id="tab">Stats (pouco)</button></span>`; box.prepend(dd);
+  const d = document.createElement("span");
   d.innerHTML = `Dúvida de continuidade <span class="seg"><button data-c="dset" data-v="aberta">Aberta</button><button data-c="dset" data-v="respondida">Respondida</button><button data-c="dset" data-v="reaberta">Respondida e reaberta</button></span>`;
   box.prepend(d);
 }

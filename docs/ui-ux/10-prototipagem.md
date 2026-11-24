@@ -31,7 +31,7 @@ Ajustes pequenos numa tela já aprovada (um botão, um texto, um espaçamento) n
 
 | Tela | Documento | Protótipo | Estado |
 |---|---|---|---|
-| Jornada (Cena, Aduran, Log, Arcos, Ficha) | `09-tela-da-jornada.md` | `prototipos/tela-da-jornada.html` | Aprovado em 2026-11-23; acréscimo em 2026-11-24: aba **Estado da Cena** e dúvida de continuidade (item 2.8; ADR-078) |
+| Jornada (Cena, Aduran, Log, Arcos, Ficha) | `09-tela-da-jornada.md` | `prototipos/tela-da-jornada.html` | Aprovado em 2026-11-23; acréscimos em 2026-11-24: aba **Estado da Cena** e dúvida de continuidade (item 2.8), **Diário** e ficha do NPC (item 2.9); ADR-078 |
 | Menu inicial (redesenho) | `11-menu-inicial.md` | `prototipos/menu-inicial.html` | Aprovado e implementado em 2026-11-23 |
 | Nova Jornada (assistente) | `12-nova-jornada.md` | `prototipos/nova-jornada.html` | Aprovado em 2026-11-23; implementação no backlog |
 | Jornadas (lista) | — | — | Idem |

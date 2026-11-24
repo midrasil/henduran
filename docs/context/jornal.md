@@ -343,3 +343,13 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrências: a primeira versão pôs o painel na coluna da Ficha e com botões de resposta, e foi refeita conforme o pedido. No teste automatizado, o estado Fora de Cena não rodou na primeira vez por falta de `matchMedia` no jsdom.
 - Em aberto: ficha do NPC; confirmar os ⏳ restantes do ADR-078; adiar a resposta à dúvida.
 - Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`, `docs/context/handoff.md`.
+
+## 2026-11-24 — `diario-e-ficha-npc`
+
+- Rota: conversa com o planejador → protótipo em várias rodadas (artifact privado, mesmo link) → aprovação → Entrega. Só documentação.
+- Resultado: acréscimo ao protótipo da tela da Jornada (`09`, item 2.9): **Diário** (Anotações, O que sei, NPCs que conheço) e **ficha do NPC com duas abas**, Narrativa e Stats. ADR-078 e backlog atualizados.
+- Decisões do responsável: o jogador vê a ficha, mas **segredos e stats ficam escondidos até ele descobrir**, com revelar opcional (spoiler); o Narrador **cria** o NPC (a IA propõe, o motor valida) e o jogador pode editar; os NPCs **não ficam numa lista do Mundo**: ficam no Diário, na tela da Jornada; o **botão Diário** fica à esquerda do botão de expandir a ficha, com anotações do jogador, o que a personagem sabe e os NPCs que conhece; **no chat** o jogador vê quem está na Cena (Estado da Cena); o **Aduran tem acesso a tudo**; **os botões de revelar são só de ícone, com popup "Tem certeza?"**; o campo **"Sabe"** do Estado da Cena não mostra texto, só o link **ver na ficha**.
+- Decisão do planejador, aprovada: o botão de spoiler dos stats segue o padrão dos segredos; "Esconder de novo" não pede confirmação.
+- Ocorrências: o PR #37 já tinha sido mergeado quando terminei estes ajustes, então foram para um PR novo; no teste do popup o jsdom não tem `matchMedia`, tratado no teste.
+- Em aberto: ficha de regras do NPC (fatia 3 do Astra) e como se descobrem os stats; esquema de dados do Diário.
+- Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`, `docs/context/handoff.md`.

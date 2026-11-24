@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `prototipo-estado-cena` (aba Estado da Cena e dúvida de continuidade na tela da Jornada).
+Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário do jogador e ficha do NPC no protótipo da tela da Jornada).
 
 ## Estado
 
@@ -32,6 +32,13 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-estado-cena` (aba Estado da C
 - **Ficha do NPC ainda não existe** e é o próximo bloqueio: o contexto de um NPC vem principalmente da ficha dele (o que sabe, lembra, esconde), não da Cena; o campo "Sabe" do Estado da Cena é provisório (item novo no backlog).
 - A decidir: adiar a resposta à dúvida ("Responder depois"), ver `09`, item 2.8.
 
+## Atualização de 2026-11-24 (madrugada): Diário e ficha do NPC
+
+- **Protótipo aprovado** (acréscimo à tela da Jornada; `09-tela-da-jornada.md`, item 2.9; este PR): botão **Diário** à esquerda do expandir da Ficha, com **Anotações** (só do jogador), **O que sei** (com origem de cada informação) e **NPCs que conheço** (filtros Todos, Nesta Cena, Fora da Cena). A **ficha do NPC tem duas abas**: **Narrativa** (identidade, personalidade e voz, motivações e segredos, o que sabe e lembra, relações, estado, anotações do jogador) e **Stats** (patamar, atributos, perícias e trilhas). **Segredos e stats ficam escondidos até o jogador descobrir**; revelar é um botão de ícone com popup "Tem certeza?". O Aduran vê tudo.
+- O Estado da Cena **não tem mais campo "Sabe"** com texto: só o link **ver na ficha** (o conhecimento do NPC vem da ficha).
+- **Em aberto:** a **ficha de regras** do NPC (fatia 3 do Astra; os valores do protótipo são de exemplo) e **como o jogador descobre os stats** (não inventado); esquema de dados do Diário.
+- O PR #37 (Estado da Cena e dúvida de continuidade) já foi mergeado.
+
 ## Decisões vigentes
 
 - **Stack (ADR-001):** Tauri, React + TypeScript, PixiJS, Python, só Windows na fase inicial. Não iniciar scaffolding ou prova de conceito sem instrução explícita.
@@ -62,4 +69,4 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-estado-cena` (aba Estado da C
 
 ## Próximo passo recomendado
 
-⭐ (1) **Ficha do NPC**: decidir os campos (personalidade, trejeitos, o que sabe e lembra, segredos, relação com o jogador) e prototipar; (2) confirmar os itens ⏳ restantes do ADR-078; (3) prototipar a tela **Jornadas** (lista); (4) implementar, em rodadas com o dev, a tela **Modelos** (item no backlog) e depois o **Estado da Cena** e a dúvida de continuidade (esquema de dados, extrator do Quadro e teste de continuidade). Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado.
+⭐ (1) Confirmar os itens ⏳ restantes do ADR-078 (compactação a ~70%, fichas de NPC, skills de estilo por Jornada); (2) prototipar a tela **Jornadas** (lista), a última tela existente sem protótipo; (3) implementar, em rodadas com o dev, a tela **Modelos** e depois o **Estado da Cena**, o **Diário** e a dúvida de continuidade (esquema de dados, extrator do Quadro, teste de continuidade); (4) definir a **ficha de regras do NPC** junto com a fatia 3 do Astra. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real e conferir o menu em 1024×768 e maximizado.
