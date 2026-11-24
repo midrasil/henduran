@@ -4,7 +4,7 @@ Atualizado em 2026-11-24 após a tarefa `rodape-modelos-status`.
 
 - Elaborado por: opencode
 - Branch: `feat/rodape-modelos-status`. A branch anterior `feat/tela-modelos` teve o PR [#42](https://github.com/midrasil/henduran/pull/42) mergeado; por isso esta entrega sai em branch nova.
-- PR desta tarefa: aberto nesta entrega (link registrado no jornal e atualizado aqui após a criação).
+- PR desta tarefa: [#44](https://github.com/midrasil/henduran/pull/44), aberto contra `main`.
 
 ## Estado
 

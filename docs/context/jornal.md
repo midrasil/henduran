@@ -12,7 +12,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: período à esquerda e indicador/modelo à direita nas telas com barra de status; menu inicial inalterado; rodapé de ações do assistente inalterado. Documentação da decisão em `docs/ui-ux/12-nova-jornada.md`, seção 11.
 - Validações: em `app/`, `npm run typecheck` sem erros, `npm run test` 37 arquivos/330 testes passando e `npm run build` ok, todos reexecutados pelo planejador. Conferência visual no app real fica com o responsável.
 - Arquivos: `app/src/App.tsx`, `app/src/styles/shell.css`, `app/src/navigation.ts`, `app/src/navigation.test.ts`, `app/src/screens/ServiceIndicator.tsx`, `app/src/screens/ServiceIndicator.css`, `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/App.test.tsx`, `docs/ui-ux/12-nova-jornada.md`, `docs/context/handoff.md`, `docs/context/jornal.md`.
-- Entrega: branch `feat/rodape-modelos-status`; PR a ser aberto nesta entrega (link adicionado após a criação).
+- Entrega: branch `feat/rodape-modelos-status`; PR [#44](https://github.com/midrasil/henduran/pull/44) aberto contra `main`.
 
 ## 2026-11-23 — `rodape-menu-modelo` (opencode)
 
