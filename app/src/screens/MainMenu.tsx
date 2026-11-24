@@ -1,6 +1,17 @@
-import type { JourneyList, JourneySummary } from "../api/journeys";
-import { formatSavedAt, STATUS_NOTICE, toPeriod } from "../lib/format";
-import { Badge, Button, Panel, PeriodLabel, PixelIcon } from "../ui";
+import { useEffect, useState } from "react";
+
+import type { BackendInfo } from "../api/backend";
+import type { EngineStatus } from "../api/engine";
+import { fetchPortraitAt, type JourneyList, type JourneySummary } from "../api/journeys";
+import type { BackendStatus } from "../hooks/useBackend";
+import { formatSavedAgo, formatSavedAt, STATUS_NOTICE, toPeriod } from "../lib/format";
+import { Button, Panel, PERIOD_LABEL, PeriodIcon, PixelIcon, Portrait } from "../ui";
+import { calendarText } from "./journey/journeyText";
+import { modelReady } from "./journey/JourneyTopBar";
+import { MenuLandscape } from "./menu/MenuLandscape";
+import { Banner, BookIcon, CompassMark, Diamond, FrameCorner } from "./menu/menuArt";
+
+import "./menu/MainMenu.css";
 
 /** A última Jornada jogada (`last_journey_id`); sem ela, a salva mais recentemente. */
 export function pickLastJourney(list: JourneyList | null): JourneySummary | null {
@@ -9,7 +20,12 @@ export function pickLastJourney(list: JourneyList | null): JourneySummary | null
 }
 
 export interface MainMenuProps {
-  connected: boolean;
+  /** Estado do serviço local (rodapé e botões). */
+  backend: BackendStatus;
+  /** Estado do motor de IA (rodapé); `null` enquanto não se sabe. */
+  engine: EngineStatus | null;
+  /** Versão do app, no rodapé. */
+  version: string;
   list: JourneyList | null;
   listError: string | null;
   opening: boolean;
@@ -22,9 +38,16 @@ export interface MainMenuProps {
   onExit: () => void;
 }
 
-/** Menu inicial: título, botões principais e o cartão da última Jornada. */
+/**
+ * Menu inicial (docs/ui-ux/11-menu-inicial.md): paisagem viva do período da última
+ * Jornada, título e botões no eixo central, cartão da última Jornada à direita da
+ * coluna (embaixo dela em telas estreitas) e rodapé com a versão e o indicador do
+ * serviço e do modelo, que abre Modelos.
+ */
 export function MainMenu({
-  connected,
+  backend,
+  engine,
+  version,
   list,
   listError,
   opening,
@@ -36,47 +59,65 @@ export function MainMenu({
   canExit,
   onExit,
 }: MainMenuProps) {
+  const info = backend.kind === "connected" ? backend.info : null;
+  const connected = info !== null;
   const last = pickLastJourney(list);
   const usable = last !== null && last.status === "ok";
+  const period = toPeriod(last?.day_period ?? null);
 
   return (
     <div className="menu">
-      <header className="menu__title-plate px-frame">
-        <h1 className="menu__title">
-          <PixelIcon name="star" size={32} className="menu__mark" />
-          Henduran
-        </h1>
-        <p className="menu__subtitle">Jornada solo de fantasia com Narrador IA</p>
-      </header>
+      <MenuLandscape period={period} className="menu__scene" />
+      <FrameCorner className="menu-corner--tl" />
+      <FrameCorner className="menu-corner--tr" />
+      <FrameCorner className="menu-corner--bl" />
+      <FrameCorner className="menu-corner--br" />
+      <Banner side="left" />
+      <Banner side="right" />
 
-      <div className="menu__body">
-        <nav className="menu__buttons" aria-label="Menu inicial">
-          <Button
-            variant="primary"
-            className="menu__button menu__button--main"
-            disabled={!connected || !usable}
-            loading={opening}
-            onClick={() => last && onContinue(last)}
-          >
-            <PixelIcon name="star" size={24} /> Continuar Jornada
-          </Button>
-          <Button className="menu__button" disabled={!connected} onClick={onNew}>
-            <PixelIcon name="sword" size={24} /> Nova Jornada
-          </Button>
-          <Button className="menu__button" disabled={!connected} onClick={onJourneys}>
-            <PixelIcon name="list" size={24} /> Jornadas
-          </Button>
-          <Button className="menu__button" disabled={!connected} onClick={onModels}>
-            <PixelIcon name="gem" size={24} /> Modelos
-          </Button>
-          {canExit ? (
-            <Button className="menu__button" onClick={onExit}>
-              <PixelIcon name="door" size={24} /> Sair
+      <div className="menu__stage">
+        <header className="menu__title-block">
+          <div className="menu__logo">
+            <CompassMark width={56} className="menu__mark" />
+            <h1 className="menu__title">Henduran</h1>
+            <CompassMark width={56} className="menu__mark menu__mark--mirror" />
+          </div>
+          <div className="menu__rule" aria-hidden="true">
+            <i />
+            <Diamond />
+            <i />
+          </div>
+          <p className="menu__subtitle">Jornada solo de fantasia com Narrador IA</p>
+        </header>
+
+        <div className="menu__main">
+          <nav className="menu__buttons" aria-label="Menu inicial">
+            <Button
+              variant="primary"
+              className="menu__button menu__button--main"
+              disabled={!connected || !usable}
+              loading={opening}
+              onClick={() => last && onContinue(last)}
+            >
+              <PixelIcon name="star" size={24} />
+              <span className="menu__button-text">Continuar Jornada</span>
             </Button>
-          ) : null}
-        </nav>
+            <Button className="menu__button" disabled={!connected} onClick={onNew}>
+              <PixelIcon name="sword" size={24} />
+              <span className="menu__button-text">Nova Jornada</span>
+            </Button>
+            <Button className="menu__button" disabled={!connected} onClick={onJourneys}>
+              <BookIcon width={24} />
+              <span className="menu__button-text">Jornadas</span>
+            </Button>
+            {canExit ? (
+              <Button className="menu__button" onClick={onExit}>
+                <PixelIcon name="door" size={24} />
+                <span className="menu__button-text">Sair</span>
+              </Button>
+            ) : null}
+          </nav>
 
-        <div className="menu__side">
           {openError ? (
             <div className="callout callout--danger menu__error" role="alert">
               <p>{openError}</p>
@@ -87,70 +128,229 @@ export function MainMenu({
               </div>
             </div>
           ) : null}
-          {!connected ? (
-            <Panel title="Última Jornada" titleLevel={2} variant="parchment">
-              <p>Esperando o serviço local ficar pronto…</p>
-            </Panel>
-          ) : listError ? (
-            <Panel title="Última Jornada" titleLevel={2} variant="parchment">
-              <p className="text-danger">{listError}</p>
-            </Panel>
-          ) : list === null ? (
-            <Panel title="Última Jornada" titleLevel={2} variant="parchment">
-              <p>Carregando…</p>
-            </Panel>
-          ) : last ? (
-            <LastJourneyCard journey={last} onJourneys={onJourneys} />
-          ) : (
-            <Panel title="Comece a sua primeira Jornada" titleLevel={2} variant="parchment">
-              <p>Você ainda não tem nenhuma Jornada. Gere um Mundo, crie um protagonista e comece a jogar.</p>
-              <div className="actions">
-                <Button variant="primary" onClick={onNew}>
-                  Criar a primeira Jornada
-                </Button>
-              </div>
-            </Panel>
-          )}
+
+          <LastJourneyCard
+            backend={backend}
+            info={info}
+            list={list}
+            listError={listError}
+            journey={last}
+            onJourneys={onJourneys}
+          />
         </div>
       </div>
+
+      <footer className="menu__foot">
+        <p className="menu__version">
+          <PixelIcon name="star" className="menu__version-mark" />
+          <span>Henduran · v{version}</span>
+        </p>
+        <span className="menu__foot-mid" aria-hidden="true">
+          <Diamond width={18} />
+        </span>
+        <ServiceIndicator backend={backend} engine={engine} onModels={onModels} />
+      </footer>
     </div>
   );
 }
 
-function LastJourneyCard({ journey, onJourneys }: { journey: JourneySummary; onJourneys: () => void }) {
+/* ------------------------------------------------------------ cartão */
+
+interface CardProps {
+  backend: BackendStatus;
+  info: BackendInfo | null;
+  list: JourneyList | null;
+  listError: string | null;
+  journey: JourneySummary | null;
+  onJourneys: () => void;
+}
+
+const CARD_TITLE = (
+  <>
+    <PixelIcon name="scroll" className="last-journey__title-icon" /> Última Jornada
+  </>
+);
+
+/** Cartão preso à direita da coluna de botões (abaixo dela em telas estreitas). */
+function LastJourneyCard({ backend, info, list, listError, journey, onJourneys }: CardProps) {
+  if (backend.kind !== "connected") {
+    return (
+      <Panel title={CARD_TITLE} titleLevel={2} variant="parchment" className="last-journey last-journey--message">
+        <p>{backend.kind === "starting" ? "Preparando o serviço local…" : "O serviço local não respondeu. Veja o aviso no rodapé."}</p>
+      </Panel>
+    );
+  }
+  if (listError) {
+    return (
+      <Panel title={CARD_TITLE} titleLevel={2} variant="parchment" className="last-journey last-journey--message">
+        <p className="text-danger">{listError}</p>
+      </Panel>
+    );
+  }
+  if (list === null) {
+    return (
+      <Panel title={CARD_TITLE} titleLevel={2} variant="parchment" className="last-journey last-journey--message">
+        <p>Carregando…</p>
+      </Panel>
+    );
+  }
+  if (!journey) {
+    return (
+      <Panel
+        title={
+          <>
+            <PixelIcon name="scroll" className="last-journey__title-icon" /> Sua primeira Jornada
+          </>
+        }
+        titleLevel={2}
+        variant="parchment"
+        className="last-journey last-journey--message"
+      >
+        <p>
+          Ainda não há nenhuma Jornada. Em <b>Nova Jornada</b>, o jogo sorteia um Mundo, você cria o protagonista e o Narrador
+          começa a história.
+        </p>
+      </Panel>
+    );
+  }
+  return <JourneyCard info={info} journey={journey} onJourneys={onJourneys} />;
+}
+
+/** O retrato da Jornada vem como blob (a rota exige o token) e vira uma URL local, revogada ao trocar. */
+function usePortraitUrl(info: BackendInfo | null, urlPath: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    setUrl(null);
+    if (!info || !urlPath || typeof URL.createObjectURL !== "function") return;
+    const controller = new AbortController();
+    let created: string | null = null;
+    fetchPortraitAt(info, urlPath, controller.signal)
+      .then((blob) => {
+        if (!blob || controller.signal.aborted) return;
+        created = URL.createObjectURL(blob);
+        setUrl(created);
+      })
+      .catch(() => undefined); // sem retrato, as iniciais
+    return () => {
+      controller.abort();
+      if (created && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(created);
+    };
+  }, [info, urlPath]);
+  return url;
+}
+
+function JourneyCard({ info, journey, onJourneys }: { info: BackendInfo | null; journey: JourneySummary; onJourneys: () => void }) {
+  const portraitUrl = usePortraitUrl(info, journey.portrait?.url_path ?? null);
   const notice = journey.status === "ok" ? null : (STATUS_NOTICE[journey.status] ?? journey.error_message);
+  const period = journey.day_period ? toPeriod(journey.day_period) : null;
+  const date = calendarText(journey.calendar);
+  const saved = journey.last_saved_at ?? journey.created_at;
+  const who = journey.character_name ?? journey.name ?? "?";
+
   return (
-    <Panel title="Última Jornada" titleLevel={2} variant="parchment" className="last-journey">
-      <p className="last-journey__name">{journey.name ?? "Jornada sem nome"}</p>
-      <ul className="last-journey__facts">
-        <li>
-          <PixelIcon name="person" /> <span className="visually-hidden">Personagem: </span>
-          {journey.character_name ?? "sem personagem"}
-        </li>
-        <li>
-          <PixelIcon name="pin" /> <span className="visually-hidden">Local: </span>
-          {journey.location ?? "local desconhecido"}
-          {journey.world_name ? `, ${journey.world_name}` : ""}
-        </li>
-        <li>
-          <PixelIcon name="clock" /> Salvo em: {formatSavedAt(journey.last_saved_at ?? journey.created_at)}
-        </li>
-        <li>
-          <PeriodLabel period={toPeriod(journey.day_period)} />
-        </li>
-      </ul>
-      {notice ? (
-        <div className="callout callout--warn">
-          <p>
-            <Badge tone="warn">Atenção</Badge> {notice}
-          </p>
-          <div className="actions">
-            <Button size="sm" onClick={onJourneys}>
-              Ver Jornadas
-            </Button>
-          </div>
+    <Panel title={CARD_TITLE} titleLevel={2} variant="parchment" className="last-journey">
+      <div className="last-journey__body">
+        <Portrait name={who} src={portraitUrl} crop={journey.portrait?.crop ?? null} size="sm" className="last-journey__portrait" />
+        <div className="last-journey__info">
+          <p className="last-journey__name">{journey.name ?? "Jornada sem nome"}</p>
+          <ul className="last-journey__facts">
+            <li>
+              <PixelIcon name="person" />
+              <span>
+                <span className="visually-hidden">Personagem: </span>
+                {journey.character_name ?? "sem personagem"}
+              </span>
+            </li>
+            <li>
+              <PixelIcon name="pin" />
+              <span>
+                <span className="visually-hidden">Lugar: </span>
+                {journey.location ?? "lugar desconhecido"}
+                {journey.world_name ? `, ${journey.world_name}` : ""}
+              </span>
+            </li>
+            {period ? (
+              <li>
+                <PeriodIcon period={period} size={14} />
+                <span>
+                  <span className="visually-hidden">Período do dia: </span>
+                  <b>{PERIOD_LABEL[period]}</b>
+                  {date ? <span className="last-journey__date"> · {date}</span> : null}
+                </span>
+              </li>
+            ) : null}
+            {journey.current_scene_title ? (
+              <li className="last-journey__scene">
+                <PixelIcon name="seal" />
+                <span>Em Cena: “{journey.current_scene_title}”</span>
+              </li>
+            ) : null}
+          </ul>
         </div>
+      </div>
+      {notice ? (
+        <p className="last-journey__warn" role="note">
+          <PixelIcon name="warning" />
+          <span>
+            {notice}
+            {notice.includes("Jornadas") ? null : (
+              <>
+                {" "}
+                Abra <b>Jornadas</b> para ver as opções.
+              </>
+            )}
+          </span>
+        </p>
       ) : null}
+      <div className="last-journey__foot">
+        <span className="last-journey__saved">
+          <PixelIcon name="clock" />
+          {saved ? (
+            <time dateTime={saved} title={formatSavedAt(saved)}>
+              {formatSavedAgo(saved)}
+            </time>
+          ) : (
+            <span>{formatSavedAgo(null)}</span>
+          )}
+        </span>
+        <Button variant="ghost" size="sm" className="last-journey__all" onClick={onJourneys}>
+          Ver todas
+        </Button>
+      </div>
     </Panel>
+  );
+}
+
+/* ------------------------------------------------------- indicador do rodapé */
+
+type Light = "ok" | "busy" | "off";
+
+/** Luz e textos do indicador: serviço, depois o modelo (o texto não depende só da cor). */
+export function serviceState(backend: BackendStatus, engine: EngineStatus | null): { light: Light; main: string; detail: string } {
+  if (backend.kind === "starting") return { light: "busy", main: "Iniciando o serviço", detail: "aguarde" };
+  if (backend.kind === "error") return { light: "off", main: `Erro: ${backend.message}`, detail: "o serviço local não respondeu" };
+  if (engine === null) return { light: "busy", main: "Conectado", detail: "consultando o modelo…" };
+  if (modelReady(engine)) {
+    const name = engine.active_model_name ?? (engine.provider !== "local" ? `provedor ${engine.provider}` : "modelo");
+    return { light: "ok", main: "Conectado", detail: `${name} pronto` };
+  }
+  if (engine.state === "starting") return { light: "busy", main: "Conectado", detail: "carregando o modelo…" };
+  if (engine.state === "downloading") return { light: "busy", main: "Conectado", detail: "baixando o motor de IA…" };
+  return { light: "off", main: "Conectado", detail: "nenhum modelo carregado" };
+}
+
+function ServiceIndicator({ backend, engine, onModels }: { backend: BackendStatus; engine: EngineStatus | null; onModels: () => void }) {
+  const { light, main, detail } = serviceState(backend, engine);
+  return (
+    <div className="menu__service" role="status">
+      <button type="button" className="menu__service-btn" data-light={light} onClick={onModels} aria-label={`${main}, ${detail}. Abrir Modelos`}>
+        <span className="menu__led" aria-hidden="true" />
+        <span>{main}</span>
+        <small className="menu__service-detail">{detail}</small>
+        <span className="menu__service-go" aria-hidden="true">
+          Modelos ▸
+        </span>
+      </button>
+    </div>
   );
 }

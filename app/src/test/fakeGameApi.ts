@@ -234,7 +234,7 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
       state.open = null;
       return jsonResponse({ closed });
     }
-    const m = /^\/journeys\/([^/]+)(\/open|\/backups|\/restore)?$/.exec(path);
+    const m = /^\/journeys\/([^/]+)(\/open|\/backups|\/restore|\/portrait)?$/.exec(path);
     if (m) {
       const id = decodeURIComponent(m[1]!);
       const journey = state.journeys.find((j) => j.id === id);
@@ -250,6 +250,10 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
         return jsonResponse(state.open);
       }
       if (m[2] === "/backups") return jsonResponse({ backups: options.backups ?? [] });
+      if (m[2] === "/portrait" && method === "GET") {
+        if (!journey.portrait) return jsonResponse({ detail: { code: "retrato_ausente", message: "O personagem não tem retrato." } }, 404);
+        return new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), { status: 200, headers: { "Content-Type": "image/png" } });
+      }
       if (m[2] === "/restore" && method === "POST") {
         const name = (body as { backup: string }).backup;
         journey.status = "ok";

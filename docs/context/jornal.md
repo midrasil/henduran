@@ -248,3 +248,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Não testado: ícone no instalador (`npm run tauri build`).
 - Arquivos: `app/src-tauri/icons/*`, `docs/ui-ux/icone/*`, `app/index.html`, `app/public/favicon.png`, `docs/context/handoff.md`.
 - Entrega: PR [#26](https://github.com/midrasil/henduran/pull/26) aberto contra `main`.
+
+## 2026-11-23 — `menu-inicial` (implementação)
+
+- Rota: conversa com o planejador → Dev (duas rodadas: implementação e ajuste visual do fundo) → validação do responsável → Entrega.
+- Resultado: menu inicial redesenhado implementado conforme o protótipo aprovado (PR #24): paisagem animada em canvas a cerca de 10 quadros por segundo, parada com *reduced motion*; cartão "Última Jornada" com retrato, data do calendário e Cena em andamento; indicador de serviço e modelo no rodapé abrindo Modelos. `GET /journeys` ganhou `calendar`, `current_scene_title` e `portrait`; nova rota `GET /journeys/{id}/portrait`.
+- Decisões: campos novos opcionais para não quebrar clientes; retrato servido por rota própria com token, sem abrir a Jornada; castelos posicionados pelas larguras do CSS para não ficarem atrás do cartão (o protótipo tinha esse defeito); diferenças em relação ao protótipo registradas em `11-menu-inicial.md`, seção 5.
+- Ocorrência: `test_bloqueio_contra_outro_processo_e_liberado_ao_matar` falhou uma vez na execução completa do backend e passou isolado; teste de bloqueio entre processos, arquivo não alterado.
+- Em paralelo: protótipo da Nova Jornada em revisão, em outro worktree (não faz parte deste PR).
+- Arquivos principais: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/*`, `backend/henduran/storage/journeys.py`, `backend/henduran/api/app.py`, `docs/ui-ux/11-menu-inicial.md`.
