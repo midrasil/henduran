@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de Mundos).
+Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de Mundos; PR #34).
 
 ## Estado
 
