@@ -1,14 +1,16 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
+Atualizado em 2026-11-23 após a tarefa `icone-do-jogo` (ícone do aplicativo).
 
 ## Estado
 
-- Tarefa: protótipo do redesenho do menu inicial, primeira das telas existentes a passar pelo processo de `docs/ui-ux/10-prototipagem.md`.
-- Resultado: **aprovado na primeira rodada**. Documento `docs/ui-ux/11-menu-inicial.md` e protótipo `docs/ui-ux/prototipos/menu-inicial.html`: título e botões no eixo central, cartão "Última Jornada" à direita sem deslocar o eixo, Modelos fora dos botões (indicador clicável no rodapé), paisagem pixel art em tela cheia com castelos dos dois lados e animação por período (nuvens, estrelas, pássaros, vaga-lumes), cantos dourados e estandartes. **Ainda não implementado**: o app continua com o menu anterior.
-- Antes disso, a entrega 3a (tela da Jornada) foi mergeada (PR #23).
-- Decisão do responsável: **por enquanto só prototipar e documentar** as telas existentes, uma por vez; a implementação vem depois.
-- Branch: `docs/prototipo-menu`, PR [#24](https://github.com/midrasil/henduran/pull/24) aberto contra `main`.
+- Tarefa: ícone padrão do jogo (janela, barra de tarefas, Alt+Tab, `.exe` e favicon). Rosa dos ventos dourada em pixel art, pontas roxas, medalhão escuro e aro dourado, com as cores dos tokens de `app/src/styles/tokens.css`.
+- Resultado: `app/src-tauri/icons/` regenerado (`32x32`, `128x128`, `128x128@2x`, `icon.png`, `icon.ico` com 16 a 256 px); `docs/ui-ux/icone/gerar_icone.py` e `icone-1024.png` guardam a fonte; `app/public/favicon.png` e `<link rel="icon">` em `app/index.html` para o navegador. O `tauri.conf.json` já apontava para os arquivos.
+- Ocorrência: o ícone não aparecia no Windows porque o `henduran.exe` de debug tinha sido compilado antes e o Cargo não refaz o recurso do Windows só porque os PNG/ICO mudaram. Resolvido com `touch app/src-tauri/build.rs` e `cargo build`; o responsável confirmou no app. Se trocar o ícone de novo, repetir o `touch`; alternativa permanente: `println!("cargo:rerun-if-changed=icons")` no `build.rs` (não feito).
+- Validações: `cargo check` e `cargo build` passaram; ícone embutido no exe conferido por extração; o responsável conferiu a janela e a barra de tarefas. `npm run tauri build` (ícone do instalador) não foi testado.
+- Branch: `chore/icone-do-jogo`; PR aberto contra `main` (link no jornal).
+- Antes disso: PR #25 (largura das mensagens da Jornada) mergeado, junto com #23 (tela da Jornada) e #24 (protótipo do menu). O commit provisório do ícone foi feito pelo responsável com o opencode, em outra máquina, quando acabaram os tokens.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos prontos: menu inicial e tela da Jornada. Ajustes pequenos podem ir direto ao código.
 
 ## Decisões vigentes
 
@@ -61,4 +63,4 @@ Atualizado em 2026-11-23 após a tarefa `prototipo-menu` (só documentação).
 
 ## Próximo passo recomendado
 
-⭐ Prototipar a próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), depois **Jornadas** e **Modelos** (no nível do Caliope), seguindo `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups.
+⭐ Retomar a prototipagem da próxima tela existente: **Nova Jornada** (assistente Mundo, Protagonista e Revisão), seguida de **Jornadas** e **Modelos**, conforme `docs/ui-ux/10-prototipagem.md`. Em paralelo, do lado do responsável: testar a tela da Jornada com um modelo local real e conferir a largura das mensagens. Implementações pendentes no backlog: redesenho do menu (com retrato, data e Cena no resumo da Jornada), estado das trilhas e máximo de Fraturas no backend, `assets\` nos backups. Opcional: testar `npm run tauri build` para ver o ícone no instalador.
