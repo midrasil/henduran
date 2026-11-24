@@ -44,7 +44,7 @@
 ### 2.3 Centro: o chat ativo
 
 - **Cabeçalho**: período (ícone e nome) e lugar, o **nome da Cena** e o motivo. O nome é proposto pelo Narrador e **o jogador pode renomear** (lápis ao lado do título; a troca entra no Log).
-- **Ícones no canto direito do cabeçalho**: **Aduran** (com aviso de mensagem nova), **Log** e, separado, **Encerrar Cena** (porta). Durante a Cena, os três aparecem nos três modos (Cena, Aduran e Log); no Aduran e no Log aparece também **voltar à Cena**.
+- **Ícones no canto direito do cabeçalho**: **Aduran** (com aviso de mensagem nova), **Estado da Cena** (com selo "1" enquanto houver dúvida de continuidade aberta), **Log** e, separado, **Encerrar Cena** (porta). Durante a Cena, os quatro aparecem nos quatro modos (Cena, Aduran, Estado da Cena e Log); fora da Cena, só o Aduran e o Log. Nos modos que não são a Cena aparece também **voltar à Cena**.
 - **Em Cena**: página de pergaminho, letra capitular na abertura, narração em serifa; falas do jogador em balão roxo à direita.
 - **Aduran durante a Cena**: o centro vira a margem do cronista. O que se fala ali **não entra no contexto do Narrador da Cena** nem vira fato da história (`ESCOPO-MVP.md`, item 6).
 - **Log**: durante a Cena, **só o que aconteceu naquela Cena**; Fora de Cena, o Log da Jornada inteira. Eventos com ícone por tipo (Cena aberta, Cena encerrada, lugar, renomeada) e o momento (Dia e período). Depois: rolagens, memórias e outros eventos do motor.
@@ -88,6 +88,25 @@ Janela com **abas na lateral** (retrato grande acima) e conteúdo em pergaminho:
 
 O jogador escolhe uma imagem do computador, **recorta** num enquadramento de perfil (arrastar e aproximar) e vê a prévia. A **imagem original fica guardada** (anexo da Jornada em `assets\`, ADR-075; PNG, JPEG ou WebP até 20 MB, ADR-076 item 18) e o recorte é guardado como enquadramento, para poder ser refeito depois. O retrato aparece no resumo e na ficha completa.
 
+### 2.8 Estado da Cena (aba do chat) e dúvida de continuidade
+
+**Estado:** protótipo aprovado em 2026-11-24 (ADR-078, proposta). A **Ficha da coluna da direita continua como era**.
+
+- **Aba Estado da Cena** (ícone no cabeçalho do chat, margem escura como o Aduran e o Log): é a memória narrativa do que está acontecendo agora, mantida pelo motor e **editável pelo jogador**. Mostra:
+  - **Aqui e agora**: lugar, momento e clima.
+  - **Quem está presente**: um cartão por personagem (inclui o do jogador), com **Postura, Posição, Segura, Humor e Sabe**. Cada linha tem um **lápis** ("isso está errado") para corrigir; o que mudou na última resposta ganha a etiqueta **novo** e o que o jogador corrigiu, **corrigido por você**. O Narrador segue a correção do jogador.
+  - **Em aberto**: os fios da história ainda sem resposta.
+  - **Skills desta Cena** (n de 3): o Aduran pode sugerir uma skill de situação, que só entra se o jogador **aceitar** (ADR-078, item 7).
+  - **Dúvidas de continuidade**: histórico das perguntas e respostas (da Cena e das anteriores), com **Ver no chat**.
+  - Um texto explica que é memória narrativa, **não regra de jogo** (Vida, Vontade e testes continuam com o motor).
+- **Sobre "Sabe" e os NPCs**: o campo mostra o que a personagem **sabe nesta Cena**. O conhecimento duradouro de um NPC (o que sabe, lembra, segredos, personalidade) virá da **ficha do NPC**, que **ainda não foi desenhada** (ADR-078, item 6). Até lá, "Sabe" é um espaço provisório.
+- **Dúvida de continuidade no chat**: quando o Narrador precisa de um fato ou o motor acha uma contradição (modo padrão "só em contradição clara"), aparece um **cartão que ocupa toda a largura do chat**, como uma mensagem, apenas com um destaque (borda roxa) e o rótulo "Dúvida de continuidade". O texto traz a pergunta e o que o Narrador acha. **Não há botões de escolha**, só **Você decide** (o Narrador escolhe a hipótese dele).
+  - **A próxima mensagem digitada pelo jogador responde ao cartão e não vai para o chat**: o campo de escrita mostra "Responda à dúvida do Narrador…", fica destacado e a dica avisa isso. A resposta fica **dentro do cartão**, que se recolhe, para não encher o chat.
+  - **Reabrir**: na mensagem do Narrador à qual a dúvida pertence, um ícone **"?"** entre as ações que aparecem ao passar o mouse (junto com Copiar etc.) reabre o cartão, logo abaixo dela, com a pergunta e a resposta; há **Fechar**.
+  - **Registro**: a resposta entra no **Log da Cena** como "Continuidade", atualiza o Estado da Cena e fica no histórico de dúvidas da aba.
+- **Menu ⚙ > Continuidade**: **Sempre perguntar**, **Só em contradição clara** (padrão) e **Nunca** (o Narrador escolhe e segue); no máximo uma pergunta a cada 6 turnos.
+- **A decidir**: enquanto a dúvida está aberta, a mensagem seguinte sempre a responde; falta definir se haverá um jeito de **adiar** a resposta e agir na Cena antes (por exemplo, "Responder depois").
+
 ## 3. Estados
 
 - **Jornada sem abertura**: o centro mostra a preparação da Cena inicial; digitação e envio **desabilitados** (ADR-076, item 10); sem modelo, aviso com o caminho para a configuração e **Gerar abertura** desabilitado.
@@ -98,3 +117,4 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
 
 - Reflow a 320 px e DPI de 125% a 200% (ADR-068), a verificar na implementação.
 - `@Aduran` dentro do chat da Cena (entrega 3b).
+- Ficha do NPC e sua relação com o campo "Sabe" do Estado da Cena (ADR-078, item 6).
