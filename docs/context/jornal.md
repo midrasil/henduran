@@ -354,3 +354,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - **Formatação do texto do chat** (a pedido do responsável, no mesmo protótipo): quatro estilos (narração, fala, ação, pensamento). O responsável pediu aparência de livro: fala com travessão, ação e fala no mesmo estilo (itálico), nome do NPC como chip acima da fala e **sem recuo**; testou quatro estilos (A simples, B faixa lateral, C placa de nome, D duas colunas) e escolheu o **A**. Na conversa, "cifrão" era um engano do responsável: queria dizer hífen (travessão).
 - Em aberto: ficha de regras do NPC (fatia 3 do Astra) e como se descobrem os stats; esquema de dados do Diário; ajuste do prompt do Narrador com a convenção de marcas.
 - Arquivos: `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/main/05-narrador-ia.md`, `docs/main/decisoes/ADR-078-memoria-e-contexto-do-narrador-continuidade.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`, `docs/context/handoff.md`.
+
+## 2026-11-24 — `prototipo-jornadas` (Jornadas e Pontos de retorno)
+
+- Rota: conversa com o planejador → protótipo em rodadas (artifact privado) → aprovação → Entrega. Só documentação e protótipos.
+- Resultado: protótipo da tela **Jornadas** (`jornadas.html`) e dos **Pontos de retorno** no menu de opções da tela da Jornada; `15-jornadas.md`, `09` (item 2.11), `10`, backlog.
+- Decisões do responsável: a Jornada passa a ter **salvamentos manuais como nos jogos**, acessados pelo menu de opções (criar, salvar por cima, renomear, excluir, carregar); no detalhe da lista, **só os pontos de retorno**, sem resumo; a lista vazia usa todo o espaço.
+- Decisões assumidas pelo planejador, aprovadas na conversa: carregar sobrescreve com um ponto "Antes de carregar"; 20 manuais e 5 automáticos; o Mundo não volta.
+- Ocorrências: o protótipo inicial tinha um painel de detalhes com resumo; o responsável o trocou pela lista de pontos. Dois botões do painel Protótipo falhavam com a lista vazia (corrigido e retestado em jsdom).
+- Arquivos: `docs/ui-ux/15-jornadas.md`, `docs/ui-ux/prototipos/jornadas.html`, `docs/ui-ux/prototipos/tela-da-jornada.html`, `docs/ui-ux/09-tela-da-jornada.md`, `docs/ui-ux/10-prototipagem.md`, `docs/backlog.md`.

@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário, ficha do NPC e formatação do texto do chat no protótipo da tela da Jornada).
+Atualizado em 2026-11-24 após a tarefa `prototipo-jornadas` (lista de Jornadas e Pontos de retorno).
 
 ## Estado
 
@@ -39,6 +39,13 @@ Atualizado em 2026-11-24 após a tarefa `diario-e-ficha-npc` (Diário, ficha do 
 - **Em aberto:** a **ficha de regras** do NPC (fatia 3 do Astra; os valores do protótipo são de exemplo) e **como o jogador descobre os stats** (não inventado); esquema de dados do Diário.
 - **Formatação do texto do chat** (item 2.10 do `09`): convenção `"fala"`, `*ação*`, `_pensamento_`; narração sem marca. Fala com travessão e ação no mesmo estilo (itálico); pensamento em itálico roxo entre parênteses; `Nome: "fala"` mostra um **chip roxo com o nome acima da fala, sem recuo**, que abre a ficha do NPC; barra **Fala, Ação, Pensamento** no campo de escrita e legenda no **?**. Estilo "A · Simples" escolhido entre quatro. **O pensamento do jogador é privado** (NPCs não o conhecem). A convenção entra no prompt do Narrador (`05`, seção 6.2).
 - O PR #37 (Estado da Cena e dúvida de continuidade) já foi mergeado.
+
+## Atualização de 2026-11-24 (madrugada, 2): Jornadas e Pontos de retorno
+
+- **PR #38 mergeado** (Diário, ficha do NPC e formatação do texto do chat).
+- **Protótipos aprovados** (este PR): **tela Jornadas** (`prototipos/jornadas.html`; lista com busca e filtros; o detalhe mostra **só os pontos de retorno**; lista vazia em tela cheia) e **Pontos de retorno** no menu de opções da tela da Jornada (`09`, item 2.11; `15-jornadas.md`). Salvamentos manuais (até 20) e automáticos (5, no início e no fim de cada Cena); Carregar guarda antes "Antes de carregar".
+- **A confirmar na implementação:** carregar sobrescreve (e não bifurca); limites; o Mundo não volta com o ponto; como armazenar (cópia do `journey.db` ou diferença).
+- **Próximos passos:** ⭐ voltar à implementação com o dev (Modelos, depois Estado da Cena, Diário e dúvida de continuidade, e os pontos de retorno); ficha de regras do NPC (fatia 2/3 do Astra); decidir o ADR de armazenamento dos pontos.
 
 ## Decisões vigentes
 

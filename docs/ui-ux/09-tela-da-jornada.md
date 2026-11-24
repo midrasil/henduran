@@ -138,6 +138,10 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
 - **Se o modelo esquecer as marcas**, o trecho aparece como narração comum, sem erro; o teste de continuidade pode medir a aderência à convenção.
 - Estilos descartados no protótipo: faixa lateral, placa de nome (card) e duas colunas.
 
+### 2.11 Pontos de retorno
+
+No menu de opções (engrenagem do topo direito), o item **Pontos de retorno** abre a mini-tela de salvamentos manuais e automáticos da Jornada (criar, carregar, salvar por cima, renomear, excluir). Detalhes e decisões em `15-jornadas.md`.
+
 ## 3. Estados
 
 - **Jornada sem abertura**: o centro mostra a preparação da Cena inicial; digitação e envio **desabilitados** (ADR-076, item 10); sem modelo, aviso com o caminho para a configuração e **Gerar abertura** desabilitado.

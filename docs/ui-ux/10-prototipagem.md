@@ -34,7 +34,7 @@ Ajustes pequenos numa tela já aprovada (um botão, um texto, um espaçamento) n
 | Jornada (Cena, Aduran, Log, Arcos, Ficha) | `09-tela-da-jornada.md` | `prototipos/tela-da-jornada.html` | Aprovado em 2026-11-23; acréscimos em 2026-11-24: aba **Estado da Cena** e dúvida de continuidade (item 2.8), **Diário** e ficha do NPC (item 2.9), **formatação do texto do chat** (item 2.10); ADR-078 |
 | Menu inicial (redesenho) | `11-menu-inicial.md` | `prototipos/menu-inicial.html` | Aprovado e implementado em 2026-11-23 |
 | Nova Jornada (assistente) | `12-nova-jornada.md` | `prototipos/nova-jornada.html` | Aprovado em 2026-11-23; implementação no backlog |
-| Jornadas (lista) | — | — | Idem |
+| Jornadas (lista) e Pontos de retorno | `prototipos/jornadas.html` e menu de opções de `tela-da-jornada.html` | `15-jornadas.md` | Aprovado em 2026-11-24 |
 | Mundos (lista e criação) | `13-mundos.md` | `prototipos/mundos.html` | **Aprovado em 2026-11-24 como está**: o protótipo é o registro da tela já implementada |
 | Modelos e Skills (no nível do Caliope) | `14-modelos.md` | `prototipos/modelos.html` | Aprovado em 2026-11-24; implementação no backlog |
 | Mundo e registro de lugares | `09`, item 2.1 | — | **A prototipar** quando passar de diálogo simples |
