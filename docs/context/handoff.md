@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 2).
+Atualizado em 2026-11-24 após a tarefa `prototipo-mundos` (registro da tela de Mundos; PR #34).
 
 ## Estado
 
@@ -11,12 +11,12 @@ Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 2).
 - **Aviso do retrato**: se o envio falha depois da criação, a Jornada abre com aviso e os botões Tentar de novo, Escolher outro e Fechar.
 - **Mundo personalizado**: Mundo editado, do zero ou duplicado não tem semente (`world_meta.seed` nulo); a interface mostra "Mundo personalizado". A `world/0002` não foi reescrita (mudaria o checksum dos bancos do PR #30).
 - **Excluir Jornada não apaga mais o Mundo** (`services/journey_deletion.delete_journey`, resposta `{deleted, world_id}`).
-- **Tela de Mundos, modelo inicial provisório e sem protótipo** (exceção à regra de protótipo, decisão do responsável em 2026-11-24): botão **Mundos** no menu, `app/src/screens/WorldsScreen.tsx` (reaproveita `WorldStep` em modo `library`), `POST /worlds`, `DELETE /worlds/{id}` (409 `mundo_em_uso` ou `uso_indeterminado`; exclusão atômica por renomeação). Documento curto `docs/ui-ux/13-mundos.md`. **O protótipo será feito em 2026-11-25, em outra máquina**, e a tela será ajustada depois.
+- **Tela de Mundos** (implementada sem protótipo, por decisão do responsável em 2026-11-24, e depois **aprovada como está**; o protótipo `docs/ui-ux/prototipos/mundos.html` foi feito só como registro): botão **Mundos** no menu, `app/src/screens/WorldsScreen.tsx` (reaproveita `WorldStep` em modo `library`), `POST /worlds`, `DELETE /worlds/{id}` (409 `mundo_em_uso` ou `uso_indeterminado`; exclusão atômica por renomeação). Documento `docs/ui-ux/13-mundos.md`. A nota "Tela provisória" do cabeçalho foi removida.
 - **Editar Jornada**: `PATCH /journeys/current` (nome e descrição, regras da criação; 422 `resumo_invalido`) e "Editar Jornada" no menu ⚙ da Jornada.
 - Validações: `npm run typecheck` sem erros; `npm run test` 320/320 (reexecutado pelo planejador); `pytest` 662 passando e 1 pulado, `npm run build` ok (relatados pelo dev; não reexecutados pelo planejador).
 - Não verificado: app Tauri real, TipTap em navegador real (digitar, atalhos, colar do Word), leitor de tela, DPI de 125% a 200%, reflow a 320 px, qualidade das sugestões com modelo local real e se o `llama-server` aceita os esquemas com `const` e `enum` (se recusar, o cliente repete sem esquema e o motor valida).
 - Aprovado pelo responsável: editor sob demanda, remoção do `character-count`, `world/0002` intacta, comportamento de Sugerir Atributos e Perícias e os limites (ideia 500 caracteres, 120 s, 2 novas tentativas), na opção recomendada.
-- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial e Nova Jornada; **Mundos pendente**.
+- Processo atual: prototipar e documentar uma tela existente por vez (`docs/ui-ux/10-prototipagem.md`); protótipos aprovados: Jornada, menu inicial, Nova Jornada e Mundos (registro).
 
 ## Decisões vigentes
 
@@ -48,4 +48,4 @@ Atualizado em 2026-11-24 após a tarefa `nova-jornada` (rodada 2).
 
 ## Próximo passo recomendado
 
-⭐ Prototipar a tela de **Mundos** (2026-11-25, outra máquina) conforme `docs/ui-ux/13-mundos.md` e `10-prototipagem.md`: layout da lista, criação, exclusão explícita e a organização futura em abas de geração; depois ajustar a implementação provisória. Em seguida, prototipar **Jornadas** e **Modelos**. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador e o TipTap no app), e conferir o menu em 1024×768 e maximizado.
+⭐ Prototipar **Jornadas** (lista) e **Modelos** (no nível do Caliope), conforme `docs/ui-ux/10-prototipagem.md`, uma tela por vez. Em paralelo, do lado do responsável: testar a Nova Jornada com um modelo local real (qualidade dos botões do Narrador e o TipTap no app), o botão Configurar modelo (PR #33) e conferir o menu em 1024×768 e maximizado.

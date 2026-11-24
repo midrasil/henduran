@@ -302,3 +302,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Arquivos principais: `app/src/ui/HistoryEditor/*`, `app/src/screens/newJourney/narrator.tsx`, `app/src/screens/WorldsScreen.tsx`, `app/src/screens/journey/EditJourneyDialog.tsx`, `backend/henduran/narrative/fill.py`, `backend/henduran/services/{fill,journey_edit,world_library,journey_deletion}.py`, migração `journey/0006`, `docs/ui-ux/13-mundos.md`.
 - Entrega: PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.
 - Acréscimo (2026-11-24): botão **Configurar modelo** na tela Iniciar Jornada, abrindo Modelos num diálogo sem sair da criação (pedido do responsável); `App.tsx`, `NewJourneyWizard.tsx`, `StartStep.tsx`; 321 testes passando.
+
+## 2026-11-24 — `prototipo-mundos` (registro)
+
+- Rota: conversa com o planejador → protótipo → Entrega. Só documentação.
+- Contexto: a tela de Mundos foi implementada pelo dev como modelo provisório, sem protótipo, por decisão do responsável (PR #32). Depois de vê-la funcionando, o responsável a aprovou **como está** e pediu um protótipo só para manter o registro.
+- Resultado: `docs/ui-ux/prototipos/mundos.html` reproduz a tela implementada (lista, detalhes em abas, Gerar mundo, Criar do zero, Salvar Mundo, Duplicar e editar, Excluir com os dois diálogos, Mundo em uso, Mundo personalizado, avisos); `13-mundos.md`, `10-prototipagem.md`, README e backlog atualizados. Única mudança no app: a remoção da nota "Tela provisória".
+- Decisão do responsável: remover a nota "Tela provisória" do cabeçalho; feito no app (`WorldsScreen.tsx`) e no protótipo, que reaproveita o desenho do passo Mundo da Nova Jornada, como a implementação.
+- Entrega: PR [#34](https://github.com/midrasil/henduran/pull/34) aberto contra `main`.
+- Arquivos: `docs/ui-ux/prototipos/mundos.html`, `docs/ui-ux/13-mundos.md`, `docs/ui-ux/10-prototipagem.md`, `docs/ui-ux/README.md`, `docs/backlog.md`.

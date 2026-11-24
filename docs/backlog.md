@@ -1,6 +1,6 @@
 # Backlog
 
-- [ ] ⭐ design: prototipar a tela de Mundos e ajustar a implementação provisória — modelo inicial implementado sem protótipo em 2026-11-24 por decisão do responsável; protótipo previsto para 2026-11-25 em outra máquina; o que decidir está em `docs/ui-ux/13-mundos.md` — origem: decisão do responsável em 2026-11-24
+- [x] design: tela de Mundos — o responsável aprovou a implementação feita pelo dev como está (2026-11-24); `prototipos/mundos.html` registra a tela e não pede mudanças; a nota "Tela provisória" do cabeçalho foi removida
 
 - [ ] ⭐ design: implementar a Nova Jornada conforme `docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html` (aprovado em 2026-11-23): trilho com 3 passos e tela Iniciar Jornada, lista de Mundos salvos (somente leitura, Duplicar e editar), Protagonista em abas com retrato (recorte), Revisão em abas — decisões aprovadas no ADR-077 (editor TipTap, História em HTML saneado com texto puro derivado, rota do Narrador que preenche dados, descrição da Jornada em `journey_meta`); antes de instalar o editor, conferir a licença e a medida do pacote e pedir aprovação — origem: prototipagem da Nova Jornada
   - [x] rodada 1 (2026-11-24): assistente em 3 passos e Iniciar Jornada, Mundos salvos (`GET /worlds`, `GET /worlds/{id}`, criação num Mundo salvo), semente gravada no Mundo, Protagonista em abas com retrato, Revisão em abas, descrição da Jornada em `journey_meta` (no contexto do Narrador) e História em HTML saneado com texto puro derivado; editor provisório (`contenteditable`) atrás do `HistoryEditor`

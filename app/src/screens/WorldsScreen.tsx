@@ -22,9 +22,8 @@ import { WorldStep, type WorldDraft, type WorldSelection } from "./newJourney/Wo
 import "./newJourney/NewJourney.css";
 
 /**
- * Tela de Mundos do menu inicial — **modelo inicial provisório**, implementado sem protótipo por
- * decisão do responsável em 2026-11-24 (docs/ui-ux/13-mundos.md); o protótipo vem depois e a
- * tela será ajustada a ele.
+ * Tela de Mundos do menu inicial — implementada sem protótipo por decisão do responsável em 2026-11-24 e aprovada como
+ * está (docs/ui-ux/13-mundos.md; o protótipo de registro está em prototipos/mundos.html).
  *
  * Reaproveita o passo Mundo da Nova Jornada (`WorldStep`, em modo `library`): a lista de Mundos
  * salvos, os detalhes somente leitura em abas, Gerar mundo (com semente ou aleatório), Criar do
@@ -258,12 +257,6 @@ export function WorldsScreen({ info, schema, makeSeed = randomSeed, validationDe
             </h2>
             <p className="hint">Os Mundos salvos ficam disponíveis para novas Jornadas. Crie, duplique ou exclua aqui.</p>
           </div>
-          <p className="nj-note surface-parchment" role="note">
-            <span className="nj-note__i" aria-hidden="true">
-              i
-            </span>
-            <span>Tela provisória: o layout definitivo depende do protótipo da tela de Mundos.</span>
-          </p>
         </header>
         <div className="nj-body">
           {notice ? (
