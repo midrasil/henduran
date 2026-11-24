@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BackendError, type BackendInfo, type FieldError } from "../../api/backend";
+import { chatErrorMessage, isAbortError, StreamError } from "../../api/chatStream";
+import type { EngineStatus } from "../../api/engine";
+import { requestFill, type FillRequest, type FillResult } from "../../api/narratorFill";
 import {
   createJourney,
   fetchWorld,
@@ -19,10 +22,12 @@ import {
 import { useServerValidation } from "../../hooks/useServerValidation";
 import { describeError } from "../../lib/format";
 import { Button, Dialog, PixelIcon, SkyBackdrop, type PixelIconName, type PortraitCropValue } from "../../ui";
+import { modelReady } from "../journey/JourneyTopBar";
 import { PortraitDialog } from "../journey/PortraitDialog";
 import { CharacterStep, type PortraitDraft } from "./CharacterStep";
 import {
   advanceMove,
+  applyTexts,
   blankWorld,
   CHARACTER_TABS,
   characterTabOf,
@@ -46,6 +51,7 @@ import {
   type TabDef,
   type WorldTab,
 } from "./model";
+import { AiToast, type AiNotice, type NarratorControls } from "./narrator";
 import { checkPortraitFile, plural } from "./parts";
 import { ReviewStep } from "./ReviewStep";
 import { StartStep } from "./StartStep";
@@ -111,6 +117,8 @@ export interface NewJourneyWizardProps {
   makeSeed?: (max: number) => number;
   /** Atraso da validação ao vivo, em ms (os testes usam 0). */
   validationDelayMs?: number;
+  /** Estado do motor de IA: sem modelo pronto, os botões do Narrador ficam desabilitados. */
+  engine?: EngineStatus | null;
 }
 
 interface SubmitErrors {
@@ -142,6 +150,7 @@ export function NewJourneyWizard({
   random = Math.random,
   makeSeed = randomSeed,
   validationDelayMs,
+  engine = null,
 }: NewJourneyWizardProps) {
   const [step, setStep] = useState(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -378,7 +387,7 @@ export function NewJourneyWizard({
   };
 
   const onWorldChange = (next: WorldContent) => {
-    // Mundo editado: a semente passa a ser gerada ao criar a Jornada (ADR-077, item 5).
+    // Mundo editado: vira Mundo personalizado, sem semente (ADR-077, item 5, refinado em 2026-11-24).
     setDraft((prev) => (prev ? { content: next, seed: null, edited: true } : prev));
     if (submitErrors.world.length) setSubmitErrors((prev) => ({ ...prev, world: [] }));
     if (startPlaceId && !next.places.some((p) => p.id === startPlaceId)) setStartPlaceId(null);
@@ -400,6 +409,150 @@ export function NewJourneyWizard({
       rules.skill_profiles[Math.floor(random() * rules.skill_profiles.length)];
     if (!profile) return;
     onFormChange({ ...form, skill_profile: profile.id, skills: randomSkills(rules, profile, random) });
+  };
+
+  /* ------------------------------------------------------------- Narrador que preenche dados */
+  const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [aiNotice, setAiNotice] = useState<AiNotice | null>(null);
+  const [idea, setIdea] = useState("");
+  const aiAbort = useRef<AbortController | null>(null);
+  const aiUndo = useRef<{ form: CharacterForm; name: string; description: string } | null>(null);
+  const latest = useRef({ form, journeyName, journeyDescription });
+  latest.current = { form, journeyName, journeyDescription };
+  const ready = modelReady(engine);
+
+  // Trocar de passo ou sair do assistente cancela o pedido em andamento.
+  const cancelFill = useCallback(() => {
+    aiAbort.current?.abort();
+    aiAbort.current = null;
+    setAiBusy(null);
+  }, []);
+  useEffect(() => cancelFill, [step, cancelFill]);
+
+  // O aviso some sozinho depois de um tempo (como no protótipo).
+  useEffect(() => {
+    if (!aiNotice) return;
+    const timer = setTimeout(() => setAiNotice(null), 9000);
+    return () => clearTimeout(timer);
+  }, [aiNotice]);
+
+  const fillContext = (): Pick<FillRequest, "world" | "character" | "journey" | "idea"> => {
+    const place = world?.places.find((p) => p.id === startPlaceId);
+    const join = (...parts: string[]) => parts.filter((t) => t.trim()).join(". ");
+    const { form: f, journeyName: n, journeyDescription: d } = latest.current;
+    return {
+      ...(idea.trim() ? { idea: idea.trim() } : {}),
+      world: world
+        ? {
+            name: world.name,
+            era: join(world.era.name, world.era.description),
+            tone: join(world.tone.name, world.tone.description),
+            ...(place ? { place: join(place.name, place.type, place.description) } : {}),
+          }
+        : {},
+      character: toDraft(f),
+      journey: { name: n, description: d },
+    };
+  };
+
+  /** Pede ao Narrador; `apply` aplica o resultado e devolve quantos campos mudaram. */
+  const runFill = async (key: string, body: Pick<FillRequest, "kind" | "field" | "tab" | "mode">, apply: (r: FillResult) => number) => {
+    if (aiBusy || !ready) return;
+    const controller = new AbortController();
+    aiAbort.current = controller;
+    setAiBusy(key);
+    setAiNotice(null);
+    try {
+      const result = await requestFill(info, { ...body, ...fillContext() }, controller.signal);
+      if (controller.signal.aborted || result === null) return;
+      const { form: f, journeyName: n, journeyDescription: d } = latest.current;
+      aiUndo.current = { form: f, name: n, description: d };
+      const count = apply(result);
+      setAiNotice(
+        count
+          ? { message: `O Narrador preencheu ${plural(count, "campo", "campos")}.`, undo: true }
+          : { message: "Nada a preencher: os campos já estavam preenchidos." },
+      );
+    } catch (err) {
+      if (controller.signal.aborted || isAbortError(err)) return;
+      const code = err instanceof BackendError || err instanceof StreamError ? err.code : undefined;
+      if (code === "nada_a_preencher") {
+        setAiNotice({ message: "Nada a preencher: os campos já estavam preenchidos." });
+        return;
+      }
+      const base = err instanceof Error && err.message ? err.message : "O Narrador não respondeu.";
+      const message = chatErrorMessage(code, base);
+      setAiNotice({ message: /Nada mudou/.test(message) ? message : `${message} Nada mudou.`, error: true });
+    } finally {
+      if (aiAbort.current === controller) aiAbort.current = null;
+      setAiBusy((current) => (current === key ? null : current));
+    }
+  };
+
+  const undoFill = () => {
+    const snapshot = aiUndo.current;
+    if (!snapshot) return;
+    onFormChange(snapshot.form);
+    setJourneyName(snapshot.name);
+    setJourneyDescription(snapshot.description);
+    aiUndo.current = null;
+    setAiNotice(null);
+  };
+
+  const narrator: NarratorControls = {
+    ready,
+    busy: aiBusy,
+    idea,
+    onIdea: setIdea,
+    suggest: (path) =>
+      void runFill(`field:${path}`, { kind: "field", field: path }, (r) => {
+        const value = r.values?.[path];
+        if (value === undefined) return 0;
+        if (path === "journey.name") {
+          setJourneyName(value);
+          return 1;
+        }
+        if (path === "journey.description") {
+          setJourneyDescription(value);
+          return 1;
+        }
+        const { form: next, count } = applyTexts(latest.current.form, { [path]: value }, false);
+        onFormChange(next);
+        return count;
+      }),
+    fillMissing: (tab) =>
+      void runFill(`missing:${tab}`, { kind: "missing", tab }, (r) => {
+        const { form: next, count } = applyTexts(latest.current.form, r.values ?? {}, true);
+        if (count) onFormChange(next);
+        return count;
+      }),
+    suggestAttributes: () =>
+      void runFill("attributes", { kind: "attributes" }, (r) => {
+        const f = latest.current.form;
+        if (!r.attributes) return 0;
+        // Só os Atributos sem valor recebem a sugestão (o serviço manteve os escolhidos).
+        const blank = Object.entries(f.attributes)
+          .filter(([, v]) => v === null)
+          .map(([k]) => k);
+        const attributes = { ...f.attributes };
+        for (const k of blank) attributes[k] = r.attributes[k] ?? null;
+        onFormChange({ ...f, attributes });
+        return blank.length;
+      }),
+    suggestSkills: () =>
+      void runFill("skills", { kind: "skills" }, (r) => {
+        const f = latest.current.form;
+        if (!r.skill_profile || !r.skills) return 0;
+        const added = Object.keys(r.skills).filter((k) => !((f.skills[k] ?? 0) > 0)).length;
+        onFormChange({ ...f, skill_profile: r.skill_profile, skills: { ...r.skills } });
+        return added + (f.skill_profile === null ? 1 : 0);
+      }),
+    history: (mode) =>
+      void runFill(`history:${mode}`, { kind: "history", mode }, (r) => {
+        if (r.history_html === undefined) return 0;
+        onFormChange({ ...latest.current.form, history: r.history_html });
+        return 1;
+      }),
   };
 
   /* ------------------------------------------------------------- criação */
@@ -617,6 +770,7 @@ export function NewJourneyWizard({
               counts={charCounts}
               onRandomAttributes={randomizeAttributes}
               onRandomSkills={randomizeSkills}
+              narrator={narrator}
               portrait={portrait}
               onPortrait={() => setPortraitOpen(true)}
             />
@@ -665,6 +819,7 @@ export function NewJourneyWizard({
                   setSubmitErrors((prev) => ({ ...prev, description: null }));
                 }}
                 disabled={creating}
+                narrator={narrator}
               />
             </>
           ) : null}
@@ -691,6 +846,8 @@ export function NewJourneyWizard({
           )}
         </footer>
       </section>
+
+      {aiNotice ? <AiToast notice={aiNotice} onUndo={undoFill} onClose={() => setAiNotice(null)} /> : null}
 
       <PortraitDialog
         open={portraitOpen}

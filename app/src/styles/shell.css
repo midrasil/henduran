@@ -64,7 +64,8 @@
   height: calc(var(--sky-band-height) / 2);
 }
 
-.app .app__sky--nova-jornada {
+.app .app__sky--nova-jornada,
+.app .app__sky--mundos {
   display: none;
 }
 

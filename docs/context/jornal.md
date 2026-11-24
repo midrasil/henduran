@@ -290,3 +290,14 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Ocorrência: troca de branch da pasta principal durante o trabalho (PR #29); alterações recolocadas em `feat/nova-jornada` sem conflito. O dev deixou um backend de teste na porta 8765, que pode ser fechado.
 - Arquivos principais: `app/src/screens/newJourney/*`, `app/src/ui/HistoryEditor/*`, `backend/henduran/richtext.py`, `backend/henduran/services/journey_creation.py`, `backend/henduran/storage/{worlds,character,journeys}.py`, `backend/henduran/api/app.py`, migrações `journey/0005` e `world/0002`, `docs/ui-ux/12-nova-jornada.md`.
 - Entrega: PR [#30](https://github.com/midrasil/henduran/pull/30) aberto contra `main`.
+
+## 2026-11-24 — `nova-jornada` (rodada 2)
+
+- Rota: conversa com o planejador → Dev (interrompido uma vez pelo limite de uso e retomado do ponto salvo) → teste do responsável → Entrega. A rodada 1 foi o PR #30.
+- Resultado: TipTap no editor da História, rota e botões do Narrador que preenche dados, aparência opcional, aviso do retrato, Mundo personalizado, Editar Jornada e modelo inicial provisório da tela de Mundos (detalhes no handoff).
+- Decisões do responsável (2026-11-24): instalar o TipTap; aparência opcional na rodada 2; aviso do retrato; botão **Mundos** no menu com lista e criação de Mundo; editar nome e descrição dentro da Jornada (opção b); Mundo editado é "Mundo personalizado" e não recebe semente; o dev cria um modelo inicial da tela de Mundos **sem protótipo**, que será feito em 2026-11-25 em outra máquina; excluir Jornada não apaga o Mundo.
+- Decisões do dev aprovadas pelo responsável: editor sob demanda (o TipTap soma 404,7 kB ao JS); `extension-character-count` removido; `world/0002` não reescrita (checksum); Sugerir Atributos e Perícias só preenche o que falta; limites do Narrador (ideia 500 caracteres, 120 s, 2 novas tentativas).
+- Ocorrências: o dev parou por limite de uso e foi retomado com o escopo completo; a porta 8765 já estava ocupada por outro backend, que o dev não tocou.
+- Pendências: protótipo de Mundos; teste do Narrador com modelo local real; TipTap em navegador real.
+- Arquivos principais: `app/src/ui/HistoryEditor/*`, `app/src/screens/newJourney/narrator.tsx`, `app/src/screens/WorldsScreen.tsx`, `app/src/screens/journey/EditJourneyDialog.tsx`, `backend/henduran/narrative/fill.py`, `backend/henduran/services/{fill,journey_edit,world_library,journey_deletion}.py`, migração `journey/0006`, `docs/ui-ux/13-mundos.md`.
+- Entrega: PR [#32](https://github.com/midrasil/henduran/pull/32) aberto contra `main`.

@@ -12,6 +12,8 @@ export interface FieldExtras {
   hideLabel?: boolean;
   /** Elemento ao lado do campo (por exemplo, o botão Buscar). */
   action?: ReactNode;
+  /** Elemento na linha do rótulo, à direita (por exemplo, o botão Sugerir do Narrador); fica fora do `<label>`. */
+  labelAction?: ReactNode;
   className?: string;
 }
 
@@ -29,14 +31,25 @@ export function Field({
   error,
   hideLabel,
   action,
+  labelAction,
   className,
   children,
 }: { [K in keyof FieldExtras]?: FieldExtras[K] | undefined } & { id: string; children: ReactNode }) {
+  const labelEl = (
+    <label htmlFor={id} className={hideLabel ? "visually-hidden" : "field__label"}>
+      {label}
+    </label>
+  );
   return (
     <div className={["field", error ? "field--invalid" : "", className ?? ""].filter(Boolean).join(" ")}>
-      <label htmlFor={id} className={hideLabel ? "visually-hidden" : "field__label"}>
-        {label}
-      </label>
+      {labelAction ? (
+        <div className="field__head">
+          {labelEl}
+          {labelAction}
+        </div>
+      ) : (
+        labelEl
+      )}
       <div className="field__row">
         {children}
         {action}
@@ -58,11 +71,11 @@ export function Field({
 export type TextFieldProps = FieldExtras & Omit<ComponentPropsWithRef<"input">, "className">;
 
 /** Campo de texto de uma linha com rótulo, dica e erro. */
-export function TextField({ label, hint, error, hideLabel, action, className, id, ...input }: TextFieldProps) {
+export function TextField({ label, hint, error, hideLabel, action, labelAction, className, id, ...input }: TextFieldProps) {
   const autoId = useId();
   const fieldId = id ?? autoId;
   return (
-    <Field id={fieldId} label={label} hint={hint} error={error} hideLabel={hideLabel} action={action} className={className}>
+    <Field id={fieldId} label={label} hint={hint} error={error} hideLabel={hideLabel} action={action} labelAction={labelAction} className={className}>
       <input
         id={fieldId}
         className="field__control px-frame"
@@ -77,11 +90,11 @@ export function TextField({ label, hint, error, hideLabel, action, className, id
 export type TextAreaProps = FieldExtras & Omit<ComponentPropsWithRef<"textarea">, "className">;
 
 /** Área de texto com rótulo, dica e erro. */
-export function TextArea({ label, hint, error, hideLabel, action, className, id, ...area }: TextAreaProps) {
+export function TextArea({ label, hint, error, hideLabel, action, labelAction, className, id, ...area }: TextAreaProps) {
   const autoId = useId();
   const fieldId = id ?? autoId;
   return (
-    <Field id={fieldId} label={label} hint={hint} error={error} hideLabel={hideLabel} action={action} className={className}>
+    <Field id={fieldId} label={label} hint={hint} error={error} hideLabel={hideLabel} action={action} labelAction={labelAction} className={className}>
       <textarea
         id={fieldId}
         className="field__control field__control--area px-frame"

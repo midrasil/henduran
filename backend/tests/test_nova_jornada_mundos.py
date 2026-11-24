@@ -63,24 +63,23 @@ def test_mundo_gerado_sem_edicao_guarda_a_semente(env):
     assert item.id == summary.world_id and item.seed == 476
 
 
-def test_mundo_editado_ou_sem_semente_recebe_semente_nova(env, monkeypatch):
+def test_mundo_editado_ou_sem_semente_e_personalizado(env):
+    """Mundo editado, criado do zero ou duplicado não recebe semente (Mundo personalizado)."""
     _, worlds, journeys = env
     content = generate_world(476)["content"]
     content["name"] = "Terras Editadas"
-    monkeypatch.setattr("henduran.services.journey_creation.new_seed", lambda: 1234)
     new(journeys, world_content=content, world_seed=476)
     new(journeys, seed=8)  # sem semente pedida (criado do zero ou duplicado)
     seeds = {w.name: w.seed for w in worlds.catalog()}
-    assert seeds["Terras Editadas"] == 1234
-    assert seeds[generate_world(8)["content"]["name"]] == 1234
+    assert seeds["Terras Editadas"] is None
+    assert seeds[generate_world(8)["content"]["name"]] is None
 
 
-def test_semente_pedida_invalida_vira_semente_nova(monkeypatch):
+def test_semente_so_quando_reproduz_o_conteudo():
     content = validate_world_content(generate_world(476)["content"]).content
-    monkeypatch.setattr("henduran.services.journey_creation.new_seed", lambda: 7)
     assert world_seed_for(content, 476) == 476
     for bad in (None, -1, SEED_MAX + 1, True, "476", 477):
-        assert world_seed_for(content, bad) == 7
+        assert world_seed_for(content, bad) is None
 
 
 # ------------------------------------------------------------------ Mundo salvo

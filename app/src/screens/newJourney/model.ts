@@ -423,3 +423,31 @@ export function plainTextOfHtml(html: string): string {
 export function wordCount(plain: string): number {
   return plain.split(/\s+/).filter((w) => w && !/^(-|\d+\.)$/.test(w)).length;
 }
+
+/* ------------------------------------------------- Narrador que preenche dados */
+
+/** Valor de um campo de texto do personagem pelo caminho do serviço (`name`, `convictions[1].pillar`...). */
+export function textAt(form: CharacterForm, path: string): string | undefined {
+  const m = /^convictions\[(\d+)\]\.(text|pillar)$/.exec(path);
+  if (m) return form.convictions[Number(m[1])]?.[m[2] as "text" | "pillar"];
+  if (path === "name" || path === "concept" || path === "appearance" || path === "ambition" || path === "desire") return form[path];
+  return undefined;
+}
+
+/**
+ * Aplica os textos sugeridos. `onlyBlank` (Preencher o que falta) não toca em campo já
+ * preenchido. Devolve o formulário novo e quantos campos mudaram.
+ */
+export function applyTexts(form: CharacterForm, values: Record<string, string>, onlyBlank: boolean): { form: CharacterForm; count: number } {
+  let count = 0;
+  const next: CharacterForm = { ...form, convictions: form.convictions.map((c) => ({ ...c })) };
+  for (const [path, value] of Object.entries(values)) {
+    const current = textAt(next, path);
+    if (current === undefined || (onlyBlank && current.trim())) continue;
+    const m = /^convictions\[(\d+)\]\.(text|pillar)$/.exec(path);
+    if (m) next.convictions[Number(m[1])]![m[2] as "text" | "pillar"] = value;
+    else (next as unknown as Record<string, string>)[path] = value;
+    count++;
+  }
+  return { form: next, count };
+}

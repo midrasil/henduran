@@ -2,6 +2,7 @@ import type { WorldContent } from "../../api/journeys";
 import { Portrait, TextArea, TextField } from "../../ui";
 import type { PortraitDraft } from "./CharacterStep";
 import type { CharacterForm } from "./model";
+import { SuggestButton, type NarratorControls } from "./narrator";
 
 /** Limite da descrição da Jornada (ADR-077, item 4); o serviço confere de novo. */
 export const JOURNEY_DESCRIPTION_MAX = 2000;
@@ -19,6 +20,8 @@ export interface StartStepProps {
   onName: (value: string) => void;
   onDescription: (value: string) => void;
   disabled: boolean;
+  /** Sugerir do Narrador no nome e na descrição (usa o Mundo, o lugar inicial e o personagem). */
+  narrator: NarratorControls;
 }
 
 /** Tela Iniciar Jornada: nome e descrição da Jornada (os dois opcionais). */
@@ -60,6 +63,7 @@ export function StartStep(props: StartStepProps) {
             <TextField
               id="s-name"
               label="Nome da Jornada (opcional)"
+              labelAction={<SuggestButton path="journey.name" label="o nome da Jornada" narrator={props.narrator} />}
               autoComplete="off"
               placeholder={props.defaultName}
               hint={`Se ficar em branco, será “${props.defaultName}”.`}
@@ -71,6 +75,7 @@ export function StartStep(props: StartStepProps) {
             <TextArea
               id="s-description"
               label="Descrição (opcional)"
+              labelAction={<SuggestButton path="journey.description" label="a descrição da Jornada" narrator={props.narrator} />}
               rows={6}
               maxLength={JOURNEY_DESCRIPTION_MAX}
               placeholder="Em poucas linhas: o ponto de partida, o clima e o que está em jogo."

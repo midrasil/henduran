@@ -1078,6 +1078,11 @@
   display: none;
 }
 
+/* Aviso da Nova Jornada (retrato não enviado), acima das colunas. */
+.jscreen__notice {
+  margin: var(--space-1) var(--space-2) 0;
+}
+
 .jscreen__toast {
   position: fixed;
   z-index: var(--z-overlay);

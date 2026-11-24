@@ -146,3 +146,11 @@ export async function checkPortraitFile(file: File): Promise<string | null> {
   const head = new Uint8Array(await blob.arrayBuffer());
   return looksLikeImage(head) ? null : "Este arquivo não é uma imagem PNG, JPEG ou WebP. Escolha outra imagem.";
 }
+
+/* --------------------------------------------------------------------- semente */
+
+/** Mundo editado à mão, criado do zero ou duplicado: sem semente (decisão de 2026-11-24). */
+export const PERSONALIZED = "Mundo personalizado";
+
+/** "semente N" ou "Mundo personalizado" (chips e listas de Mundos). */
+export const seedLabel = (seed: number | null | undefined) => (seed == null ? PERSONALIZED : `semente ${seed}`);

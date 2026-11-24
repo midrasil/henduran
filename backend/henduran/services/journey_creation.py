@@ -11,7 +11,8 @@ Etapas:
    :class:`JourneyCreationInvalid` com **todos** os erros por campo.
 2. ``criar_mundo`` (só Mundo novo): cria o Mundo (versão 1) com o conteúdo validado e a
    semente, no ``world.db``. A semente é a do gerador quando o conteúdo é exatamente o
-   que ela gera; senão (Mundo editado, criado do zero ou duplicado), uma semente nova.
+   que ela gera; senão (Mundo editado, criado do zero ou duplicado), o Mundo é
+   **personalizado** e a semente fica nula.
 3. ``criar_jornada``: cria a Jornada fixada no Mundo e, **na mesma transação do
    ``journey.db``**, grava o personagem, a Ambição e o Desejo ativos, a descrição e o resumo
    (``character_name``, ``location`` = nome do lugar inicial, ``start_place_id``
@@ -44,7 +45,7 @@ from henduran.storage import character as character_store
 from henduran.storage.errors import StorageError
 from henduran.storage.journeys import JourneyStore, JourneySummary
 from henduran.storage.worlds import WorldStore
-from henduran.worldgen.generator import generate_world, new_seed
+from henduran.worldgen.generator import generate_world
 from henduran.worldgen.schema import SEED_MAX, WorldValidation, validate_world_content
 
 log = logging.getLogger("henduran.services")
@@ -195,16 +196,18 @@ def plan_creation(
     )
 
 
-def world_seed_for(content: dict[str, Any], requested: Any) -> int:
-    """Semente do Mundo novo: a pedida, se ela gera exatamente ``content``; senão, uma semente nova.
+def world_seed_for(content: dict[str, Any], requested: Any) -> int | None:
+    """Semente do Mundo novo: a pedida, só se ela gera exatamente ``content``; senão, ``None``.
 
-    Um Mundo editado à mão, criado do zero ou duplicado recebe a semente ao ser criado (ADR-077, item 5).
+    Um Mundo editado à mão, criado do zero ou duplicado é um **Mundo personalizado**: não
+    recebe semente, porque nenhuma semente o reproduz (decisão do responsável em 2026-11-24,
+    refinando o ADR-077, item 5).
     """
     if isinstance(requested, int) and not isinstance(requested, bool) and 0 <= requested <= SEED_MAX:
         generated = validate_world_content(generate_world(requested)["content"]).content
         if generated == content:
             return requested
-    return new_seed()
+    return None
 
 
 def create_journey_with_character(

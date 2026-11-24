@@ -16,6 +16,7 @@ import {
   type CountStatus,
   type OptionalField,
 } from "./model";
+import { AiBar, AiButton, SuggestButton, type NarratorControls } from "./narrator";
 import { CardPane, QTip, tabItems } from "./parts";
 
 const id = (path: string) => fieldId("c", path);
@@ -43,6 +44,8 @@ export interface CharacterStepProps {
   counts: Record<CharacterTab, number>;
   onRandomAttributes: () => void;
   onRandomSkills: () => void;
+  /** Botões do Narrador que preenche dados (ADR-077, item 3). */
+  narrator: NarratorControls;
   portrait: PortraitDraft | null;
   onPortrait: () => void;
 }
@@ -103,7 +106,7 @@ function useErr(errors: FieldError[], show: boolean) {
   };
 }
 
-function IdentityTab({ rules, form, onChange, errors, showErrors }: CharacterStepProps) {
+function IdentityTab({ rules, form, onChange, errors, showErrors, narrator }: CharacterStepProps) {
   const err = useErr(errors, showErrors);
   const set = (patch: Partial<CharacterForm>) => onChange({ ...form, ...patch });
   const text = (key: "name" | "concept" | "appearance" | OptionalField) => ({
@@ -113,13 +116,21 @@ function IdentityTab({ rules, form, onChange, errors, showErrors }: CharacterSte
     onChange: (e: { target: { value: string } }) => set({ [key]: e.target.value } as Partial<CharacterForm>),
   });
   const optionalFilled = [form.age, form.height, form.origin, form.personality].some((v) => v.trim());
+  const suggest = (path: string, label: string) => <SuggestButton path={path} label={label} narrator={narrator} />;
   return (
     <>
+      <AiBar tab="ident" narrator={narrator} idPrefix={id("ident")} />
       <div className="nj-grid2">
-        <TextField label="Nome" autoComplete="off" {...text("name")} />
-        <TextField label="Conceito" hint={HELP.concept} autoComplete="off" {...text("concept")} />
+        <TextField label="Nome" autoComplete="off" labelAction={suggest("name", "o nome")} {...text("name")} />
+        <TextField label="Conceito" hint={HELP.concept} autoComplete="off" labelAction={suggest("concept", "o Conceito")} {...text("concept")} />
       </div>
-      <TextArea label="Aparência" hint={HELP.appearance} rows={3} {...text("appearance")} />
+      <TextArea
+        label="Aparência (opcional)"
+        hint={HELP.appearance}
+        rows={3}
+        labelAction={suggest("appearance", "a aparência")}
+        {...text("appearance")}
+      />
       <details className="nj-more" open={optionalFilled || undefined}>
         <summary>Descrição opcional (idade, altura, origem, personalidade)</summary>
         <p className="hint">{HELP.optionalDescription}</p>
@@ -134,8 +145,9 @@ function IdentityTab({ rules, form, onChange, errors, showErrors }: CharacterSte
   );
 }
 
-function HistoryTab({ rules, form, onChange, errors, showErrors }: CharacterStepProps) {
+function HistoryTab({ rules, form, onChange, errors, showErrors, narrator }: CharacterStepProps) {
   const err = useErr(errors, showErrors);
+  const written = plainTextOfHtml(form.history).trim() !== "";
   return (
     <HistoryEditor
       id={id("history")}
@@ -148,15 +160,36 @@ function HistoryTab({ rules, form, onChange, errors, showErrors }: CharacterStep
       placeholder="Conte de onde o personagem vem e o que viveu até aqui…"
       error={err("history")}
       className="nj-rte"
+      toolbarExtra={
+        <>
+          <AiButton
+            label="Escrever"
+            busyKey="history:write"
+            narrator={narrator}
+            title="Desenvolver com o Narrador o que está escrito (ou escrever do zero, se estiver vazio)"
+            onClick={() => narrator.history("write")}
+          />
+          <AiButton
+            label="Continuar"
+            busyKey="history:continue"
+            narrator={narrator}
+            unavailable={!written}
+            title={written ? "Continuar o texto a partir do que está escrito" : "Escreva algo para o Narrador continuar"}
+            onClick={() => narrator.history("continue")}
+          />
+        </>
+      }
     />
   );
 }
 
-function ObjectivesTab({ form, onChange, errors, showErrors, rules }: CharacterStepProps) {
+function ObjectivesTab({ form, onChange, errors, showErrors, rules, narrator }: CharacterStepProps) {
   const err = useErr(errors, showErrors);
   const set = (patch: Partial<CharacterForm>) => onChange({ ...form, ...patch });
+  const suggest = (path: string, label: string) => <SuggestButton path={path} label={label} narrator={narrator} />;
   return (
     <>
+      <AiBar tab="obj" narrator={narrator} idPrefix={id("obj")} />
       <div className="nj-sub">
         <h5>Ambição e Desejo</h5>
       </div>
@@ -164,6 +197,7 @@ function ObjectivesTab({ form, onChange, errors, showErrors, rules }: CharacterS
         <TextField
           id={id("ambition")}
           label="Ambição"
+          labelAction={suggest("ambition", "a Ambição")}
           hint={HELP.ambition}
           value={form.ambition}
           error={err("ambition")}
@@ -172,6 +206,7 @@ function ObjectivesTab({ form, onChange, errors, showErrors, rules }: CharacterS
         <TextField
           id={id("desire")}
           label="Desejo"
+          labelAction={suggest("desire", "o Desejo")}
           hint={HELP.desire}
           value={form.desire}
           error={err("desire")}
@@ -199,6 +234,7 @@ function ObjectivesTab({ form, onChange, errors, showErrors, rules }: CharacterS
               <TextField
                 id={id(`convictions[${i}].text`)}
                 label="Convicção"
+                labelAction={suggest(`convictions[${i}].text`, `a Convicção ${i + 1}`)}
                 value={c.text}
                 error={err(`convictions[${i}].text`)}
                 onChange={(e) => update({ text: e.target.value })}
@@ -206,6 +242,7 @@ function ObjectivesTab({ form, onChange, errors, showErrors, rules }: CharacterS
               <TextField
                 id={id(`convictions[${i}].pillar`)}
                 label="Pilar"
+                labelAction={suggest(`convictions[${i}].pillar`, `o Pilar da Convicção ${i + 1}`)}
                 value={c.pillar}
                 error={err(`convictions[${i}].pillar`)}
                 onChange={(e) => update({ pillar: e.target.value })}
@@ -235,7 +272,7 @@ function Tally({ status, label }: { status: CountStatus[]; label: string }) {
   );
 }
 
-function StatusTab({ rules, form, onChange, errors, showErrors, onRandomAttributes, onRandomSkills }: CharacterStepProps) {
+function StatusTab({ rules, form, onChange, errors, showErrors, onRandomAttributes, onRandomSkills, narrator }: CharacterStepProps) {
   const err = useErr(errors, showErrors);
   const set = (patch: Partial<CharacterForm>) => onChange({ ...form, ...patch });
 
@@ -278,6 +315,13 @@ function StatusTab({ rules, form, onChange, errors, showErrors, onRandomAttribut
           <Button size="sm" onClick={onRandomAttributes}>
             <PixelIcon name="dice" /> Sortear Atributos
           </Button>
+          <AiButton
+            label="Sugerir Atributos"
+            busyKey="attributes"
+            narrator={narrator}
+            title="O Narrador distribui os valores que faltam, de acordo com o personagem"
+            onClick={narrator.suggestAttributes}
+          />
         </span>
       </div>
       <Tally status={attrStatus} label="Valores usados" />
@@ -339,6 +383,13 @@ function StatusTab({ rules, form, onChange, errors, showErrors, onRandomAttribut
           <Button size="sm" onClick={onRandomSkills}>
             <PixelIcon name="dice" /> Sortear Perícias
           </Button>
+          <AiButton
+            label="Sugerir perfil e Perícias"
+            busyKey="skills"
+            narrator={narrator}
+            title="O Narrador escolhe o perfil (se faltar) e as Perícias que faltam"
+            onClick={narrator.suggestSkills}
+          />
         </span>
       </div>
       <div className="nj-profiles" role="group" aria-label="Perfil de Perícias">

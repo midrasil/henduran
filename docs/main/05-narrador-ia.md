@@ -46,6 +46,10 @@ Skills podem fornecer instruções especializadas de interpretação, estilo, ge
 
 O produto deve funcionar como uma aplicação desktop, sem exigir navegador nem serviço de IA online quando um modelo local adequado estiver disponível.
 
+## 6.1 Narrador que preenche dados (Nova Jornada)
+
+Implementado em 2026-11-24 (ADR-077, item 3): `POST /narrator/fill` (contrato em `backend/README.md`). O serviço monta o contexto (Mundo escolhido, lugar inicial, o que o jogador já preencheu, a descrição da Jornada e a ideia opcional) e pede ao `NarratorProvider` uma resposta com **esquema JSON fixo** por tipo de pedido (`field`, `missing`, `attributes`, `skills`, `history`). **A IA propõe, o motor valida**: textos pelos limites da criação, Atributos e Perícias pela distribuição do catálogo (os já escolhidos ficam fixos no esquema), História por HTML saneado com o limite de 4.000 caracteres de texto puro. Resposta inválida volta ao modelo com o motivo, até 2 novas tentativas. Cancelável, com tempo limite de 120 s e erros explícitos; nada é gravado (o cliente aplica no formulário e oferece Desfazer).
+
 ## 7. Comportamentos a validar
 
 - Narrador mantém identidade e personalidade de NPCs ao longo de Cenas diferentes.

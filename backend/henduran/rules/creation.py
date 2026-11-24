@@ -13,7 +13,9 @@ Rascunho (JSON vindo da interface)::
     }
 
 Os campos ``age``, ``height``, ``origin`` e ``personality`` são **opcionais**, texto
-livre e sem efeito de regra: ausentes, nulos ou vazios valem "não informado".
+livre e sem efeito de regra: ausentes, nulos ou vazios valem "não informado". A
+``appearance`` também é opcional (12-nova-jornada.md, seção 4; migração ``journey/0006``):
+ausente, nula ou vazia, é gravada como texto vazio.
 
 História formatada (ADR-077, item 2): o rascunho pode trazer ``history_html`` (HTML do
 editor). O serviço o sanea (:mod:`henduran.richtext`), deriva o **texto puro** e o usa
@@ -76,7 +78,6 @@ OPTIONAL_FIELDS = tuple(name for name, _, _ in OPTIONAL_TEXT_FIELDS)
 _TEXT_FIELDS = (
     ("name", "name", "O nome"),
     ("concept", "concept", "O Conceito"),
-    ("appearance", "appearance", "A aparência"),
     ("history", "history", "A história"),
     ("ambition", "ambition", "A Ambição"),
     ("desire", "desire", "O Desejo"),
@@ -388,6 +389,19 @@ def _validate_skills(errors: list[FieldError], profile_value: Any, value: Any) -
     return profile.id, out
 
 
+def validate_attributes(value: Any) -> tuple[dict[str, int] | None, list[FieldError]]:
+    """Confere só os Atributos (valores e distribuição da criação). Usado pelo Narrador que preenche dados."""
+    errors: list[FieldError] = []
+    return _validate_attributes(errors, value), errors
+
+
+def validate_skills(profile: Any, value: Any) -> tuple[str | None, dict[str, int] | None, list[FieldError]]:
+    """Confere só o perfil e as Perícias (valores e distribuição do perfil). Usado pelo Narrador que preenche dados."""
+    errors: list[FieldError] = []
+    checked_profile, skills = _validate_skills(errors, profile, value)
+    return checked_profile, skills, errors
+
+
 def validate_character(draft: Any) -> ValidationResult:
     """Valida o rascunho inteiro e devolve todos os erros (ou o :class:`Character` normalizado)."""
     result = ValidationResult()
@@ -406,6 +420,9 @@ def validate_character(draft: Any) -> ValidationResult:
         texts[name] = check_text(
             errors, name, draft.get(name), R.TEXT_LIMITS[limit_key], label, single_line=name in _SINGLE_LINE
         )
+    texts["appearance"] = check_optional_text(
+        errors, "appearance", draft.get("appearance"), R.TEXT_LIMITS["appearance"], "A aparência"
+    )
     history_html: str | None = None
     if rich_history:
         texts["history"], history_html = check_history_html(errors, draft.get("history_html"))
@@ -526,5 +543,7 @@ __all__ = [
     "derive",
     "has_bad_chars",
     "preview_derived",
+    "validate_attributes",
     "validate_character",
+    "validate_skills",
 ]

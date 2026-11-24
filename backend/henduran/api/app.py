@@ -62,6 +62,7 @@ from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubErro
 from henduran.db.connection import Database, DatabaseError
 from henduran.db.migrations import schema_version
 from henduran.providers.base import NarratorProvider, ProviderUnavailable
+from henduran.narrative import fill as fill_engine
 from henduran.narrative.scene import ProposalRejected
 from henduran.rules.creation import creation_catalog, preview_derived, validate_character
 from henduran.services import narration
@@ -71,8 +72,11 @@ from henduran.services.journey_creation import (
     JourneyCreationInvalid,
     create_journey_with_character,
 )
-from henduran.services.journey_deletion import delete_journey_and_orphan_world
+from henduran.services.fill import FILL_TIMEOUT_S, FillTimeout, run_fill
+from henduran.services.journey_deletion import delete_journey
+from henduran.services.journey_edit import EDIT_FIELDS, JourneyEditInvalid, edit_journey_summary
 from henduran.services.narration import NarrationFailed
+from henduran.services.world_library import WorldInvalid, delete_saved_world, save_world
 from henduran.services.session import JourneySession
 from henduran.storage import JourneyStore, StorageError, WorldStore
 from henduran.storage.journeys import OpenJourney
@@ -154,6 +158,10 @@ STORAGE_STATUS = {
     "id_divergente": 409,
     "checksum_divergente": 409,
     "migracao_desconhecida": 409,
+    # Mundos salvos (tela de Mundos)
+    "mundo_em_uso": 409,
+    "uso_indeterminado": 409,
+    "exclusao_falhou": 500,
     "banco_inacessivel": 503,
     # Narrador e ciclo de Cena (ADR-076)
     "abertura_existente": 409,
@@ -234,6 +242,7 @@ def create_app(
     journeys: JourneyStore | None = None,
     worlds: WorldStore | None = None,
     rng: random.Random | None = None,
+    fill_timeout: float = FILL_TIMEOUT_S,
 ) -> FastAPI:
     """Cria a aplicação. ``token`` é o segredo por execução exigido em todas as rotas.
 
@@ -344,6 +353,56 @@ def create_app(
                     "error",
                     {"message": "Falha ao gerar a resposta do Narrador.", "code": "generation_failed"},
                 )
+            finally:
+                cancel.set()
+                generations.pop(generation_id, None)
+
+        return StreamingResponse(
+            events(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    # ------------------------------------------------- Narrador que preenche dados (ADR-077, item 3)
+    @app.post("/narrator/fill", dependencies=auth)
+    async def narrator_fill(request: Request) -> StreamingResponse:
+        """Sugestão do Narrador para a Nova Jornada (SSE: ``start``, ``done`` com ``result`` ou ``error``). Nada é gravado."""
+        body = await read_json(request, fill_engine.REQUEST_FIELDS)
+        try:
+            plan = fill_engine.prepare(body)
+        except fill_engine.FillInvalid as exc:
+            raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
+        generation_id = str(uuid.uuid4())
+        cancel = asyncio.Event()
+        generations[generation_id] = cancel
+
+        async def events() -> AsyncIterator[str]:
+            try:
+                yield _sse("start", {"id": generation_id})
+                result = await run_fill(provider, plan, cancel, timeout=fill_timeout)
+                if result is None:
+                    yield _sse("done", {"reason": "cancelled"})
+                else:
+                    yield _sse("done", {"reason": "completed", "kind": plan.kind, "result": result})
+            except asyncio.CancelledError:
+                cancel.set()  # conexão fechada pelo cliente
+                raise
+            except ProviderUnavailable as exc:
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except ProposalRejected as exc:
+                logger.warning("sugestão recusada: %s", exc.reasons)
+                yield _sse(
+                    "error",
+                    {
+                        "message": "O Narrador não conseguiu sugerir uma resposta válida. Nada mudou; tente de novo.",
+                        "code": exc.code,
+                    },
+                )
+            except FillTimeout as exc:
+                yield _sse("error", {"message": str(exc), "code": exc.code})
+            except Exception:  # noqa: BLE001 — o erro vira evento, sem vazar detalhes
+                logger.exception("falha na sugestão %s", generation_id)
+                yield _sse("error", {"message": "Falha ao pedir a sugestão do Narrador.", "code": "generation_failed"})
             finally:
                 cancel.set()
                 generations.pop(generation_id, None)
@@ -648,6 +707,30 @@ def create_app(
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
 
+    @app.post("/worlds", dependencies=auth)
+    async def worlds_save(request: Request) -> JSONResponse:
+        """Salva um Mundo sem Jornada (tela de Mundos). ``{content, seed?}``; a semente só fica se reproduz o conteúdo."""
+        if worlds is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
+        body = await read_json(request, ("content", "seed"))
+        try:
+            summary = await asyncio.to_thread(save_world, worlds, body.get("content"), body.get("seed"))
+        except WorldInvalid as exc:
+            raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return JSONResponse({"world": summary.to_dict()}, status_code=201)
+
+    @app.delete("/worlds/{world_id}", dependencies=auth)
+    async def worlds_delete(world_id: str, confirm: str = "") -> dict:
+        """Exclui um Mundo salvo (``?confirm=true``); 409 ``mundo_em_uso`` se alguma Jornada o usa."""
+        if worlds is None:
+            raise _http_error("storage_unavailable", "O armazenamento de Mundos não está ativo.", 503)
+        try:
+            return await asyncio.to_thread(delete_saved_world, worlds, world_id, confirm=confirm.lower() in ("true", "1"))
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+
     @app.post("/worlds/validate", dependencies=auth)
     async def worlds_validate(request: Request) -> dict:
         body = await read_json(request, ("content",))
@@ -708,6 +791,19 @@ def create_app(
             raise _http_error("nenhuma_jornada_aberta", "Nenhuma Jornada está aberta.", 404)
         return snap
 
+    @app.patch("/journeys/current", dependencies=auth)
+    async def journeys_edit(request: Request) -> dict:
+        """Nome e descrição da Jornada aberta (``{name?, description?}``), com as regras da criação."""
+        body = await read_json(request, EDIT_FIELDS)
+        journey = current_journey()
+        try:
+            summary = await asyncio.to_thread(edit_journey_summary, journey, body)
+        except JourneyEditInvalid as exc:
+            raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        return {"journey": summary}
+
     @app.post("/journeys/close", dependencies=auth)
     async def journeys_close() -> dict:
         _, sess = need_journeys()
@@ -734,7 +830,7 @@ def create_app(
         store, _ = need_journeys()
         try:
             result = await asyncio.to_thread(
-                delete_journey_and_orphan_world, store, journey_id, confirm=confirm.lower() in ("true", "1")
+                delete_journey, store, journey_id, confirm=confirm.lower() in ("true", "1")
             )
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc

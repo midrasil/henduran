@@ -2,7 +2,7 @@ import type { CreationRules, DerivedPreview, WorldContent } from "../../api/jour
 import { Button, Portrait, Tabs } from "../../ui";
 import type { CharacterForm, ReviewTab, TabDef } from "./model";
 import type { PortraitDraft } from "./CharacterStep";
-import { CardPane, RichTextView } from "./parts";
+import { CardPane, PERSONALIZED, RichTextView } from "./parts";
 
 const TABS_ID = "nj-review";
 const TABS: TabDef<ReviewTab>[] = [
@@ -15,7 +15,7 @@ export interface ReviewStepProps {
   world: WorldContent;
   /** Mundo salvo (já existente) ou novo, salvo ao criar a Jornada. */
   savedWorld: boolean;
-  /** Semente; `null` = gerada ao criar a Jornada. */
+  /** Semente; `null` = Mundo personalizado (editado, criado do zero ou duplicado). */
   seed: number | null;
   startPlaceId: string | null;
   form: CharacterForm;
@@ -67,7 +67,7 @@ function WorldReview({ world, savedWorld, seed, startPlaceId, onEditWorld }: Rev
           <dt>Situação</dt>
           <dd>{savedWorld ? "Mundo salvo, já existente" : "Mundo novo, salvo ao criar a Jornada"}</dd>
           <dt>Semente</dt>
-          <dd>{seed === null ? "gerada ao criar a Jornada" : seed}</dd>
+          <dd>{seed === null ? PERSONALIZED : seed}</dd>
         </dl>
         <div className="nj-rtxt">
           <p>

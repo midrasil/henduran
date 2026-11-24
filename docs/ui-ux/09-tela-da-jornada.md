@@ -29,7 +29,8 @@
 ### 2.1 Barra superior
 
 - À esquerda, o **nome da Jornada** dado pelo jogador, com o personagem e o Mundo.
-- À direita: o **período e a data no calendário do Mundo** (ícone e texto curto, sem seletor; por exemplo "Noite · 12 de Alvorim, Solário · Ano 476"; ADR-076, item 16), o **indicador do modelo** (pronto ou não; clicar leva à configuração de modelo) e o botão **⚙** (Mundo com o registro de lugares, Modelos, Voltar ao menu).
+- À direita: o **período e a data no calendário do Mundo** (ícone e texto curto, sem seletor; por exemplo "Noite · 12 de Alvorim, Solário · Ano 476"; ADR-076, item 16), o **indicador do modelo** (pronto ou não; clicar leva à configuração de modelo) e o botão **⚙** (**Editar Jornada**, Mundo com o registro de lugares, Modelos, Voltar ao menu).
+  - *Editar Jornada* (decisão do responsável em 2026-11-24, sem protótipo próprio): diálogo com **Nome da Jornada** e **Descrição**, opcionais como na Nova Jornada (nome em branco volta a "A Jornada de <nome>"; descrição até 2.000 caracteres). Salvar grava pelo serviço (`PATCH /journeys/current`); em erro, aviso no diálogo e nada muda. O nome novo aparece na barra e no menu inicial; o Narrador lê a descrição nova no próximo contexto.
 - **O céu do período em pixel art ocupa o fundo da barra inteira**, com o mesmo desenho do menu inicial (`SkyBackdrop`, `sky.ts`): bandas pontilhadas, sol ou lua, estrelas, nuvens, relevo e árvores. Os textos ficam legíveis por sombra dura e fundos escuros translúcidos nos controles.
 
 ### 2.2 Coluna dos Arcos (esquerda)

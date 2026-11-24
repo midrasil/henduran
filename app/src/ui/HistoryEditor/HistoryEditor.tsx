@@ -1,20 +1,24 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from "react";
+import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
+import StarterKit from "@tiptap/starter-kit";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { describedBy } from "../TextField/TextField";
 
 import "./HistoryEditor.css";
 
 /**
- * Editor da História do personagem (ADR-077, item 1).
+ * Editor da História do personagem (ADR-077, item 1): TipTap (ProseMirror) num conjunto enxuto.
  *
- * **PROVISÓRIO.** O ADR-077 aprovou o TipTap (ProseMirror) para este editor, mas ele é uma
- * dependência nova que ainda espera a aprovação da instalação (AGENTS.md). Até lá, esta
- * implementação usa `contenteditable` e `document.execCommand`, com a barra do protótipo.
- * A interface abaixo é a que o componente TipTap vai manter: trocar o editor é mudar só
- * este arquivo (e o CSS dele).
+ * Recursos: parágrafo, Título (h2) e Subtítulo (h3), negrito, itálico, sublinhado, tachado,
+ * listas com marcadores e numerada, citação, alinhamento, desfazer e refazer, limpar formatação
+ * e placeholder. Fora do conjunto (e desligados no StarterKit): links, código, bloco de código,
+ * linha horizontal e quebra de linha manual. Colar passa pelo esquema do editor: o que não
+ * pertence ao conjunto é descartado.
  *
- * O HTML que sai daqui não é confiável por si: o servidor sanea com lista permitida e
- * deriva o texto puro (o limite conta o texto puro). Colar e soltar inserem só texto.
+ * O HTML que sai daqui não é confiável por si: o servidor sanea com lista permitida e deriva o
+ * texto puro (o limite conta o texto puro; o contador usa a mesma derivação, `plainText`).
  */
 export interface HistoryEditorProps {
   /** Id do campo editável (para foco e rótulos). */
@@ -34,57 +38,52 @@ export interface HistoryEditorProps {
   disabled?: boolean;
   /** Mensagem de erro (marca o campo como inválido). */
   error?: string | undefined;
-  /** Ações extras no fim da barra (os botões Escrever e Continuar do Narrador, rodada 2). */
+  /** Ações extras no fim da barra (os botões Escrever e Continuar do Narrador). */
   toolbarExtra?: ReactNode;
   className?: string;
 }
 
-type Command =
-  | "bold"
-  | "italic"
-  | "underline"
-  | "strikeThrough"
-  | "insertUnorderedList"
-  | "insertOrderedList"
-  | "justifyLeft"
-  | "justifyCenter"
-  | "justifyRight"
-  | "justifyFull"
-  | "undo"
-  | "redo"
-  | "removeFormat";
+type Align = "left" | "center" | "right" | "justify";
 
 interface ToolButton {
-  command: Command | "blockquote";
+  key: string;
   glyph: string;
   label: string;
-  /** Tem estado ligado/desligado (`aria-pressed`). */
-  toggle: boolean;
+  /** Estado ligado/desligado (`aria-pressed`); ausente nos botões de ação. */
+  active?: (e: Editor) => boolean;
+  run: (e: Editor) => void;
+  enabled?: (e: Editor) => boolean;
   className?: string;
 }
 
+const chain = (e: Editor) => e.chain().focus();
+const align = (a: Align): Pick<ToolButton, "active" | "run"> => ({
+  active: (e) => e.isActive({ textAlign: a }),
+  run: (e) => chain(e).setTextAlign(a).run(),
+});
+
 const GROUPS: ToolButton[][] = [
   [
-    { command: "bold", glyph: "N", label: "Negrito (Ctrl+B)", toggle: true, className: "rte__btn--bold" },
-    { command: "italic", glyph: "I", label: "Itálico (Ctrl+I)", toggle: true, className: "rte__btn--italic" },
-    { command: "underline", glyph: "S", label: "Sublinhado (Ctrl+U)", toggle: true, className: "rte__btn--underline" },
-    { command: "strikeThrough", glyph: "T", label: "Tachado", toggle: true, className: "rte__btn--strike" },
+    { key: "bold", glyph: "N", label: "Negrito (Ctrl+B)", active: (e) => e.isActive("bold"), run: (e) => chain(e).toggleBold().run(), className: "rte__btn--bold" },
+    { key: "italic", glyph: "I", label: "Itálico (Ctrl+I)", active: (e) => e.isActive("italic"), run: (e) => chain(e).toggleItalic().run(), className: "rte__btn--italic" },
+    { key: "underline", glyph: "S", label: "Sublinhado (Ctrl+U)", active: (e) => e.isActive("underline"), run: (e) => chain(e).toggleUnderline().run(), className: "rte__btn--underline" },
+    { key: "strike", glyph: "T", label: "Tachado", active: (e) => e.isActive("strike"), run: (e) => chain(e).toggleStrike().run(), className: "rte__btn--strike" },
   ],
   [
-    { command: "insertUnorderedList", glyph: "•", label: "Lista com marcadores", toggle: true },
-    { command: "insertOrderedList", glyph: "1.", label: "Lista numerada", toggle: true },
-    { command: "blockquote", glyph: "❝", label: "Citação", toggle: false },
+    { key: "bullet", glyph: "•", label: "Lista com marcadores", active: (e) => e.isActive("bulletList"), run: (e) => chain(e).toggleBulletList().run() },
+    { key: "ordered", glyph: "1.", label: "Lista numerada", active: (e) => e.isActive("orderedList"), run: (e) => chain(e).toggleOrderedList().run() },
+    { key: "quote", glyph: "❝", label: "Citação", active: (e) => e.isActive("blockquote"), run: (e) => chain(e).toggleBlockquote().run() },
   ],
   [
-    { command: "justifyLeft", glyph: "⇤", label: "Alinhar à esquerda", toggle: true },
-    { command: "justifyCenter", glyph: "↔", label: "Centralizar", toggle: true },
-    { command: "justifyRight", glyph: "⇥", label: "Alinhar à direita", toggle: true },
-    { command: "justifyFull", glyph: "☰", label: "Justificar", toggle: true },
+    { key: "left", glyph: "⇤", label: "Alinhar à esquerda", ...align("left") },
+    { key: "center", glyph: "↔", label: "Centralizar", ...align("center") },
+    { key: "right", glyph: "⇥", label: "Alinhar à direita", ...align("right") },
+    { key: "justify", glyph: "☰", label: "Justificar", ...align("justify") },
   ],
   [
-    { command: "undo", glyph: "↶", label: "Desfazer (Ctrl+Z)", toggle: false },
-    { command: "redo", glyph: "↷", label: "Refazer (Ctrl+Y)", toggle: false },
-    { command: "removeFormat", glyph: "✕", label: "Limpar formatação", toggle: false },
+    { key: "undo", glyph: "↶", label: "Desfazer (Ctrl+Z)", run: (e) => chain(e).undo().run(), enabled: (e) => e.can().undo() },
+    { key: "redo", glyph: "↷", label: "Refazer (Ctrl+Y)", run: (e) => chain(e).redo().run(), enabled: (e) => e.can().redo() },
+    { key: "clear", glyph: "✕", label: "Limpar formatação", run: (e) => chain(e).unsetAllMarks().clearNodes().unsetTextAlign().run() },
   ],
 ];
 
@@ -96,51 +95,13 @@ const BLOCKS = [
 
 type BlockValue = (typeof BLOCKS)[number]["value"];
 
-/** `execCommand` existe nos navegadores (e no WebView2); no jsdom dos testes, não. */
-function exec(command: string, value?: string): boolean {
-  if (typeof document.execCommand !== "function") return false;
-  try {
-    return document.execCommand(command, false, value);
-  } catch {
-    return false;
-  }
-}
+const currentBlock = (e: Editor): BlockValue =>
+  e.isActive("heading", { level: 2 }) ? "h2" : e.isActive("heading", { level: 3 }) ? "h3" : "p";
 
-function queryState(command: string): boolean {
-  if (typeof document.queryCommandState !== "function") return false;
-  try {
-    return document.queryCommandState(command);
-  } catch {
-    return false;
-  }
-}
+/** HTML emitido: vazio quando não há texto (o placeholder aparece e o campo conta como em branco). */
+const htmlOf = (e: Editor) => (e.isEmpty ? "" : e.getHTML());
 
-function currentBlock(): BlockValue {
-  if (typeof document.queryCommandValue !== "function") return "p";
-  try {
-    const value = document.queryCommandValue("formatBlock").toLowerCase();
-    return value === "h2" || value === "h3" ? value : "p";
-  } catch {
-    return "p";
-  }
-}
-
-/** Insere texto simples na seleção (colar e soltar nunca trazem HTML de fora). */
-function insertPlainText(text: string): void {
-  if (exec("insertText", text)) return;
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
-  const range = selection.getRangeAt(0);
-  range.deleteContents();
-  const node = document.createTextNode(text);
-  range.insertNode(node);
-  range.setStartAfter(node);
-  range.collapse(true);
-  selection.removeAllRanges();
-  selection.addRange(range);
-}
-
-/** Editor de texto com barra de formatação (provisório; ver o comentário do módulo). */
+/** Editor de texto com barra de formatação (TipTap). */
 export function HistoryEditor({
   id,
   label,
@@ -155,85 +116,97 @@ export function HistoryEditor({
   toolbarExtra,
   className,
 }: HistoryEditorProps) {
-  const areaRef = useRef<HTMLDivElement>(null);
-  /** O último HTML que este editor emitiu (para não reescrever o DOM a cada tecla). */
-  const emitted = useRef<string | null>(null);
-  const [pressed, setPressed] = useState<Record<string, boolean>>({});
-  const [block, setBlock] = useState<BlockValue>("p");
+  /** O último HTML que este editor emitiu (para não reescrever o documento a cada tecla). */
+  const emitted = useRef<string>(value);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-  // Valor vindo de fora (rascunho, Desfazer, Narrador): reescreve o conteúdo.
-  useLayoutEffect(() => {
-    const area = areaRef.current;
-    if (!area || value === emitted.current) return;
-    area.innerHTML = value;
+  const countId = `${id}-count`;
+  const errorId = `${id}-error`;
+  const attributes = (): Record<string, string> => {
+    const attrs: Record<string, string> = {
+      id,
+      class: "rte__doc",
+      role: "textbox",
+      "aria-multiline": "true",
+      "aria-label": label,
+    };
+    const described = describedBy(countId, error !== undefined && errorId);
+    if (described) attrs["aria-describedby"] = described;
+    if (error) attrs["aria-invalid"] = "true";
+    if (disabled) attrs["aria-disabled"] = "true";
+    return attrs;
+  };
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+        code: false,
+        codeBlock: false,
+        link: false,
+        horizontalRule: false,
+        hardBreak: false,
+        // Sem parágrafo vazio automático no fim (depois de listas e citações).
+        trailingNode: false,
+      }),
+      TextAlign.configure({ types: ["heading", "paragraph"], alignments: ["left", "center", "right", "justify"] }),
+      Placeholder.configure({ placeholder: placeholder ?? "" }),
+    ],
+    content: value,
+    editable: !disabled,
+    immediatelyRender: true,
+    shouldRerenderOnTransaction: false,
+    editorProps: { attributes: attributes() },
+    onUpdate: ({ editor: e }) => {
+      const html = htmlOf(e);
+      if (html === emitted.current) return;
+      emitted.current = html;
+      onChangeRef.current(html);
+    },
+  });
+
+  // Valor vindo de fora (rascunho, Desfazer, Narrador): troca o documento sem emitir.
+  useEffect(() => {
+    if (!editor || value === emitted.current) return;
     emitted.current = value;
-  }, [value]);
-
-  const emit = useCallback(() => {
-    const area = areaRef.current;
-    if (!area) return;
-    // Sem texto, o editor fica vazio de verdade (e o placeholder aparece).
-    const html = area.textContent?.trim() || area.querySelector("li") ? area.innerHTML : "";
-    if (!html && area.innerHTML) area.innerHTML = "";
-    emitted.current = html;
-    onChange(html);
-  }, [onChange]);
-
-  const refreshState = useCallback(() => {
-    const area = areaRef.current;
-    const selection = typeof window.getSelection === "function" ? window.getSelection() : null;
-    if (!area || !selection || !selection.anchorNode || !area.contains(selection.anchorNode)) return;
-    const next: Record<string, boolean> = {};
-    for (const group of GROUPS) for (const b of group) if (b.toggle) next[b.command] = queryState(b.command);
-    setPressed(next);
-    setBlock(currentBlock());
-  }, []);
+    editor.commands.setContent(value, { emitUpdate: false });
+  }, [editor, value]);
 
   useEffect(() => {
-    document.addEventListener("selectionchange", refreshState);
-    return () => document.removeEventListener("selectionchange", refreshState);
-  }, [refreshState]);
+    if (!editor) return;
+    editor.setEditable(!disabled, false);
+    editor.setOptions({ editorProps: { attributes: attributes() } });
+    // `attributes` depende só dos valores abaixo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, disabled, error, label, id]);
 
-  const run = (command: ToolButton["command"]) => {
-    const area = areaRef.current;
-    if (!area || disabled) return;
-    area.focus();
-    exec("defaultParagraphSeparator", "p");
-    if (command === "blockquote") exec("formatBlock", "blockquote");
-    else exec(command);
-    emit();
-    refreshState();
-  };
+  const state = useEditorState({
+    editor,
+    selector: ({ editor: e }) => {
+      if (!e) return null;
+      const pressed: Record<string, boolean> = {};
+      const enabled: Record<string, boolean> = {};
+      for (const group of GROUPS)
+        for (const b of group) {
+          if (b.active) pressed[b.key] = b.active(e);
+          if (b.enabled) enabled[b.key] = b.enabled(e);
+        }
+      return { pressed, enabled, block: currentBlock(e) };
+    },
+  });
 
-  const setBlockStyle = (next: BlockValue) => {
-    const area = areaRef.current;
-    if (!area || disabled) return;
-    area.focus();
-    exec("formatBlock", next);
-    setBlock(next);
-    emit();
-  };
-
-  const onPaste = (e: ClipboardEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const text = e.clipboardData.getData("text/plain");
-    if (text) insertPlainText(text);
-    emit();
-  };
-
-  const onDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const text = e.dataTransfer.getData("text/plain");
-    if (text) insertPlainText(text);
-    emit();
+  const setBlock = (next: BlockValue) => {
+    if (!editor || disabled) return;
+    const c = chain(editor);
+    if (next === "p") c.setParagraph().run();
+    else c.setHeading({ level: next === "h2" ? 2 : 3 }).run();
   };
 
   const plain = plainText(value);
   const chars = plain.length;
   const words = countWords(plain);
   const over = chars > limit;
-  const countId = `${id}-count`;
-  const errorId = `${id}-error`;
 
   return (
     <div
@@ -243,9 +216,9 @@ export function HistoryEditor({
         <select
           className="rte__select"
           aria-label="Estilo do parágrafo"
-          value={block}
-          disabled={disabled}
-          onChange={(e) => setBlockStyle(e.target.value as BlockValue)}
+          value={state?.block ?? "p"}
+          disabled={disabled || !editor}
+          onChange={(e) => setBlock(e.target.value as BlockValue)}
         >
           {BLOCKS.map((b) => (
             <option key={b.value} value={b.value}>
@@ -257,16 +230,16 @@ export function HistoryEditor({
           <span key={i} className="rte__group">
             {group.map((b) => (
               <button
-                key={b.command}
+                key={b.key}
                 type="button"
                 className={["rte__btn", b.className ?? ""].filter(Boolean).join(" ")}
                 aria-label={b.label}
                 title={b.label}
-                aria-pressed={b.toggle ? Boolean(pressed[b.command]) : undefined}
-                disabled={disabled}
+                aria-pressed={b.active ? Boolean(state?.pressed[b.key]) : undefined}
+                disabled={disabled || !editor || (b.enabled ? !state?.enabled[b.key] : false)}
                 // Não tira o foco (nem a seleção) do texto ao clicar.
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => run(b.command)}
+                onClick={() => editor && b.run(editor)}
               >
                 <span aria-hidden="true">{b.glyph}</span>
               </button>
@@ -275,27 +248,7 @@ export function HistoryEditor({
         ))}
         {toolbarExtra ? <span className="rte__extra">{toolbarExtra}</span> : null}
       </div>
-      <div
-        ref={areaRef}
-        id={id}
-        className="rte__area"
-        contentEditable={!disabled}
-        suppressContentEditableWarning
-        role="textbox"
-        aria-multiline="true"
-        aria-label={label}
-        aria-invalid={error ? true : undefined}
-        aria-disabled={disabled || undefined}
-        aria-describedby={describedBy(countId, error !== undefined && errorId)}
-        data-placeholder={placeholder}
-        tabIndex={disabled ? -1 : 0}
-        onInput={emit}
-        onBlur={emit}
-        onPaste={onPaste}
-        onDrop={onDrop}
-        onKeyUp={refreshState}
-        onMouseUp={refreshState}
-      />
+      <EditorContent editor={editor} className="rte__area" />
       <div className="rte__foot">
         <span id={countId} className={`rte__count${over ? " rte__count--over" : ""}`} aria-live="polite">
           {words === 1 ? "1 palavra" : `${words} palavras`} · {chars.toLocaleString("pt-BR")}/{limit.toLocaleString("pt-BR")}{" "}

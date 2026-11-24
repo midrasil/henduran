@@ -19,7 +19,13 @@ O jogo é desktop e centrado em chat, com interface pixel art, mapas auxiliares 
 **Aprovado depois (ADR-070 a 072):**
 
 - **Execução local de LLMs:** llama.cpp (`llama-server`) com modelos GGUF, local gratuito primeiro; provedores remotos por API key depois, pela interface `NarratorProvider`.
-- **Protocolo interface↔serviço Python:** HTTP local em loopback, com SSE para streaming.
+- **Protocolo interface↔serviço Python:** HTTP local em loopback, com SSE para streaming. Rotas do Narrador em SSE: o chat, as da Jornada aberta (ADR-076) e `POST /narrator/fill` (Narrador que preenche dados na Nova Jornada, ADR-077, item 3; não grava nada). Contrato em `backend/README.md`.
+
+**Dependências da interface aprovadas por tarefa** (versões exatas no `app/package.json`):
+
+| Pacote | Versão | Licença | Uso | Aprovação |
+| --- | --- | --- | --- | --- |
+| `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-text-align`, `@tiptap/extension-placeholder` | 3.35.0 | MIT | Editor da História na Nova Jornada (ADR-077, item 1), num conjunto enxuto: links, código, bloco de código, linha horizontal e quebra manual desligados no StarterKit. Nenhuma extensão "Pro" (paga). O contador usa a mesma derivação de texto puro do serviço, por isso `@tiptap/extension-character-count` não entrou. | Responsável, 2026-11-24 (rodada 2 da Nova Jornada). Medido com `vite build`: o editor é carregado sob demanda (pacote próprio de 407,5 kB, 129,6 kB gzip); o pacote inicial continua em 417,6 kB (126,8 kB gzip), contra 418,8 kB (126,9 kB gzip) antes. Num pacote único, seriam 823,5 kB (255,4 kB gzip). |
 
 **Proposto / em aberto:**
 

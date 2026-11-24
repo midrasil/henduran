@@ -1,7 +1,7 @@
 /** Navegação do app: um redutor simples, sem biblioteca de rotas. */
-import type { JourneySnapshot } from "./api/journeys";
+import type { JourneySnapshot, OpenJourneySummary } from "./api/journeys";
 
-export type Screen = "menu" | "jornadas" | "nova-jornada" | "modelos" | "jornada";
+export type Screen = "menu" | "jornadas" | "mundos" | "nova-jornada" | "modelos" | "jornada";
 
 export interface NavState {
   screen: Screen;
@@ -16,6 +16,8 @@ export interface NavState {
 export type NavAction =
   | { type: "go"; screen: Screen; notice?: string }
   | { type: "opened"; snapshot: JourneySnapshot }
+  /** Nome ou descrição da Jornada aberta editados (o resto do retrato da Jornada não muda). */
+  | { type: "summary"; journey: OpenJourneySummary }
   | { type: "closed" };
 
 export const initialNav: NavState = { screen: "menu", journey: null, modelsBack: "menu", notice: null };
@@ -30,6 +32,8 @@ export function navReducer(state: NavState, action: NavAction): NavState {
     }
     case "opened":
       return { ...state, screen: "jornada", journey: action.snapshot, notice: null };
+    case "summary":
+      return state.journey ? { ...state, journey: { ...state.journey, journey: action.journey } } : state;
     case "closed":
       return { ...state, screen: "menu", journey: null, notice: null };
   }

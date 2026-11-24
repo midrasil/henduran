@@ -1,4 +1,4 @@
-/* Editor da História (provisório, contenteditable; o TipTap vai usar as mesmas classes). Pergaminho. */
+/* Editor da História (TipTap). Pergaminho. `.rte__area` é a caixa com rolagem; `.rte__doc`, o documento editável. */
 .rte {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -98,27 +98,43 @@
 }
 
 .rte__area {
+  display: flex;
+  flex-direction: column;
   min-height: 260px;
   overflow: auto;
+}
+
+.rte__area:focus-within {
+  box-shadow: inset 0 0 0 3px var(--color-focus-on-parchment);
+}
+
+.rte__doc {
+  flex: 1;
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-serif);
   font-size: var(--font-size-lg);
   line-height: 1.5;
   outline: none;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
-.rte__area:focus-visible {
-  box-shadow: inset 0 0 0 3px var(--color-focus-on-parchment);
-}
-
-.rte__area:empty::before {
+/* Placeholder do TipTap: no primeiro parágrafo do documento vazio. */
+.rte__doc p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
+  float: left;
+  height: 0;
   color: var(--color-text-on-parchment-muted);
   font-style: italic;
+  pointer-events: none;
 }
 
-.rte__area h2 {
+.rte--disabled .rte__doc {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.rte__doc h2 {
   margin: 0.6em 0 0.3em;
   font-family: var(--font-serif);
   font-size: 1.6em;
@@ -126,7 +142,7 @@
   color: var(--color-text-on-parchment);
 }
 
-.rte__area h3 {
+.rte__doc h3 {
   margin: 0.6em 0 0.3em;
   font-family: var(--font-serif);
   font-size: 1.3em;
@@ -134,19 +150,19 @@
   color: var(--px-purple-800);
 }
 
-.rte__area p,
-.rte__area ul,
-.rte__area ol,
-.rte__area blockquote {
+.rte__doc p,
+.rte__doc ul,
+.rte__doc ol,
+.rte__doc blockquote {
   margin: 0 0 0.7em;
 }
 
-.rte__area ul,
-.rte__area ol {
+.rte__doc ul,
+.rte__doc ol {
   padding-left: 1.5em;
 }
 
-.rte__area blockquote {
+.rte__doc blockquote {
   padding: 2px var(--space-2);
   border-left: 4px solid var(--px-purple-500);
   color: var(--color-text-on-parchment-muted);
@@ -174,4 +190,12 @@
 
 .rte__error::before {
   content: "! ";
+}
+
+.rte__doc li > p {
+  margin: 0;
+}
+
+.rte__doc blockquote > p:last-child {
+  margin-bottom: 0;
 }

@@ -47,11 +47,9 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, ope
     if (!removing) return;
     setRemoving({ ...removing, sending: true, error: null });
     try {
-      const result = await deleteJourney(info, removing.journey.id);
+      await deleteJourney(info, removing.journey.id);
       setRemoving(null);
-      setAnnounce(
-        `Jornada “${label(removing.journey)}” excluída.${result.world_deleted ? " O Mundo dela também foi apagado." : ""}`,
-      );
+      setAnnounce(`Jornada “${label(removing.journey)}” excluída. O Mundo dela continua salvo.`);
       await reload();
       titleRef.current?.focus();
     } catch (err) {
@@ -191,7 +189,7 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, ope
         description={
           <p>
             Isto apaga a Jornada do disco, com o personagem e os backups dela, e não pode ser desfeito. O Mundo da Jornada
-            também é apagado se nenhuma outra Jornada o usar.
+            continua salvo na tela Mundos.
           </p>
         }
         onClose={() => setRemoving(null)}

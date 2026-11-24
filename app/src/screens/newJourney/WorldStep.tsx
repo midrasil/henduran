@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
+
 import type { FieldError } from "../../api/backend";
 import type { SavedWorld, WorldContent, WorldSchema } from "../../api/journeys";
 import { errorsByField } from "../../lib/format";
 import { Button, PixelIcon, Tabs, TextArea, TextField } from "../../ui";
 import { canAdd, canRemove, cloneWorld, fieldId, nextPlaceId, WORLD_TABS, type WorldTab } from "./model";
-import { CardPane, Chip, plural, tabItems } from "./parts";
+import { CardPane, Chip, plural, seedLabel, tabItems } from "./parts";
 
 const id = (path: string) => fieldId("w", path);
 const TABS_ID = "nj-world";
@@ -13,7 +15,7 @@ export type WorldSelection = "draft" | string;
 
 export interface WorldDraft {
   content: WorldContent;
-  /** Semente do gerador; `null` quando o Mundo foi editado, criado do zero ou duplicado (gerada ao criar). */
+  /** Semente do gerador; `null` quando o Mundo foi editado, criado do zero ou duplicado (Mundo personalizado). */
   seed: number | null;
   edited: boolean;
 }
@@ -54,6 +56,14 @@ export interface WorldStepProps {
   /** Mostra os erros nos campos (depois da primeira tentativa de avançar). */
   showErrors: boolean;
   validationError: string | null;
+  /**
+   * Tela de Mundos do menu (modelo provisório): sem lugar inicial e com os textos de salvar
+   * pela própria tela. `savedActions` vai no aviso do Mundo salvo (Duplicar e editar, Excluir);
+   * `draftActions`, no topo do Mundo novo em edição (Salvar Mundo).
+   */
+  library?: boolean;
+  savedActions?: ReactNode;
+  draftActions?: ReactNode;
 }
 
 const usedText = (n: number | null) => (n ? `Usado em ${plural(n, "Jornada", "Jornadas")}` : "Ainda sem Jornadas");
@@ -84,7 +94,7 @@ export function WorldStep(props: WorldStepProps) {
               <span>
                 {draft.content.era.name.trim() || "sem era"} · {draft.content.tone.name.trim() || "sem tom"}
               </span>
-              <span className="nj-wi__new">Novo · salvo ao criar a Jornada</span>
+              <span className="nj-wi__new">{props.library ? "Novo · ainda não salvo" : "Novo · salvo ao criar a Jornada"}</span>
             </button>
           ) : null}
           {items.map((w) => (
@@ -101,14 +111,16 @@ export function WorldStep(props: WorldStepProps) {
                 {w.era ?? "sem era"} · {w.tone ?? "sem tom"}
               </span>
               <span>
-                {w.seed === null ? "sem semente" : `semente ${w.seed}`} · {usedText(w.journey_count)}
+                {seedLabel(w.seed)} · {usedText(w.journey_count)}
               </span>
             </button>
           ))}
           {saved === null && !savedError ? <p className="hint nj-wlist__empty">Carregando os Mundos salvos…</p> : null}
           {saved !== null && total === 0 ? (
             <p className="hint nj-wlist__empty">
-              Você ainda não tem Mundos salvos. Gere um ou crie do zero; ele é salvo quando a Jornada for criada.
+              {props.library
+                ? "Você ainda não tem Mundos salvos. Gere um ou crie do zero e use Salvar Mundo."
+                : "Você ainda não tem Mundos salvos. Gere um ou crie do zero; ele é salvo quando a Jornada for criada."}
             </p>
           ) : null}
           {unreadable.length ? (
@@ -246,10 +258,12 @@ function WorldCard(props: WorldStepProps & { world: WorldContent }) {
           <Chip>{world.era.name.trim() || "sem era"}</Chip>
           <Chip>Tom: {world.tone.name.trim() || "sem tom"}</Chip>
           <Chip>{world.calendar.era_label.trim() || "sem ano"}</Chip>
-          <Chip>
-            <PixelIcon name="pin" /> Começa em {start ? start.name.trim() || "(sem nome)" : "(escolha)"}
-          </Chip>
-          <Chip tone="gold">{seed === null ? "semente gerada ao criar a Jornada" : `semente ${seed}`}</Chip>
+          {props.library ? null : (
+            <Chip>
+              <PixelIcon name="pin" /> Começa em {start ? start.name.trim() || "(sem nome)" : "(escolha)"}
+            </Chip>
+          )}
+          <Chip tone="gold">{seedLabel(seed)}</Chip>
         </div>
       </div>
       <Tabs items={tabItems(WORLD_TABS, counts, false)} value={tab} onChange={onTab} label="Partes do Mundo" idPrefix={TABS_ID} className="nj-tabs" />
@@ -259,12 +273,16 @@ function WorldCard(props: WorldStepProps & { world: WorldContent }) {
             <span>
               Este Mundo já está salvo
               {savedWorld?.journey_count ? ` e é usado em ${plural(savedWorld.journey_count, "Jornada", "Jornadas")}` : ""}, então
-              não muda. O lugar inicial você escolhe aqui. Para alterar o Mundo, duplique.
+              não muda.{props.library ? "" : " O lugar inicial você escolhe aqui."} Para alterar o Mundo, duplique.
             </span>
-            <Button size="sm" onClick={props.onDuplicate}>
-              Duplicar e editar
-            </Button>
+            {props.savedActions ?? (
+              <Button size="sm" onClick={props.onDuplicate}>
+                Duplicar e editar
+              </Button>
+            )}
           </div>
+        ) : props.draftActions ? (
+          <div className="callout nj-readonly">{props.draftActions}</div>
         ) : null}
         {props.validationError && !readOnly ? <p className="callout callout--warn">{props.validationError}</p> : null}
         {err("") ? (
@@ -446,7 +464,10 @@ function WorldCard(props: WorldStepProps & { world: WorldContent }) {
               <h5 id={id("places")} tabIndex={-1}>
                 Lugares ({world.places.length})
               </h5>
-              <small>{countHint("places", "lugares")} Escolha onde a Jornada começa.</small>
+              <small>
+                {countHint("places", "lugares")}
+                {props.library ? "" : " Escolha onde a Jornada começa."}
+              </small>
             </div>
             {err("places") ? <p className="callout callout--danger">{err("places")}</p> : null}
             {err("start") ? (
@@ -463,15 +484,17 @@ function WorldCard(props: WorldStepProps & { world: WorldContent }) {
                     <b className="nj-item__name">
                       {label} <small>{place.type}</small>
                     </b>
-                    <button
-                      type="button"
-                      className="nj-startbtn"
-                      aria-pressed={isStart}
-                      aria-label={isStart ? `A Jornada começa em ${label}` : `Começar em ${label}`}
-                      onClick={() => onStartPlace(place.id)}
-                    >
-                      <PixelIcon name="pin" /> {isStart ? "A Jornada começa aqui" : "Começar aqui"}
-                    </button>
+                    {props.library ? null : (
+                      <button
+                        type="button"
+                        className="nj-startbtn"
+                        aria-pressed={isStart}
+                        aria-label={isStart ? `A Jornada começa em ${label}` : `Começar em ${label}`}
+                        onClick={() => onStartPlace(place.id)}
+                      >
+                        <PixelIcon name="pin" /> {isStart ? "A Jornada começa aqui" : "Começar aqui"}
+                      </button>
+                    )}
                     <RemoveButton
                       label={`Remover o lugar ${label}`}
                       disabled={readOnly || !canRemove(schema, "places", world)}

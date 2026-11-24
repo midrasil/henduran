@@ -25,6 +25,7 @@ O protótipo aprovado da Nova Jornada (`12-nova-jornada.md`) pede três coisas q
    - A rota é **cancelável**, tem **tempo limite** e devolve **erro explícito**; sem modelo carregado, o cliente desabilita os botões e a rota responde com um código claro. **Nada é gravado** até o jogador criar a Jornada.
 4. **Descrição da Jornada.** Campo **opcional** de até **2.000 caracteres**, guardado em `journey_meta` (ADR-075), editável depois dentro da Jornada, **incluído no contexto do Narrador** (abertura da Cena inicial e demais contextos gerais). O **nome** continua opcional, com o padrão "A Jornada de <nome do personagem>".
 5. **Mundos salvos são somente leitura na Nova Jornada.** Para alterar um Mundo salvo, o jogador **duplica** e edita a cópia, que vira um Mundo novo, salvo ao criar a Jornada. Isso decorre do ADR-075 (o `world.db` é lido sem alteração pelas Jornadas). Um Mundo editado à mão ou criado do zero recebe a semente **ao ser criado**.
+   - *Refinamento (responsável, 2026-11-24):* em vez de uma semente nova, o Mundo editado à mão, criado do zero ou duplicado vira **"Mundo personalizado"**, sem semente (`world_meta.seed` nula); a semente só é guardada quando reproduz exatamente o conteúdo (Mundo gerado e não editado).
 
 ## Consequências
 
