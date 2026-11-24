@@ -6,13 +6,15 @@ Atualizado em 2026-11-23 após a tarefa `rodape-menu-modelo` (ajustes no menu in
 
 ## Estado
 
-- Tarefa: dois ajustes pequenos no menu inicial, sem nova tela e sem mudança de regra.
+- Tarefa: três ajustes pequenos no menu inicial, sem nova tela e sem mudança de regra.
   1. O indicador do modelo no rodapé passou a espelhar o tratamento visual da versão à esquerda: LED + `Conectado · <detalhe> · Modelos ▸`, sem caixa, com o mesmo `aria-label` de antes (`Conectado, <detalhe>. Abrir Modelos`).
   2. O cartão "Última Jornada" deixou de aparecer quando a lista carregou sem Jornadas; o texto "Sua primeira Jornada" / "Ainda não há nenhuma Jornada..." foi removido. Os estados de serviço iniciando, carregando, erro e Jornada danificada continuam com painel.
+  3. Ajuste posterior: o gap entre os botões centrais passou de 12 px para 16 px (`--space-2`) e a sombra externa dos botões foi removida, mantendo moldura e bisel em pixel.
 - Decisões do responsável: indicador **sem caixa**, mantendo a palavra **Conectado**; cartão de primeira vez **não deve existir**; sincronizar `docs/ui-ux/11-menu-inicial.md` e `docs/ui-ux/prototipos/menu-inicial.html`.
 - Artefatos alterados: `app/src/screens/MainMenu.tsx`, `app/src/screens/menu/MainMenu.css`, `app/src/screens/MainMenu.test.tsx`, `docs/ui-ux/11-menu-inicial.md`, `docs/ui-ux/prototipos/menu-inicial.html`, `docs/context/handoff.md`, `docs/context/jornal.md`.
 - Validações: em worktree temporário limpo, com somente as mudanças desta tarefa, `npm run test -- src/screens/MainMenu.test.tsx` (15/15), `npm run test` (33 arquivos, 285/285) e `npm run typecheck` passaram. No worktree principal havia mudanças concorrentes da Nova Jornada (`App.tsx`, `newJourney/`, `api/`, `ui/`, backend), que quebram o typecheck e um teste de `model.ts`; elas **não** fazem parte deste commit.
-- Não verificado: layout real do menu sem cartão em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
+- Revalidado após o ajuste de gap/sombra: 15/15 no teste do menu, 285/285 na suíte e `typecheck` OK no worktree do PR.
+- Não verificado: layout real do menu sem cartão e sem o "quadrado" da sombra em 1280×800, 1024×768 e telas estreitas; leitor de tela e DPI de 125% a 200% seguem pendentes.
 - Branch: `fix/rodape-menu-modelo`, baseada em `main` (5c573f2). PR [#29](https://github.com/midrasil/henduran/pull/29) aberto contra `main`.
 
 ## Decisões vigentes
