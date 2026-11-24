@@ -49,15 +49,16 @@ import secrets
 import uuid
 import weakref
 from collections.abc import AsyncIterator, Callable
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from henduran.ai import gguf
 from henduran.ai import hardware as hw
-from henduran.ai.engine import EngineError, EngineManager
+from henduran.ai.engine import SLOTS, EngineError, EngineManager
 from henduran.ai.modelhub import SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, HubError, ModelHub
 from henduran.db.connection import Database, DatabaseError
 from henduran.db.migrations import schema_version
@@ -78,6 +79,7 @@ from henduran.services.journey_edit import EDIT_FIELDS, JourneyEditInvalid, edit
 from henduran.services.narration import NarrationFailed
 from henduran.services.world_library import WorldInvalid, delete_saved_world, save_world
 from henduran.services.session import JourneySession
+from henduran.settings import GPU_LAYERS_MAX, MODEL_CONTEXT_MAX, MODEL_CONTEXT_MIN
 from henduran.storage import JourneyStore, StorageError, WorldStore
 from henduran.storage.journeys import OpenJourney
 from henduran.worldgen import SEED_MAX, generate_world, validate_world_content
@@ -124,6 +126,7 @@ ERROR_STATUS = {
     "pasta_desconhecida": 404,
     "download_desconhecido": 404,
     "engine_unavailable": 503,
+    "ajuste_invalido": 422,
     "storage_unavailable": 503,
     # Narrador (ADR-076)
     "proposta_invalida": 502,
@@ -202,8 +205,19 @@ class ChatRequest(BaseModel):
     messages: list[Message] = Field(min_length=1)
 
 
+GpuLayers = Literal["auto"] | Annotated[int, Field(ge=0, le=GPU_LAYERS_MAX)]
+
+
 class SelectModelRequest(BaseModel):
     id: str = Field(min_length=1, max_length=1024)
+    # Ajustes de carga do modelo (opcionais; ficam salvos para este modelo).
+    context_size: int | None = Field(default=None, ge=MODEL_CONTEXT_MIN, le=MODEL_CONTEXT_MAX)
+    gpu_layers: GpuLayers | None = None
+
+
+class HideModelRequest(BaseModel):
+    id: str = Field(min_length=1, max_length=1024)
+    hidden: bool
 
 
 class DownloadRequest(BaseModel):
@@ -432,6 +446,7 @@ def create_app(
         eng = need_engine()
         info = await hardware()
         active = eng.settings.get("active_model")
+        hidden = set(eng.settings.get("hidden_models"))
         models = []
         for m in await asyncio.to_thread(eng.models):
             models.append(
@@ -447,9 +462,81 @@ def create_app(
                     "source": m.get("source", "app"),
                     "folder": m.get("root"),
                     "removable": m.get("source", "app") == "app",
+                    "hidden": m["id"] in hidden,
+                    "options": eng.model_options(m["id"]),
                 }
             )
         return {"models": models, "models_dir": str(eng.paths.models_dir), "active": active}
+
+    def remember_model(model_id: str, *, hidden: bool | None = None, options: dict | None = None,
+                       forget: bool = False) -> None:
+        """Grava (ou esquece) a preferência de ocultar e os ajustes de carga de um modelo."""
+        eng = need_engine()
+        hidden_ids = [i for i in eng.settings.get("hidden_models") if i != model_id]
+        all_options = eng.settings.get("model_options")
+        if forget:
+            all_options.pop(model_id, None)
+        else:
+            if hidden is None and model_id in eng.settings.get("hidden_models"):
+                hidden_ids.append(model_id)
+            elif hidden:
+                hidden_ids.append(model_id)
+            if options:
+                all_options[model_id] = {**all_options.get(model_id, {}), **options}
+        eng.settings.update(hidden_models=hidden_ids, model_options=all_options)
+
+    @app.post("/models/hidden", dependencies=auth)
+    async def hide_model(body: HideModelRequest) -> dict:
+        eng = need_engine()
+        model = await asyncio.to_thread(eng.resolve_model, body.id)
+        if model is None:
+            raise _http_error("model_not_found", "Modelo não encontrado na pasta de modelos.", 404)
+        remember_model(model["id"], hidden=body.hidden)
+        return {"id": model["id"], "hidden": body.hidden}
+
+    @app.get("/models/estimate", dependencies=auth)
+    async def estimate_model(id: str, context_size: int | None = None, gpu_layers: str | None = None) -> dict:
+        eng = need_engine()
+        model = await asyncio.to_thread(eng.resolve_model, id)
+        if model is None:
+            raise _http_error("model_not_found", "Modelo não encontrado na pasta de modelos.", 404)
+        saved = eng.model_options(model["id"])
+        ctx = saved["context_size"] if context_size is None else context_size
+        layers: str | int = saved["gpu_layers"] if gpu_layers in (None, "") else gpu_layers
+        if layers != "auto":
+            try:
+                layers = int(layers)
+            except (TypeError, ValueError):
+                layers = -1
+            if not 0 <= layers <= GPU_LAYERS_MAX:
+                raise _http_error("ajuste_invalido", f'gpu_layers deve ser "auto" ou de 0 a {GPU_LAYERS_MAX}.')
+        if context_size is not None and not MODEL_CONTEXT_MIN <= ctx <= MODEL_CONTEXT_MAX:
+            raise _http_error(
+                "ajuste_invalido", f"O contexto deve ficar entre {MODEL_CONTEXT_MIN} e {MODEL_CONTEXT_MAX} tokens."
+            )
+        info = await hardware()
+        vram = max([g.get("memory_bytes") or 0 for g in info.get("gpus") or []] or [0])
+        meta = await asyncio.to_thread(gguf.read_metadata, model["path"])
+        variant = eng.source_info().get("variant") or eng.settings.get("engine_variant")
+        estimate = hw.estimate_vram(
+            meta, model["size_bytes"], context_size=ctx, slots=SLOTS, gpu_layers=layers,
+            vram_bytes=vram, variant=variant,
+        )
+        return {"id": model["id"], "context_size": ctx, "gpu_layers": layers, **estimate}
+
+    @app.get("/models/suggestions", dependencies=auth)
+    async def model_suggestions() -> dict:
+        info = await hardware()
+        return {"suggestions": hw.suggest(info), "search_terms": hw.search_terms()}
+
+    @app.get("/models/scan", dependencies=auth)
+    async def scan_models() -> dict:
+        h = need_hub()
+        out = await asyncio.to_thread(h.scan_pc)
+        info = await hardware()
+        for entry in out["found"]:
+            entry["fit"] = hw.estimate_fit(entry["size_bytes"], info)
+        return out
 
     @app.post("/models/select", dependencies=auth)
     async def select_model(body: SelectModelRequest) -> dict:
@@ -459,8 +546,11 @@ def create_app(
             raise _http_error("model_not_found", "Modelo não encontrado na pasta de modelos.", 404)
         if not model["complete"]:
             raise _http_error("model_incomplete", "Faltam partes deste modelo dividido.")
+        options = {k: v for k, v in (("context_size", body.context_size), ("gpu_layers", body.gpu_layers)) if v is not None}
         eng.settings.update(active_model=model["id"])
-        return {"active": model["id"], "name": model["name"]}
+        if options:
+            remember_model(model["id"], options=options)
+        return {"active": model["id"], "name": model["name"], "options": eng.model_options(model["id"])}
 
     @app.get("/models/folders", dependencies=auth)
     async def list_folders() -> dict:
@@ -488,9 +578,12 @@ def create_app(
     async def remove_model(model_id: str) -> dict:
         h = need_hub()
         try:
-            return await h.remove_model(model_id)
+            out = await h.remove_model(model_id)
         except HubError as exc:
             raise hub_error(exc) from exc
+        if engine is not None:
+            remember_model(out["removed"], hidden=False, forget=True)
+        return out
 
     # --------------------------------------------------------- Hugging Face
     @app.get("/hub/search", dependencies=auth)

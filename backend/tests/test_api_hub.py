@@ -200,3 +200,34 @@ def test_cors_permite_delete(setup):
     })
     assert r.status_code == 200
     assert "DELETE" in r.headers["access-control-allow-methods"]
+
+
+def test_procurar_no_pc_via_api(tmp_path):
+    paths = DataPaths(tmp_path / "dados").ensure()
+    settings = open_settings(paths)
+    engine = EngineManager(paths, settings)
+    downloads = tmp_path / "Downloads"
+    downloads.mkdir()
+    (downloads / "Achado-Q4_K_M.gguf").write_bytes(BLOB)
+    hub = ModelHub(paths, settings, engine=engine, client=HubClient(FakeHub().transport()),
+                   scan_roots=lambda: [downloads])
+    with run_server(FakeNarratorProvider(delay=0), engine=engine, hub=hub, hardware_scan=lambda: HARDWARE) as srv:
+        body = call(srv, "GET", "/models/scan").json()
+        assert body["searched"] == [str(downloads)]
+        assert [(f["name"], f["fit"], f["folder"]) for f in body["found"]] == [("Achado-Q4_K_M.gguf", "gpu", str(downloads))]
+        assert call(srv, "POST", "/models/folders", json={"path": body["found"][0]["folder"]}).status_code == 200
+        assert call(srv, "GET", "/models/scan").json()["found"] == []
+        assert [m["name"] for m in call(srv, "GET", "/models").json()["models"]] == ["Achado-Q4_K_M.gguf"]
+        assert (downloads / "Achado-Q4_K_M.gguf").exists()
+
+
+def test_apagar_modelo_esquece_ocultar_e_ajustes(setup):
+    srv, paths, _, _ = setup
+    (paths.models_dir / "Velho-Q4_K_M.gguf").write_bytes(BLOB)
+    call(srv, "POST", "/models/hidden", json={"id": "Velho-Q4_K_M.gguf", "hidden": True})
+    call(srv, "POST", "/models/select", json={"id": "Velho-Q4_K_M.gguf", "context_size": 8192})
+    settings = open_settings(paths)
+    assert settings.get("hidden_models") == ["Velho-Q4_K_M.gguf"]
+    assert call(srv, "DELETE", "/models/Velho-Q4_K_M.gguf").status_code == 200
+    settings = open_settings(paths)
+    assert settings.get("hidden_models") == [] and settings.get("model_options") == {}

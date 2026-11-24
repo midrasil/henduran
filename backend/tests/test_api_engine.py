@@ -196,3 +196,67 @@ def test_sem_gerente_do_motor_rotas_respondem_503():
     with run_server(FakeNarratorProvider(delay=0)) as srv:
         r = httpx.get(f"{srv.base_url}/engine/status", headers={"Authorization": f"Bearer {TOKEN}"})
         assert r.status_code == 503 and r.json()["detail"]["code"] == "engine_unavailable"
+
+
+# ------------------------------------------- ocultar, ajustes de carga, estimativa e sugestões
+def test_ocultar_e_mostrar_modelo(server, manager):
+    add_model(manager.paths, "a-Q4_K_M.gguf", 10)
+    add_model(manager.paths, "b-Q4_K_M.gguf", 10)
+    models = {m["id"]: m for m in get(server, "/models").json()["models"]}
+    assert models["a-Q4_K_M.gguf"]["hidden"] is False
+    assert models["a-Q4_K_M.gguf"]["options"] == {"context_size": 4096, "gpu_layers": "auto"}
+    r = post(server, "/models/hidden", {"id": "a-Q4_K_M.gguf", "hidden": True})
+    assert r.status_code == 200 and r.json() == {"id": "a-Q4_K_M.gguf", "hidden": True}
+    models = {m["id"]: m for m in get(server, "/models").json()["models"]}
+    assert models["a-Q4_K_M.gguf"]["hidden"] is True and models["b-Q4_K_M.gguf"]["hidden"] is False
+    assert (manager.paths.models_dir / "a-Q4_K_M.gguf").exists()  # ocultar não apaga
+    assert manager.settings.get("hidden_models") == ["a-Q4_K_M.gguf"]
+    post(server, "/models/hidden", {"id": "a-Q4_K_M.gguf", "hidden": False})
+    assert manager.settings.get("hidden_models") == []
+    r = post(server, "/models/hidden", {"id": "sumiu.gguf", "hidden": True})
+    assert r.status_code == 404 and r.json()["detail"]["code"] == "model_not_found"
+    assert post(server, "/models/hidden", {"id": "a-Q4_K_M.gguf"}).status_code == 422
+
+
+def test_selecionar_com_ajustes_guarda_por_modelo(server, manager):
+    add_model(manager.paths, "a-Q4_K_M.gguf", 10)
+    post(server, "/models/hidden", {"id": "a-Q4_K_M.gguf", "hidden": True})
+    r = post(server, "/models/select", {"id": "a-Q4_K_M.gguf", "context_size": 16384, "gpu_layers": 12})
+    assert r.status_code == 200
+    assert r.json()["options"] == {"context_size": 16384, "gpu_layers": 12}
+    assert manager.settings.get("model_options") == {"a-Q4_K_M.gguf": {"context_size": 16384, "gpu_layers": 12}}
+    assert manager.settings.get("hidden_models") == ["a-Q4_K_M.gguf"]  # os ajustes não mexem em ocultar
+    r = post(server, "/models/select", {"id": "a-Q4_K_M.gguf", "gpu_layers": "auto"})
+    assert r.json()["options"] == {"context_size": 16384, "gpu_layers": "auto"}
+    for bad in ({"context_size": 2048}, {"context_size": 65536}, {"gpu_layers": -1}, {"gpu_layers": "todas"}):
+        assert post(server, "/models/select", {"id": "a-Q4_K_M.gguf", **bad}).status_code == 422
+
+
+def test_estimativa_de_memoria_de_video(server, manager):
+    from .gguf_file import llama_like
+
+    llama_like(manager.paths.models_dir / "Llama-Q4_K_M.gguf", blocks=32, size=33 * 2**20)
+    add_model(manager.paths, "sem-cabecalho.gguf", 10)
+    r = get(server, "/models/estimate", params={"id": "Llama-Q4_K_M.gguf", "context_size": 8192, "gpu_layers": "33"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total_layers"] == 33 and body["layers_on_gpu"] == 33 and body["known"] is True
+    assert body["context_size"] == 8192 and body["gpu_layers"] == 33 and body["slots"] == 2
+    assert body["kv_bytes"] == 8 * 256 * 2 * 8192 * 2 * 32
+    assert body["vram_total_bytes"] == 8 * GB and body["vram_bytes"] == body["weights_bytes"] + body["kv_bytes"]
+    auto = get(server, "/models/estimate", params={"id": "Llama-Q4_K_M.gguf"}).json()
+    assert auto["context_size"] == 4096 and auto["gpu_layers"] == "auto" and auto["layers_on_gpu"] == 33
+    unknown = get(server, "/models/estimate", params={"id": "sem-cabecalho.gguf"}).json()
+    assert unknown["known"] is False and unknown["vram_bytes"] is None
+    r = get(server, "/models/estimate", params={"id": "Llama-Q4_K_M.gguf", "context_size": 100})
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "ajuste_invalido"
+    r = get(server, "/models/estimate", params={"id": "Llama-Q4_K_M.gguf", "gpu_layers": "muitas"})
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "ajuste_invalido"
+    assert get(server, "/models/estimate", params={"id": "sumiu.gguf"}).status_code == 404
+
+
+def test_sugestoes_para_este_pc(server):
+    body = get(server, "/models/suggestions").json()
+    assert [s["search"] for s in body["suggestions"]] == ["Stheno-v3.2", "Llama-3.2-3B-Instruct-GGUF"]  # placa de 8 GB
+    assert body["search_terms"][0] == "Cydonia-24B"
+    assert all(s["license"] is None for s in body["suggestions"])

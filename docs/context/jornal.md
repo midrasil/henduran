@@ -378,5 +378,15 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: **ADR-079** (instruções internas em inglês, resposta em português, medição obrigatória); ADR-078, item 7, reescrito (skills por Cena, automático e manual, até 3, prioridade abaixo de regras e Cânone); `14-modelos.md`, `05-narrador-ia.md` e backlog atualizados.
 - Decisões do responsável: filtro +18 sem padrão; todas as skills do acervo entram; importação pelo comando do skills.sh sem rodar o `npx`; skills **por Cena** com modo automático e limite de 3; trocar skill no meio da Cena é possível; prompt interno em inglês (opção 1 do idioma).
 - Decisões do planejador, aprovadas na conversa: o app lê o texto colado e baixa só texto do GitHub; a busca de skills é só no acervo local; sem tradução de entrada e saída.
-- Em aberto: modo padrão da Cena nova, regra de troca, fixar skill entre Cenas; licenças para o lançamento.
+- Confirmado depois, na mesma conversa: modo padrão automático, troca de no máximo uma skill a cada 6 turnos ou quando o Quadro mudar no essencial, e fixar skill entre Cenas. Em aberto: licenças para o lançamento.
 - Arquivos: `docs/main/decisoes/ADR-079-idioma-interno-dos-prompts.md`, `docs/main/decisoes/ADR-078-...md`, `docs/main/05-narrador-ia.md`, `docs/ui-ux/14-modelos.md`, `docs/backlog.md`.
+
+## 2026-11-24 — `tela-modelos` (rodada 1)
+
+- Rota: planejador → plano autossuficiente → dev → verificação pelo planejador → Entrega.
+- Resultado: tela Modelos refeita conforme o protótipo aprovado, sem a aba Skills (`14-modelos.md`, seção 9); backend com ocultar modelo, contexto e camadas por modelo, estimativa de memória pelo cabeçalho do `.gguf`, varredura do PC e sugestões por hardware.
+- Decisões do responsável (antes da rodada): Skills ficam para a rodada 2; filtro +18 sem padrão; todas as skills do acervo entram; importação por comando sem `npx`; skills por Cena (automático, troca de uma a cada 6 turnos, fixar entre Cenas); prompt interno em inglês (ADR-079).
+- Decisões do dev onde havia ambiguidade (registradas): sugestões abrem "Buscar este modelo" e não inventam licença; Adicionar pasta pede o caminho colado (o seletor nativo exige plugin e permissão); estimativa de memória sem fator de folga; contexto inicial 4.096.
+- Validações: typecheck limpo; vitest 326/326; pytest 701 passando e 1 pulado (reexecutados pelo planejador). Não verificado: app real, `.gguf` real, leitor de tela, DPI.
+- Em aberto: conflito entre `14-modelos.md` e `auditoria-caliope.md` sobre a lista de sugestões; seletor nativo de pasta; licenças das skills (lançamento).
+- Arquivos: `app/src/components/ModelsView.tsx`, `app/src/components/models/`, `app/src/api/engine.ts`, `backend/henduran/ai/{gguf,hardware,engine,modelhub}.py`, `backend/henduran/api/app.py`, `backend/henduran/settings.py`, `backend/README.md`, `docs/ui-ux/14-modelos.md`.

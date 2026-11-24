@@ -518,3 +518,49 @@ def test_pasta_extra_apagada_some_sem_erro(hub, tmp_path):
     shutil.rmtree(other)
     assert hub.engine.models() == []
     assert hub.folders()[1]["exists"] is False
+
+
+# ------------------------------------------------------------------ procurar neste PC
+def test_procurar_no_pc_so_le_e_ignora_pastas_conhecidas(paths, fake, tmp_path):
+    downloads = tmp_path / "Downloads"
+    lm = tmp_path / "lmstudio" / "models" / "pub" / "Repo"
+    extra = tmp_path / "Extra"
+    for folder in (downloads, lm, extra):
+        folder.mkdir(parents=True)
+    (downloads / "Phi-3.5-mini-instruct-Q4_K_M.gguf").write_bytes(b"x" * 30)
+    (downloads / "mmproj-Phi.gguf").write_bytes(b"x")
+    (downloads / "quase.gguf.part").write_bytes(b"x")
+    (lm / "Grande-Q8_0-00001-of-00002.gguf").write_bytes(b"x" * 10)
+    (lm / "Grande-Q8_0-00002-of-00002.gguf").write_bytes(b"x" * 15)
+    (extra / "JaConhecido-Q4_K_M.gguf").write_bytes(b"x")
+    (paths.models_dir / "DoApp-Q4_K_M.gguf").write_bytes(b"x")
+    settings = open_settings(paths)
+    engine = EngineManager(paths, settings)
+    hub = ModelHub(paths, settings, engine=engine, client=HubClient(fake.transport()),
+                   scan_roots=lambda: [downloads, tmp_path / "lmstudio", extra, paths.models_dir, tmp_path / "nao-existe"])
+    hub.add_folder(str(extra))
+    before = sorted(p.name for p in tmp_path.rglob("*"))
+    out = hub.scan_pc()
+    assert out["searched"] == [str(downloads), str(tmp_path / "lmstudio")]
+    assert out["truncated"] is False
+    found = {f["name"]: f for f in out["found"]}
+    assert set(found) == {"Phi-3.5-mini-instruct-Q4_K_M.gguf", "Grande-Q8_0.gguf"}
+    phi = found["Phi-3.5-mini-instruct-Q4_K_M.gguf"]
+    assert phi == {"path": str(downloads / "Phi-3.5-mini-instruct-Q4_K_M.gguf"), "folder": str(downloads),
+                   "name": "Phi-3.5-mini-instruct-Q4_K_M.gguf", "quant": "Q4_K_M", "size_bytes": 30, "parts": 1,
+                   "complete": True}
+    big = found["Grande-Q8_0.gguf"]
+    assert big["size_bytes"] == 25 and big["parts"] == 2 and big["complete"] is True and big["quant"] == "Q8_0"
+    assert big["folder"] == str(lm)
+    assert sorted(p.name for p in tmp_path.rglob("*")) == before  # nada copiado, movido nem criado
+    # depois de usar a pasta de um achado, ele sai da procura
+    hub.add_folder(phi["folder"])
+    assert [f["name"] for f in hub.scan_pc()["found"]] == ["Grande-Q8_0.gguf"]
+
+
+def test_pastas_comuns_de_modelos():
+    from henduran.ai.modelhub import common_model_dirs
+
+    names = [p.as_posix() for p in common_model_dirs()]
+    assert any(n.endswith("/Downloads") for n in names) and any(n.endswith("/Documents") for n in names)
+    assert any(".lmstudio/models" in n for n in names)

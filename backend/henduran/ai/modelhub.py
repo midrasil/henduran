@@ -10,8 +10,12 @@ Adaptações para o Henduran:
   modelos do LM Studio: pastas de ``henduran.paths`` e pastas extras em
   ``henduran.settings`` (``model_folders``). Pastas extras **nunca** são copiadas,
   movidas nem alteradas; remover um modelo de uma pasta extra é recusado.
-- Sem seletor de arquivo nativo (``tkinter``) e sem notas de quantização com
-  recomendações (não há lista curada no Henduran).
+- Sem seletor de arquivo nativo (``tkinter``). As notas de qualidade por
+  quantização e as sugestões por hardware ficam na tela Modelos e em
+  ``henduran.ai.hardware.suggest``; ocultar modelos e os ajustes de carga por
+  modelo ficam em ``henduran.settings`` (``hidden_models``, ``model_options``).
+- ``scan_pc`` (Henduran): procura ``.gguf`` nas pastas comuns (Downloads, LM
+  Studio, Documentos) só lendo; o jogador escolhe se usa a pasta de um achado.
 - Endpoints conferidos na API real do Hugging Face (ver
   ``docs/main/importacoes-caliope.md``): busca com ``expand[]`` (o campo
   ``gated`` só vem assim), licença pelas tags ``license:*``, árvore fixada no
@@ -370,12 +374,14 @@ class ModelHub:
         engine: Any = None,
         client: HubClient | None = None,
         disk_usage: Callable[[str], Any] = shutil.disk_usage,
+        scan_roots: Callable[[], list[Path]] | None = None,
     ) -> None:
         self.paths = paths
         self.settings = settings
         self.engine = engine
         self.client = client or HubClient()
         self._disk_usage = disk_usage
+        self._scan_roots = scan_roots or common_model_dirs
         self.items: dict[str, Download] = {}
 
     # ---- log
@@ -883,6 +889,103 @@ class ModelHub:
                 self.settings.update(active_model=None)
         self.settings.update(model_folders=keep)
 
+    # ---- procurar neste PC
+    def scan_pc(self) -> dict:
+        """Procura ``.gguf`` nas pastas comuns (Downloads, LM Studio, Documentos). **Só lê.**
+
+        Nada é copiado, movido nem lembrado: o jogador decide se usa a pasta de um
+        achado (``add_folder``). Modelos já dentro da pasta do app ou de uma pasta
+        extra ficam de fora. Modelos divididos aparecem uma vez, pela primeira parte.
+        """
+        known = [self.paths.models_dir, *map(Path, self.settings.get("model_folders"))]
+        known_r = []
+        for folder in known:
+            with contextlib.suppress(OSError):
+                known_r.append(folder.resolve())
+        searched: list[str] = []
+        found: dict[str, dict] = {}
+        visited = 0
+        truncated = False
+        for root in self._scan_roots():
+            try:
+                root_r = root.resolve()
+                if not root.is_dir():
+                    continue
+            except OSError:
+                continue
+            if any(root_r == k or root_r.is_relative_to(k) for k in known_r):
+                continue
+            searched.append(str(root))
+            for current, dirs, files in os.walk(root, onerror=lambda _exc: None):
+                here = Path(current)
+                depth = len(here.relative_to(root).parts)
+                visited += 1
+                if visited > SCAN_MAX_DIRS or len(found) >= SCAN_MAX_RESULTS:
+                    truncated = True
+                    break
+                # sem links nem junções, sem pastas ocultas do sistema e sem as pastas já conhecidas
+                keep = []
+                for name in dirs:
+                    sub = here / name
+                    try:
+                        if sub.is_symlink() or sub.is_junction() or name.startswith(("$", ".git", "node_modules")):
+                            continue
+                        sub_r = sub.resolve()
+                    except OSError:
+                        continue
+                    if any(sub_r == k or sub_r.is_relative_to(k) for k in known_r):
+                        continue
+                    keep.append(name)
+                dirs[:] = keep if depth < SCAN_MAX_DEPTH else []
+                for name in sorted(files):
+                    if not name.lower().endswith(".gguf") or "mmproj" in name.lower():
+                        continue
+                    path = here / name
+                    try:
+                        if path.is_symlink() or not path.is_file():
+                            continue
+                        size = path.stat().st_size
+                    except OSError:
+                        continue
+                    match = SPLIT_RE.match(name)
+                    if match:
+                        key = str(here / f"{match.group('base')}-00001-of-{match.group('total')}.gguf").lower()
+                        entry = found.setdefault(key, {
+                            "path": str(here / f"{match.group('base')}-00001-of-{match.group('total')}.gguf"),
+                            "folder": str(here), "name": f"{match.group('base')}.gguf",
+                            "quant": quant_of(match.group("base")), "size_bytes": 0,
+                            "parts": int(match.group("total")), "found_parts": 0,
+                        })
+                        entry["size_bytes"] += size
+                        entry["found_parts"] += 1
+                        continue
+                    found[str(path).lower()] = {
+                        "path": str(path), "folder": str(here), "name": name, "quant": quant_of(name),
+                        "size_bytes": size, "parts": 1, "found_parts": 1,
+                    }
+        out = []
+        for entry in found.values():
+            entry["complete"] = entry.pop("found_parts") == entry["parts"]
+            out.append(entry)
+        out.sort(key=lambda e: (e["name"].lower(), e["path"].lower()))
+        return {"found": out, "searched": searched, "truncated": truncated}
+
+
+SCAN_MAX_DEPTH = 6
+SCAN_MAX_DIRS = 20_000
+SCAN_MAX_RESULTS = 200
+
+
+def common_model_dirs() -> list[Path]:
+    """Pastas onde costuma haver ``.gguf``: Downloads, as do LM Studio e Documentos."""
+    home = Path.home()
+    return [
+        home / "Downloads",
+        home / ".lmstudio" / "models",
+        home / ".cache" / "lm-studio" / "models",
+        home / "Documents",
+    ]
+
 
 def _hash_file(path: Path, sha: Any) -> None:
     with open(path, "rb") as fh:
@@ -896,6 +999,6 @@ def _write_and_hash(fh: Any, sha: Any, chunk: bytes) -> None:
 
 
 __all__ = [
-    "HubClient", "HubError", "ModelHub", "Download", "check_url", "group_gguf_files", "inside",
+    "HubClient", "HubError", "ModelHub", "Download", "check_url", "common_model_dirs", "group_gguf_files", "inside",
     "license_of", "safe_segment", "validate_repo", "validate_repo_file",
 ]
