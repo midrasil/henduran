@@ -21,6 +21,7 @@ Especificação de pré-produção para transformar o pacote comercial Franuka e
 9. [Tela da Jornada (MVP)](09-tela-da-jornada.md) — aprovada com protótipo (`prototipos/tela-da-jornada.html`): visual livro, céu do período na barra, Arcos, chat com Aduran e Log, ficha com retrato e ficha completa em abas.
 10. [Prototipagem de telas](10-prototipagem.md) — toda tela nova passa por protótipo navegável aprovado antes do dev; lista das telas a prototipar.
 11. [Menu inicial (redesenho)](11-menu-inicial.md) — aprovado com protótipo (`prototipos/menu-inicial.html`): eixo central, paisagem animada, última Jornada à direita, Modelos no rodapé.
+12. [Nova Jornada (assistente)](12-nova-jornada.md) — aprovado com protótipo (`prototipos/nova-jornada.html`): três passos com trilho e abas (Mundo com lista de Mundos, Protagonista com retrato, editor de História e Narrador, Revisão) e tela Iniciar Jornada com nome e descrição.
 
 Recursos auxiliares locais: [catálogo visual](catalogo-franuka.local.html) e [manifesto completo](franuka-manifest.json). Regenere ambos com `./scripts/ui-ux/inspect-franuka.ps1` a partir da raiz.
 

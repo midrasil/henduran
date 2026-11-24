@@ -1,5 +1,6 @@
 # Backlog
 
+- [ ] ⭐ design: implementar a Nova Jornada conforme `docs/ui-ux/12-nova-jornada.md` e `prototipos/nova-jornada.html` (aprovado em 2026-11-23): trilho com 3 passos e tela Iniciar Jornada, lista de Mundos salvos (somente leitura, Duplicar e editar), Protagonista em abas com retrato (recorte), Revisão em abas — decisões aprovadas no ADR-077 (editor TipTap, História em HTML saneado com texto puro derivado, rota do Narrador que preenche dados, descrição da Jornada em `journey_meta`); antes de instalar o editor, conferir a licença e a medida do pacote e pedir aprovação — origem: prototipagem da Nova Jornada
 - [x] docs: aprovar os rascunhos da fatia 1 e movê-los para `rules/` — feito em 2026-11-22
 - [ ] ⭐ docs: ler e adaptar a fatia 2 (equipamento, Carga, Progressão) e a fatia 3 (Cena Tática sem mapa, Iniciativa, Ações, Confrontar, dano, Criação de NPCs sem Capacidades e as Condições necessárias), com aprovação antes de ir para `rules/` — origem: decisão do responsável em 2026-11-22
 - [ ] design: definir os pendentes de regra da fatia 1: faixa de Dificuldade que o Narrador propõe, critério de "progresso significativo" e de "defender" uma Convicção, política de avanço de tempo, definição de Amanhecer, testes de equilíbrio dos tetos por Dia — origem: ADR-073 e rascunhos da fatia 1
