@@ -88,9 +88,7 @@ Depois dos três passos, **Avançar** na Revisão leva a uma tela própria. No t
 
 ## 8. Pendências para a implementação
 
-- **Decisão em aberto, formato da História**: o servidor guarda texto simples (até 4.000 caracteres). O editor produz formatação; é preciso aprovar um formato (por exemplo, Markdown limitado ou HTML saneado), como o Narrador lê esse texto e o limite de tamanho. Até lá, o protótipo só mostra a interação.
-- **Descrição da Jornada**: campo novo (ver seção 6); precisa de coluna em `journey_meta`, validação de tamanho e uso no contexto do Narrador.
-- **Narrador preenchendo dados**: precisa de uma rota no backend que use o `NarratorProvider` (propor, o motor valida), com tempo limite, cancelamento e tratamento de erro; os textos de exemplo do protótipo não são o contrato.
+- **Decisões aprovadas no ADR-077** (`docs/main/decisoes/ADR-077-nova-jornada-historia-formatada-descricao-e-narrador-que-preenche.md`): editor TipTap enxuto para a História (dependência nova: conferir licença e medir o pacote antes de instalar), História gravada como HTML saneado com texto puro derivado (limite de 4.000 caracteres sobre o texto puro), rota do Narrador que preenche dados sem gravar nada (a IA propõe, o motor valida), descrição da Jornada em `journey_meta`, Mundos salvos somente leitura com Duplicar e editar.
 
 - Reaproveitar `app/src/ui/` (Button, Panel, Tabs, Dialog, FieldGroup, RadioGroup, TrailBoxes) e criar o que faltar (valores em botões, moldura com cantos); nada do HTML do protótipo vai para `app/src/`.
 - Manter `GET /rules/creation` e `GET /worlds/schema` como fonte de verdade; o protótipo codifica os valores só para exemplo.
