@@ -1,6 +1,6 @@
 # Handoff — estado atual do Henduran
 
-Atualizado em 2026-11-24 após a tarefa `prototipo-jornadas` (lista de Jornadas e Pontos de retorno).
+Atualizado em 2026-11-24 após a tarefa `chat-fala-e-melhorar-texto` (ajustes no chat da Jornada).
 
 ## Estado
 
@@ -37,7 +37,7 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-jornadas` (lista de Jornadas 
 - **Protótipo aprovado** (acréscimo à tela da Jornada; `09-tela-da-jornada.md`, item 2.9; este PR): botão **Diário** à esquerda do expandir da Ficha, com **Anotações** (só do jogador), **O que sei** (com origem de cada informação) e **NPCs que conheço** (filtros Todos, Nesta Cena, Fora da Cena). A **ficha do NPC tem duas abas**: **Narrativa** (identidade, personalidade e voz, motivações e segredos, o que sabe e lembra, relações, estado, anotações do jogador) e **Stats** (patamar, atributos, perícias e trilhas). **Segredos e stats ficam escondidos até o jogador descobrir**; revelar é um botão de ícone com popup "Tem certeza?". O Aduran vê tudo.
 - O Estado da Cena **não tem mais campo "Sabe"** com texto: só o link **ver na ficha** (o conhecimento do NPC vem da ficha).
 - **Em aberto:** a **ficha de regras** do NPC (fatia 3 do Astra; os valores do protótipo são de exemplo) e **como o jogador descobre os stats** (não inventado); esquema de dados do Diário.
-- **Formatação do texto do chat** (item 2.10 do `09`): convenção `"fala"`, `*ação*`, `_pensamento_`; narração sem marca. Fala com travessão e ação no mesmo estilo (itálico); pensamento em itálico roxo entre parênteses; `Nome: "fala"` mostra um **chip roxo com o nome acima da fala, sem recuo**, que abre a ficha do NPC; barra **Fala, Ação, Pensamento** no campo de escrita e legenda no **?**. Estilo "A · Simples" escolhido entre quatro. **O pensamento do jogador é privado** (NPCs não o conhecem). A convenção entra no prompt do Narrador (`05`, seção 6.2).
+- **Formatação do texto do chat** (item 2.10 do `09`): convenção `"fala"` e `*ação*`; narração sem marca. A fala abre com travessão e o fecha só se houver texto depois; ação no mesmo estilo (itálico); `Nome: "fala"` mostra um chip com o nome acima da fala, que abre a ficha do NPC. **Pensamento não existe no chat** (decisão do responsável). **Campo de escrita**: sem barra de botões; **/** abre o menu (fala, ação, ajuda); botão **Melhorar texto** à esquerda do enviar (reescreve sem mudar o que o personagem faz ou diz; revisão e desfazer; não envia sozinho). Convenção no prompt (`05`, seção 6.2).
 - O PR #37 (Estado da Cena e dúvida de continuidade) já foi mergeado.
 
 ## Atualização de 2026-11-24 (madrugada, 2): Jornadas e Pontos de retorno
@@ -46,6 +46,12 @@ Atualizado em 2026-11-24 após a tarefa `prototipo-jornadas` (lista de Jornadas 
 - **Protótipos aprovados** (este PR): **tela Jornadas** (`prototipos/jornadas.html`; lista com busca e filtros; o detalhe mostra **só os pontos de retorno**; lista vazia em tela cheia) e **Pontos de retorno** no menu de opções da tela da Jornada (`09`, item 2.11; `15-jornadas.md`). Salvamentos manuais (até 20) e automáticos (5, no início e no fim de cada Cena); Carregar guarda antes "Antes de carregar".
 - **A confirmar na implementação:** carregar sobrescreve (e não bifurca); limites; o Mundo não volta com o ponto; como armazenar (cópia do `journey.db` ou diferença).
 - **Próximos passos:** ⭐ voltar à implementação com o dev (Modelos, depois Estado da Cena, Diário e dúvida de continuidade, e os pontos de retorno); ficha de regras do NPC (fatia 2/3 do Astra); decidir o ADR de armazenamento dos pontos.
+
+## Atualização de 2026-11-24 (madrugada, 3): chat da Jornada
+
+- **PR #39 mergeado** (Jornadas e Pontos de retorno).
+- **Ajustes aprovados no protótipo do chat** (este PR): travessão de abertura e fechamento da fala, pensamento removido, menu `/` no lugar da barra de botões e botão **Melhorar texto** (item 2.10 do `09`; `05`, seção 6.2).
+- **Próximos passos:** ⭐ implementar com o dev (Modelos, depois Estado da Cena, Diário, pontos de retorno e este chat, incluindo a rota de "melhorar texto"); ficha de regras do NPC; ADR de armazenamento dos pontos de retorno.
 
 ## Decisões vigentes
 

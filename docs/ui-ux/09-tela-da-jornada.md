@@ -121,20 +121,20 @@ O jogador escolhe uma imagem do computador, **recorta** num enquadramento de per
   - Um NPC pouco conhecido mostra "Você ainda não sabe" nos campos que o jogador não descobriu.
 - **Segredos e stats escondidos**: cada bloco tem um botão **só de ícone** (olho) com dica; revelar abre um popup **"Tem certeza?"** (revelar é spoiler e não dá para desler) com **Cancelar** (foco inicial) e **Revelar mesmo assim**. O olho riscado esconde de novo, sem confirmação. Esc e o fundo fecham só o popup.
 
-### 2.10 Formatação do texto do chat (narração, fala, ação e pensamento)
+### 2.10 Formatação do texto do chat (narração, fala e ação) e campo de escrita
 
 **Estado:** protótipo aprovado em 2026-11-24 (estilo "A · Simples"), com a aparência de livro de RPG. Vale para o chat da Cena e para o do Aduran.
 
 - **Convenção de marcas**, a mesma para o Narrador e para o jogador (as marcas são o que o modelo escreve e o jogador digita; a conversão para o visual é só da interface):
   - **Narração**: sem marca, serifa normal.
-  - **Fala**: entre aspas, `"assim"`. Aparece **com travessão (—)**, em **itálico**, no mesmo estilo da ação, e **sem aspas**.
+  - **Fala**: entre aspas, `"assim"`. Aparece **com travessão (—)**, em **itálico**, no mesmo estilo da ação, e **sem aspas**. O travessão **abre** a fala e a **fecha só quando ainda há texto depois dela** no mesmo parágrafo: `Eu pego a maçã e digo — Tu é feio macho.` e `Eu pego a maçã e digo — Tu é feio macho — Em seguida jogo a maçã nele.`
   - **Ação**: entre asteriscos, `*assim*`. Aparece em **itálico**, na mesma cor e estilo da fala, sem marcador.
-  - **Pensamento**: entre sublinhados, `_assim_`. Aparece em itálico roxo, **entre parênteses** e com um fundo suave.
 - **Quem fala**: quando o texto começa com um nome conhecido seguido de dois pontos e uma fala (`Osvaldo: "…"`), a interface mostra um **chip roxo com o nome** (pixel, borda dourada) **acima da fala, sem recuo**, e o chip **abre a ficha do NPC no Diário**. Sem esse prefixo (ou para um nome desconhecido), a fala aparece só com o travessão.
-- **No campo de escrita**: uma barra com **Fala**, **Ação** e **Pensamento** aplica a marca ao texto selecionado (ou insere o par de marcas com o cursor dentro) e um botão **?** abre a legenda com exemplos. **Texto sem marca que o jogador escreve conta como ação.**
-- **O pensamento é privado**: o pensamento do personagem do jogador **não é conhecido pelos NPCs**; o contexto do Narrador deve marcá-lo assim, e o extrator do Estado da Cena e as fichas dos NPCs não o tratam como algo dito.
+- **Pensamento do personagem não é um tipo de texto do chat**: nem o do jogador nem o dos NPCs é expresso no chat (decisão do responsável, 2026-11-24); não há marca nem estilo para ele.
+- **No campo de escrita**: não há barra de botões. Digitar **/** abre um menu com **fala**, **ação** e **ajuda** (a legenda com exemplos): setas escolhem, Enter ou Tab inserem, Esc fecha, e a lista filtra conforme se digita. Fala e ação inserem o par de marcas com o cursor no meio. **Texto sem marca que o jogador escreve conta como ação.** A dica sob o campo diz "Enter envia · Shift+Enter pula linha · / para formatar". (O `@` fica para o `@Aduran`, backlog.)
+- **Melhorar texto**: botão com ícone, **à esquerda do botão de enviar**. O modelo analisa o que o jogador escreveu e **reescreve para melhorar a redação**, **sem mudar o que o personagem faz ou diz e sem inventar fatos**; o resultado substitui o texto do campo, com o aviso "Texto melhorado: revise antes de enviar" e **Desfazer**; **não envia sozinho**. Fica desabilitado com o campo vazio, sem modelo ou durante a resposta, e a dica diz o motivo. No protótipo o texto melhorado é um exemplo fixo. É uma chamada extra ao modelo (`NarratorProvider`), sem entrar no histórico.
 - **Segurança**: o texto vindo do modelo é **escapado** antes de aplicar as marcas; HTML solto nunca é interpretado.
-- **Acessibilidade**: o destaque não depende só de cor (ADR-068); cada tipo difere pela forma (travessão, itálico, parênteses, chip).
+- **Acessibilidade**: o destaque não depende só de cor (ADR-068); cada tipo difere pela forma (travessão, itálico, chip); o menu **/** e o botão Melhorar texto têm nome acessível e funcionam pelo teclado.
 - **Se o modelo esquecer as marcas**, o trecho aparece como narração comum, sem erro; o teste de continuidade pode medir a aderência à convenção.
 - Estilos descartados no protótipo: faixa lateral, placa de nome (card) e duas colunas.
 

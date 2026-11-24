@@ -52,7 +52,9 @@ Implementado em 2026-11-24 (ADR-077, item 3): `POST /narrator/fill` (contrato em
 
 ## 6.2 Convenção de formatação do texto
 
-O Narrador e o jogador escrevem com marcas leves (`"fala"`, `*ação*`, `_pensamento_`); o resto é narração, e `Nome: "fala"` indica quem fala (`09-tela-da-jornada.md`, item 2.10). O prompt do Narrador deve dizer a convenção em poucas linhas (custo de tokens desprezível) e que **o pensamento do personagem do jogador é privado e os NPCs não o conhecem**. A formatação é só visual: o motor e o extrator tratam o conteúdo, e o texto do modelo é sempre escapado.
+O Narrador e o jogador escrevem com marcas leves (`"fala"` e `*ação*`); o resto é narração, e `Nome: "fala"` indica quem fala (`09-tela-da-jornada.md`, item 2.10). O prompt do Narrador deve dizer a convenção em poucas linhas (custo de tokens desprezível) e que **pensamentos de personagens não são expressos no chat**. A formatação é só visual: o motor e o extrator tratam o conteúdo, e o texto do modelo é sempre escapado.
+
+**Melhorar texto (jogador):** chamada extra e pequena ao modelo que reescreve a mensagem do jogador sem mudar o que o personagem faz ou diz e sem inventar fatos; o jogador revisa antes de enviar e pode desfazer. Não faz parte do histórico nem do contexto da Cena.
 
 ## 7. Comportamentos a validar
 
@@ -62,7 +64,8 @@ O Narrador e o jogador escrevem com marcas leves (`"fala"`, `*ação*`, `_pensam
 - Compra de item só altera recursos após operação válida.
 - Memória não cria retroativamente fatos que contradizem o estado oficial.
 - Mudanças de modelo e de janela de contexto preservam a Jornada.
-- O modelo segue a convenção de marcas (fala, ação, pensamento) e nunca revela, pela boca de um NPC, o pensamento do personagem do jogador.
+- O modelo segue a convenção de marcas (fala e ação) e não expressa pensamentos no chat.
+- "Melhorar texto" preserva o que o personagem faz e diz e não inventa fatos.
 - Resposta interrompida, erro de inferência ou retry não duplicam transações.
 
 ## 8. Pendências
