@@ -44,7 +44,7 @@ Conflitos entre fontes devem ser **reportados**, não resolvidos por adivinhaç�
 ## Memória operacional da esteira
 
 - `docs/context/jornal.md` é o registro cronológico, cumulativo e conciso da execução. Durante ou no fechamento de cada tarefa, acrescente uma entrada com data, slug, rota, resultado, validações e ocorrências relevantes.
-- `docs/context/handoff.md` representa somente o estado atual para retomada. Ao fechar cada tarefa, substitua seu conteúdo com estado, branch e PR, artefatos, validações, pendências e próximo passo recomendado.
+- **Há dois handoffs, um por executor.** `docs/context/handoff.md` é do **desenvolvedor principal** (Claude: planejamento, protótipos, ADRs e rodadas com o dev) e `docs/context/handoff-opencode.md` é do **opencode** (ajustes e tarefas menores). Cada um representa somente o estado atual para retomada **da sua frente**: ao fechar cada tarefa, o executor **substitui o conteúdo do seu arquivo** com estado, branch e PR, artefatos, validações, pendências e próximo passo recomendado, e **não escreve no do outro**. Ao retomar, cada executor lê os dois.
 - `docs/backlog.md` é a lista autoritativa e ordenada de pendências. O handoff e o jornal podem referenciar itens do backlog, mas não devem criar uma lista paralela.
 
 ## Primeiro caso de uso de referência

@@ -420,3 +420,12 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: handoff reescrito juntando as duas frentes, com estado, pendências, decisões vigentes e próximos passos; corrigida a nota sobre o PR #31, que já estava mergeado.
 - Arquivos: `docs/context/handoff.md`, `docs/context/jornal.md`.
 
+## 2026-11-24 — `dois-handoffs`
+
+- Executor: Claude (planejador)
+- Rota: conversa com o responsável → ajuste direto → Entrega. Só documentação.
+- Decisão do responsável: manter **dois handoffs**, um para o desenvolvedor principal (Claude) e outro para o opencode, para um não sobrescrever o outro; cada um escreve só no seu e lê os dois ao retomar. O jornal e o backlog continuam únicos.
+- Resultado: `docs/context/handoff-opencode.md` criado com o conteúdo do PR #46; `docs/context/handoff.md` restaurado como o do desenvolvedor principal; seção "Memória operacional" do `AGENTS.md` atualizada.
+- Ocorrência: a consolidação anterior (PR #45) tratava o handoff como painel geral, contra a regra de só o estado atual; este PR substitui esse modelo.
+- Arquivos: `AGENTS.md`, `docs/context/handoff.md`, `docs/context/handoff-opencode.md`, `docs/context/jornal.md`.
+
