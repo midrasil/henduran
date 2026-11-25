@@ -37,34 +37,35 @@ function Pips({ value, max }: { value: number; max: number }) {
   );
 }
 
-/** Atributos em placas, na ordem do catálogo; a cor segue a categoria do catálogo (a 1ª dourada, a 2ª roxa). */
+/** Atributos em duas listas compactas, agrupados e ordenados pela categoria do catálogo. */
 export function AttributePlates({ character, rules }: { character: CharacterSheet; rules: CreationRules }) {
   const max = rules.ranges.attribute.max;
   const categoryIndex = new Map(rules.categories.map((c, i) => [c.id, i]));
   return (
-    <ul className="attr-plates">
-      {rules.attributes.map((a) => {
-        const value = character.attributes[a.id] ?? 0;
-        const category = rules.categories.find((c) => c.id === a.category);
+    <div className="attr-columns">
+      {rules.categories.map((category, index) => {
+        const attributes = rules.attributes.filter((a) => a.category === category.id).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
         return (
-          <li key={a.id} className={`attr-plate attr-plate--cat${categoryIndex.get(a.category) ?? 0}`}>
-            <span className="attr-plate__value" aria-hidden="true">
-              {value}
-            </span>
-            <span className="attr-plate__text">
-              <span className="attr-plate__name">
-                {a.name}
-                <span className="visually-hidden">
-                  : {value} de {max}
-                  {category ? ` (${category.name})` : ""}
-                </span>
-              </span>
-              <Pips value={value} max={max} />
-            </span>
-          </li>
+          <ul key={category.id} className={`attr-list attr-list--cat${categoryIndex.get(category.id) ?? index}`}>
+            {attributes.map((a) => {
+              const value = character.attributes[a.id] ?? 0;
+              return (
+                <li key={a.id} className="attr-row" title={`${a.name}: ${value} de ${max}`}>
+                  <span className="attr-row__text">
+                    <span className="attr-row__label">{a.name}</span>
+                    <Pips value={value} max={max} />
+                  </span>
+                  <span className="attr-row__value" aria-hidden="true">
+                    {value}
+                  </span>
+                  <span className="visually-hidden">: {value} de {max}</span>
+                </li>
+              );
+            })}
+          </ul>
         );
       })}
-    </ul>
+    </div>
   );
 }
 
