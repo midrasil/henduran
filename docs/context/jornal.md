@@ -2,6 +2,16 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-24 — `remodelar-atributos-ficha` (opencode)
+
+- Executor: opencode
+- Rota: planejador → ajuste direto → Entrega.
+- Pedido do responsável: remodelar os Atributos da ficha resumida da Jornada, testar ícones em pixel art e depois retornar ao formato textual aprovado: nome acima, marcadores abaixo e valor à direita, sem títulos de categoria.
+- Resultado: a ficha ficou com duas listas lado a lado, agrupadas pelas categorias oficiais e ordenadas alfabeticamente; os cards foram substituídos por linhas compactas sem ícones ou títulos de categoria.
+- Arquivos: `app/src/screens/journey/SheetSummary.tsx`, `app/src/screens/journey/JourneyScreen.css`.
+- Validações: `npm run typecheck`, testes de `MainMenu` e `JourneyScreen` (31/31) e `git diff --check` passaram.
+- Entrega: branch `fix/ficha-atributos-tamanho`; PR [#48](https://github.com/midrasil/henduran/pull/48) aberto contra `main`.
+
 ## 2026-11-24 — `ajustes-ficha-jornada` (opencode)
 
 - Executor: opencode
