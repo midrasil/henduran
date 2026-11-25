@@ -10,7 +10,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: a ficha ficou com duas listas lado a lado, agrupadas pelas categorias oficiais e ordenadas alfabeticamente; os cards foram substituídos por linhas compactas sem ícones ou títulos de categoria.
 - Arquivos: `app/src/screens/journey/SheetSummary.tsx`, `app/src/screens/journey/JourneyScreen.css`.
 - Validações: `npm run typecheck`, testes de `MainMenu` e `JourneyScreen` (31/31) e `git diff --check` passaram.
-- Entrega: branch `fix/ficha-atributos-tamanho`; PR será aberto contra `main`.
+- Entrega: branch `fix/ficha-atributos-tamanho`; PR [#48](https://github.com/midrasil/henduran/pull/48) aberto contra `main`.
 
 ## 2026-11-24 — `ajustes-ficha-jornada` (opencode)
 

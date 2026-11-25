@@ -1,6 +1,6 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-24 após `remodelar-atributos-ficha`. Branch de trabalho: `fix/ficha-atributos-tamanho`. PR será aberto contra `main`.
+Atualizado em 2026-11-24 após `remodelar-atributos-ficha`. Branch de trabalho: `fix/ficha-atributos-tamanho`. PR [#48](https://github.com/midrasil/henduran/pull/48) aberto contra `main`.
 - Elaborado por: opencode
 
 ## Estado
