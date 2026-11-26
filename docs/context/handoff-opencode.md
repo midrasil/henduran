@@ -1,29 +1,27 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-24 após `remodelar-atributos-ficha`. Branch de trabalho: `fix/ficha-atributos-tamanho`. PR [#48](https://github.com/midrasil/henduran/pull/48) aberto contra `main`.
+Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix/remover-destaque-foco`. PR aberto contra `main`.
 - Elaborado por: opencode
 
 ## Estado
 
-- A ficha resumida da Jornada mantém a coluna direita com largura de 360px.
-- A seção de Atributos agora usa duas listas lado a lado, sem títulos de categoria.
-- Cada atributo mostra o nome na primeira linha, os marcadores na linha abaixo e o valor numérico alinhado à direita.
-- Os atributos continuam agrupados pelas categorias oficiais e ordenados alfabeticamente dentro de cada lista.
-- A ficha expandida permanece com as abas Visão geral, Convicções e Descrição.
+- Os indicadores visuais azuis de foco foram removidos temporariamente da interface.
+- O foco funcional e a navegação por teclado continuam implementados; apenas os contornos e destaques visuais foram desativados.
+- A remoção cobre o indicador global e os estilos específicos de botões, abas, campos, diálogos, rádio, modelos, Nova Jornada, Composer e editor de histórico.
+- Tokens de foco foram preservados para futura reimplementação configurável.
 
 ## Validações
 
 - `cd app; npm run typecheck` passou.
-- `cd app; npm run test -- src/screens/MainMenu.test.tsx src/screens/journey/JourneyScreen.test.tsx` passou: 31 testes.
+- `cd app; npm run test` passou: 37 arquivos, 330 testes.
 - `git diff --check` passou.
 
 ## Pendências
 
-- Conferir visualmente a ficha no app Tauri em 1280×800, 1024×768 e tela estreita.
-- Conferir acessibilidade, leitor de tela e DPI de 125% a 200%.
-- Aprovado e não feito: seletor nativo de pasta do Windows na tela Modelos.
+- Conferir visualmente no app Tauri se nenhum destaque azul aparece ao clicar e navegar com `Tab`/`Shift+Tab`.
+- Conferir acessibilidade, leitor de tela e DPI de 125% a 200%, considerando que o foco visual está temporariamente desativado.
 - Permanecem pendências do produto em `docs/backlog.md`, incluindo Estado da Cena, Diário, pontos de retorno e demais rodadas da tela Modelos.
 
 ## Próximo passo recomendado
 
-⭐ Revisar visualmente a ficha no app real e revisar o PR; depois seguir para a rodada 2 da tela Modelos e o seletor nativo de pasta.
+⭐ Revisar o PR e validar visualmente o foco no app real; depois decidir quando transformar o indicador em uma preferência configurável.

@@ -100,10 +100,9 @@ select {
   color: inherit;
 }
 
-/* Foco sempre visível, com contraste sobre a superfície em volta (ADR-068). */
+/* Indicador visual de foco desativado temporariamente. O foco funcional permanece. */
 :focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /*

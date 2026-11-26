@@ -36,11 +36,6 @@
   --frame-inner: var(--color-danger-text);
 }
 
-.dialog:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 6px;
-}
-
 .dialog__titlebar {
   padding: var(--space-1) var(--space-2);
   background: var(--color-title-bar);

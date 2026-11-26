@@ -57,11 +57,6 @@
   --frame-inner: var(--fg-heading);
 }
 
-.field__control:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 4px;
-}
-
 .field__control:disabled {
   cursor: not-allowed;
   color: var(--color-disabled-text);

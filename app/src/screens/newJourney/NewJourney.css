@@ -489,12 +489,6 @@
   border-color: var(--color-parchment-edge);
 }
 
-.nj-wname:focus-visible {
-  outline: 3px solid var(--color-focus-on-parchment);
-  outline-offset: 2px;
-  background: var(--color-parchment-light);
-}
-
 .nj-wname--bad {
   border-color: var(--color-danger-text-on-parchment);
 }
@@ -1087,14 +1081,6 @@
   background: repeating-linear-gradient(45deg, var(--color-parchment-deep) 0 3px, var(--color-parchment-edge) 3px 4px);
 }
 
-.nj-pip:focus-visible,
-.nj-val:focus-visible,
-.nj-prof:focus-visible,
-.nj-startbtn:focus-visible {
-  outline: 3px solid var(--color-focus-on-parchment);
-  outline-offset: 2px;
-}
-
 /* Dica "?" com quebra de linha (as descrições são longas para o data-tip comum). */
 .nj-q {
   position: relative;
@@ -1534,11 +1520,6 @@
 .nj-aibtn:hover:not(:disabled) {
   background: var(--color-primary-hover, var(--color-primary));
   border-color: var(--color-accent-light);
-}
-
-.nj-aibtn:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 
 .nj-aibtn:disabled {

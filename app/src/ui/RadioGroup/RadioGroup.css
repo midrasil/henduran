@@ -85,11 +85,6 @@
   background: var(--color-primary-active);
 }
 
-.radio-group__option:has(input:focus-visible) {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 4px;
-}
-
 .radio-group__option input:focus-visible {
   outline: none;
 }

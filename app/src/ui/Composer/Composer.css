@@ -61,12 +61,6 @@
   cursor: not-allowed;
 }
 
-/* O foco do campo aparece na borda do conjunto (o contorno do textarea fica oculto). */
-.composer__field:has(.composer__input:focus-visible) {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
 .composer__send {
   width: var(--target-primary);
   height: var(--target-primary);
