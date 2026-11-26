@@ -2,6 +2,13 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-26 — `instalador-esteira-claude` (OpenCode)
+
+- Rota: planejador → ajuste direto → entrega.
+- Resultado: `AGENTS.md` explicita o handoff do OpenCode e o padrão de escrita de PRs; `scripts/instalar-esteira-claude.ps1` instala a esteira no Claude Code e `scripts/README.md` explica o uso.
+- Validações: prévia sem gravação, instalação nova, atualização com backup e preservação do texto externo ao bloco, reexecução sem duplicação e instalação local.
+- Entrega: branch `chore/instalador-esteira-claude`, [PR contra `main`](https://github.com/midrasil/henduran/pulls?q=head%3Achore%2Finstalador-esteira-claude).
+
 ## 2026-11-26 — `remover-destaque-foco` (opencode)
 
 - Executor: opencode
