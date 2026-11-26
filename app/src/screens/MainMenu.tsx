@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
 
 import type { BackendInfo } from "../api/backend";
 import type { EngineStatus } from "../api/engine";
-import { fetchPortraitAt, type JourneyList, type JourneySummary } from "../api/journeys";
+import type { JourneyList, JourneySummary } from "../api/journeys";
+import { usePortraitUrl } from "../hooks/usePortraitUrl";
 import type { BackendStatus } from "../hooks/useBackend";
 import { formatSavedAgo, formatSavedAt, STATUS_NOTICE, toPeriod } from "../lib/format";
 import { Button, Panel, PERIOD_LABEL, PeriodIcon, PixelIcon, Portrait } from "../ui";
@@ -207,29 +207,6 @@ function LastJourneyCard({ backend, info, list, listError, journey, onJourneys }
   }
   if (!journey) return null;
   return <JourneyCard info={info} journey={journey} onJourneys={onJourneys} />;
-}
-
-/** O retrato da Jornada vem como blob (a rota exige o token) e vira uma URL local, revogada ao trocar. */
-function usePortraitUrl(info: BackendInfo | null, urlPath: string | null): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    setUrl(null);
-    if (!info || !urlPath || typeof URL.createObjectURL !== "function") return;
-    const controller = new AbortController();
-    let created: string | null = null;
-    fetchPortraitAt(info, urlPath, controller.signal)
-      .then((blob) => {
-        if (!blob || controller.signal.aborted) return;
-        created = URL.createObjectURL(blob);
-        setUrl(created);
-      })
-      .catch(() => undefined); // sem retrato, as iniciais
-    return () => {
-      controller.abort();
-      if (created && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(created);
-    };
-  }, [info, urlPath]);
-  return url;
 }
 
 function JourneyCard({ info, journey, onJourneys }: { info: BackendInfo | null; journey: JourneySummary; onJourneys: () => void }) {

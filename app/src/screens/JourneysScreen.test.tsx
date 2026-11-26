@@ -40,35 +40,64 @@ async function openList(options: FakeGameOptions) {
   return { user, ...game };
 }
 
-const card = (name: string) => screen.getByText(name).closest("li")!;
+const card = (name: string) => screen.getByRole("button", { name });
+const detail = () => within(screen.getByRole("region", { name: "Detalhe da Jornada" }));
 
 describe("Tela Jornadas", () => {
-  it("lista as Jornadas com personagem, local, mundo, salvamento, regras e estado", async () => {
-    await openList({ journeys: [summary(), SECOND], lastJourneyId: summary().id });
+  it("exibe os dados do cartão e marca como Última a Jornada salva mais recentemente", async () => {
+    await openList({ journeys: [summary({ last_saved_at: "2026-11-24T10:00:00Z" }), SECOND], lastJourneyId: SECOND.id });
     await screen.findByText("Crônicas do Vale");
     const first = card("O Selo de Elmora");
-    expect(within(first).getByText("Última jogada")).toBeInTheDocument();
-    expect(within(first).getByText("Pronta")).toBeInTheDocument();
-    expect(within(first).getByText(/Ilsa Corvalho · .* · Mundo: /)).toBeInTheDocument();
-    expect(within(first).getByText(/Salvo em: .* · Regras: fatia-1/)).toBeInTheDocument();
+    expect(within(first).getByText("Última")).toBeInTheDocument();
+    expect(within(first).getByText("Fora de Cena")).toBeInTheDocument();
+    expect(within(first).getByText(/Ilsa Corvalho · /)).toBeInTheDocument();
+    expect(within(first).getByText(/Mundo: /)).toBeInTheDocument();
+    expect(within(first).getByText(/^Salvo/)).toBeInTheDocument();
   });
 
   it("estado vazio", async () => {
-    await openList({});
-    expect(await screen.findByText(/Nenhuma Jornada salva/)).toBeInTheDocument();
+    const { user } = await openList({});
+    const empty = await screen.findByRole("heading", { name: "Nenhuma Jornada ainda" });
+    const create = screen.getByRole("button", { name: "Nova Jornada" });
+    expect(empty.parentElement).toContainElement(create);
+    await user.click(create);
+    expect(await screen.findByRole("heading", { name: "Nova Jornada" })).toBeInTheDocument();
   });
 
   it("Abrir leva à Jornada", async () => {
     const { user } = await openList({ journeys: [summary(), SECOND] });
     await screen.findByText("Crônicas do Vale");
-    await user.click(within(card("Crônicas do Vale")).getByRole("button", { name: "Abrir" }));
+    await user.click(card("Crônicas do Vale"));
+    expect(card("Crônicas do Vale")).toHaveAttribute("aria-pressed", "true");
+    await user.click(detail().getByRole("button", { name: "Continuar Jornada" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
   });
 
-  it("Excluir pede confirmação, apaga com confirm=true e avisa que o Mundo foi junto", async () => {
+  it("combina busca sem acentos com filtros e mantém os controles quando não há resultados", async () => {
+    const { user } = await openList({ journeys: [summary({ current_scene_title: "A chegada" }), SECOND] });
+    const search = await screen.findByRole("searchbox", { name: "Buscar Jornadas" });
+    await user.click(screen.getByRole("button", { name: "Em Cena 1" }));
+    expect(card("O Selo de Elmora")).toHaveAttribute("aria-pressed", "true");
+    await user.type(search, "cronicas");
+    expect(screen.getByText(/Nenhuma Jornada combina/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fora de Cena 1" }));
+    expect(card("Crônicas do Vale")).toHaveAttribute("aria-pressed", "true");
+    expect(search).toHaveValue("cronicas");
+  });
+
+  it.each(["mais_nova", "sem_mundo"] as const)("impede continuar quando a situação é %s", async (status) => {
+    const { user } = await openList({ journeys: [summary({ status })] });
+    await user.click(await screen.findByRole("button", { name: "Com problema 1" }));
+    expect(detail().getByRole("alert")).toBeInTheDocument();
+    expect(detail().getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
+    expect(detail().queryByRole("button", { name: /Restaurar/ })).not.toBeInTheDocument();
+  });
+
+  it("Excluir pede confirmação, apaga com confirm=true e preserva o Mundo", async () => {
     const { user, api } = await openList({ journeys: [summary(), SECOND], lastJourneyId: summary().id });
-    await screen.findByText("O Selo de Elmora");
-    await user.click(within(card("O Selo de Elmora")).getByRole("button", { name: "Excluir" }));
+    await user.click(await screen.findByRole("button", { name: "O Selo de Elmora" }));
+    await user.click(detail().getByRole("button", { name: "Excluir" }));
     const dialog = screen.getByRole("dialog", { name: "Excluir “O Selo de Elmora”?" });
     expect(dialog).toHaveAccessibleDescription(/apaga a Jornada do disco/);
     expect(within(dialog).getByRole("button", { name: "Cancelar" })).toHaveFocus();
@@ -83,11 +112,11 @@ describe("Tela Jornadas", () => {
 
   it("Cancelar a exclusão não apaga nada", async () => {
     const { user, api } = await openList({ journeys: [summary()] });
-    await screen.findByText("O Selo de Elmora");
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
     await user.click(screen.getByRole("button", { name: "Excluir" }));
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancelar" }));
     expect(api.calls.some((c) => c.method === "DELETE")).toBe(false);
-    expect(screen.getByText("O Selo de Elmora")).toBeInTheDocument();
+    expect(card("O Selo de Elmora")).toBeInTheDocument();
   });
 
   it("Restaurar uma Jornada danificada: escolhe o backup e confirma", async () => {
@@ -99,11 +128,11 @@ describe("Tela Jornadas", () => {
         { name: "journey-v1-20261120-080000.db", schema_version: 1, created: "20261120-080000", size_bytes: 20480 },
       ],
     });
-    await screen.findByText("O Selo de Elmora");
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
     const item = card("O Selo de Elmora");
     expect(within(item).getByText("Danificada")).toBeInTheDocument();
-    expect(within(item).getByRole("button", { name: "Abrir" })).toBeDisabled();
-    await user.click(within(item).getByRole("button", { name: "Restaurar" }));
+    expect(detail().queryByRole("button", { name: "Continuar Jornada" })).not.toBeInTheDocument();
+    await user.click(detail().getByRole("button", { name: "Restaurar…" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Restaurar “O Selo de Elmora”" });
     const newest = await within(dialog).findByRole("radio", { name: "22/11/2026 às 10:15:00" });
@@ -117,13 +146,12 @@ describe("Tela Jornadas", () => {
       body: { backup: "journey-v1-20261120-080000.db" },
     });
     expect(screen.getAllByText(/Jornada restaurada a partir de journey-v1-20261120-080000.db/).length).toBeGreaterThan(0);
-    await waitFor(() => expect(within(card("O Selo de Elmora")).getByText("Pronta")).toBeInTheDocument());
+    await waitFor(() => expect(detail().getByText("Pronta")).toBeInTheDocument());
   });
 
   it("Restaurar sem backups explica que não há o que restaurar", async () => {
     const { user } = await openList({ journeys: [summary({ status: "danificada" })], backups: [] });
-    await screen.findByText("O Selo de Elmora");
-    await user.click(screen.getByRole("button", { name: "Restaurar" }));
+    await user.click(await screen.findByRole("button", { name: "Restaurar…" }));
     expect(await screen.findByText("Não há backups desta Jornada.")).toBeInTheDocument();
   });
 

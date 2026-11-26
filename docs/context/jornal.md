@@ -2,6 +2,13 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-26 — `biblioteca-jornadas` (OpenCode)
+
+- Rota: revisão do protótipo → implementação no frontend → ajustes de contraste e layout → entrega da branch `feat/biblioteca-jornadas`, sem PR.
+- Resultado: biblioteca com busca, filtros, painel de detalhes e ações existentes. Pontos de retorno seguem pendentes; não foram substituídos por backups.
+- Arquivos principais: `app/src/screens/JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck, suíte completa com 333 testes antes dos ajustes finais e 11 testes de Jornadas após os ajustes. Conferência visual no Tauri pendente.
+
 ## 2026-11-26 — `instalador-esteira-claude` (OpenCode)
 
 - Rota: planejador → ajuste direto → entrega.

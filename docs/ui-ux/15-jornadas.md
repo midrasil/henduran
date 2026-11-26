@@ -1,6 +1,6 @@
 # Tela Jornadas (lista) e Pontos de retorno
 
-**Estado:** protótipo aprovado em 2026-11-24: `prototipos/jornadas.html` (lista) e, no menu de opções da Jornada, `prototipos/tela-da-jornada.html` (pontos de retorno). A lista já existe no app (`JourneysScreen.tsx`); o protótipo redesenha a apresentação e acrescenta os pontos de retorno.
+**Estado:** protótipo aprovado em 2026-11-24: `prototipos/jornadas.html` (lista) e, no menu de opções da Jornada, `prototipos/tela-da-jornada.html` (pontos de retorno). A biblioteca redesenhada está implementada em `JourneysScreen.tsx` com os dados da API existente. O painel de uma Jornada pronta informa que os Pontos de retorno ainda não estão disponíveis; a restauração de backups para Jornadas danificadas continua disponível.
 
 ## 1. Objetivo
 

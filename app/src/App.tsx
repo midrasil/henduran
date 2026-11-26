@@ -210,7 +210,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
         ) : null}
 
         {screen === "jornadas" && info ? (
-          <div className="app__panel app__panel--scroll">
+          <div className="app__panel app__panel--scroll app__panel--journeys">
             <JourneysScreen
               info={info}
               list={journeys.data}
@@ -218,6 +218,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               error={journeys.error}
               reload={reloadJourneys}
               onOpen={(j) => void open(j, "jornadas")}
+              onNew={() => dispatch({ type: "go", screen: "nova-jornada" })}
               opening={opening}
               openError={openError}
               notice={nav.notice}
