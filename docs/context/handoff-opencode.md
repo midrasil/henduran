@@ -1,6 +1,6 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix/remover-destaque-foco`. PR aberto contra `main`.
+Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix/remover-destaque-foco`. PR [#49](https://github.com/midrasil/henduran/pull/49) aberto contra `main`.
 - Elaborado por: opencode
 
 ## Estado

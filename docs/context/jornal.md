@@ -10,7 +10,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - Resultado: removidos os contornos e destaques visuais azuis globais e específicos de componentes; foco funcional, navegação por teclado, tooltips, hover e estados ativos foram preservados. Tokens de foco ficaram disponíveis para futura configuração.
 - Arquivos: estilos em `app/src/styles/base.css`, `app/src/ui/`, `app/src/components/models/Models.css`, `app/src/screens/ServiceIndicator.css` e `app/src/screens/newJourney/NewJourney.css`; `docs/context/handoff-opencode.md`.
 - Validações: `npm run typecheck`, suíte frontend com 37 arquivos/330 testes e `git diff --check` passaram.
-- Entrega: branch `fix/remover-destaque-foco`; PR aberto contra `main`.
+- Entrega: branch `fix/remover-destaque-foco`; PR [#49](https://github.com/midrasil/henduran/pull/49) aberto contra `main`.
 
 ## 2026-11-24 — `remodelar-atributos-ficha` (opencode)
 
