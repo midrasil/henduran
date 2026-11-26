@@ -67,12 +67,6 @@
   opacity: 0.5;
 }
 
-.rte__btn:focus-visible,
-.rte__select:focus-visible {
-  outline: 3px solid var(--color-focus-on-parchment);
-  outline-offset: 2px;
-}
-
 .rte__btn--bold {
   font-weight: 700;
 }
@@ -102,10 +96,6 @@
   flex-direction: column;
   min-height: 260px;
   overflow: auto;
-}
-
-.rte__area:focus-within {
-  box-shadow: inset 0 0 0 3px var(--color-focus-on-parchment);
 }
 
 .rte__doc {

@@ -31,11 +31,6 @@
   text-decoration: underline;
 }
 
-.service-indicator__btn:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
 .service-indicator__led {
   flex: none;
   width: 10px;

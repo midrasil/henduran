@@ -97,13 +97,6 @@
   background: var(--color-primary-active);
 }
 
-/* O anel de foco passa por fora da moldura (4 px). */
-.btn.px-frame:focus-visible,
-.btn[data-force="focus"] {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 6px;
-}
-
 .btn:disabled {
   cursor: not-allowed;
   background: var(--color-disabled-bg);

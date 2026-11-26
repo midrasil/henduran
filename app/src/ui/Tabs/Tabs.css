@@ -40,12 +40,6 @@
   --frame-lo: var(--color-primary-active);
 }
 
-.tabs__tab:focus-visible,
-.tabs__tab[data-force="focus"] {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 6px;
-}
-
 .tabs__icon {
   display: inline-flex;
 }
