@@ -1,10 +1,12 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix/remover-destaque-foco`. PR [#49](https://github.com/midrasil/henduran/pull/49) aberto contra `main`.
+Atualizado em 2026-11-26 após `instalador-esteira-claude`. Branch: `chore/instalador-esteira-claude`. [PR da entrega](https://github.com/midrasil/henduran/pulls?q=head%3Achore%2Finstalador-esteira-claude), contra `main`.
 - Elaborado por: opencode
 
 ## Estado
 
+- `AGENTS.md` explicita o handoff do OpenCode e orienta a escrita de PRs em português. O instalador `scripts/instalar-esteira-claude.ps1` aplica a mesma esteira no Claude Code; instruções em `scripts/README.md`. Instalação local concluída.
+- O PR [#49](https://github.com/midrasil/henduran/pull/49) já foi integrado à `main`.
 - Os indicadores visuais azuis de foco foram removidos temporariamente da interface.
 - O foco funcional e a navegação por teclado continuam implementados; apenas os contornos e destaques visuais foram desativados.
 - A remoção cobre o indicador global e os estilos específicos de botões, abas, campos, diálogos, rádio, modelos, Nova Jornada, Composer e editor de histórico.
@@ -12,6 +14,8 @@ Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix
 
 ## Validações
 
+- Instalador: `-WhatIf` não gravou; instalação nova, atualização com backup e preservação do texto externo ao bloco, e reexecução sem duplicação verificadas no PowerShell.
+- Validações do PR #49:
 - `cd app; npm run typecheck` passou.
 - `cd app; npm run test` passou: 37 arquivos, 330 testes.
 - `git diff --check` passou.
@@ -24,4 +28,4 @@ Atualizado em 2026-11-26 após `remover-destaque-foco`. Branch de trabalho: `fix
 
 ## Próximo passo recomendado
 
-⭐ Revisar o PR e validar visualmente o foco no app real; depois decidir quando transformar o indicador em uma preferência configurável.
+⭐ Abrir uma nova sessão do Claude Code para conferir a esteira instalada. Na frente de UI, validar visualmente o foco no app real.
