@@ -50,6 +50,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
   const { reload: reloadJourneys } = journeys;
   const [nav, dispatch] = useReducer(navReducer, initialNav);
   const [opening, setOpening] = useState<string | null>(null);
+  const [loadRevision, setLoadRevision] = useState(0);
   const [openError, setOpenError] = useState<string | null>(null);
   const [menuError, setMenuError] = useState<string | null>(null);
   /** Retrato da Nova Jornada que não foi enviado (a tela da Jornada avisa e deixa tentar de novo). */
@@ -101,6 +102,13 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
     },
     [info],
   );
+
+  const onPointLoaded = (loaded: JourneySnapshot) => {
+    setPortraitRetry(null);
+    lastOpenedId.current = loaded.journey.id;
+    setLoadRevision((n) => n + 1);
+    dispatch({ type: "opened", snapshot: loaded });
+  };
 
   const backToMenu = async () => {
     setMenuError(null);
@@ -161,7 +169,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
 
   return (
     <div className={`app app--${screen}`}>
-      {screen !== "menu" && screen !== "jornada" ? (
+      {screen !== "menu" && screen !== "jornada" && screen !== "jornadas" ? (
         <header className="app-bar">
           <p className="app-bar__brand">
             <PixelIcon name="star" size={24} className="app-bar__mark" />
@@ -177,7 +185,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               <Button onClick={() => dispatch({ type: "go", screen: "jornada" })}>
                 <PixelIcon name="back" /> Voltar à Jornada
               </Button>
-            ) : screen === "jornadas" || screen === "mundos" || screen === "modelos" ? (
+            ) : screen === "mundos" || screen === "modelos" ? (
               <Button onClick={() => dispatch({ type: "go", screen: "menu" })}>
                 <PixelIcon name="back" /> Menu
               </Button>
@@ -210,7 +218,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
         ) : null}
 
         {screen === "jornadas" && info ? (
-          <div className="app__panel app__panel--scroll">
+          <div className="app__panel app__panel--scroll app__panel--journeys">
             <JourneysScreen
               info={info}
               list={journeys.data}
@@ -218,6 +226,9 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               error={journeys.error}
               reload={reloadJourneys}
               onOpen={(j) => void open(j, "jornadas")}
+              onNew={() => dispatch({ type: "go", screen: "nova-jornada" })}
+              onMenu={() => dispatch({ type: "go", screen: "menu" })}
+              onPointLoaded={onPointLoaded}
               opening={opening}
               openError={openError}
               notice={nav.notice}
@@ -307,7 +318,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
 
         {screen === "jornada" && snapshot && info ? (
           <JourneyScreen
-            key={snapshot.journey.id}
+            key={`${snapshot.journey.id}:${loadRevision}`}
             info={info}
             snapshot={snapshot}
             rules={rules.rules}
@@ -320,6 +331,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
             }}
             portraitRetry={portraitRetry}
             onJourneyChanged={(journey) => dispatch({ type: "summary", journey })}
+            onPointLoaded={onPointLoaded}
             {...(copyMessage ? { copyText: copyMessage } : {})}
           />
         ) : null}

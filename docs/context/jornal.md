@@ -2,6 +2,65 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-27 — `pr-biblioteca-para-main` (OpenCode)
+
+- PR #52 aberto de `feat/biblioteca-jornadas` para `main`: https://github.com/midrasil/henduran/pull/52. Inclui o redesenho da biblioteca e os Pontos de retorno.
+- O PR #51 foi mergeado em `feat/biblioteca-jornadas` (`fe0c795`); merge na `main` segue sem autorização.
+- Validação usada no texto do PR: typecheck, 34 testes direcionados, suíte frontend completa (342 testes), 32 testes de backend e `git diff --check` limpo.
+
+## 2026-11-27 — `save-padrão-como-ponto` (OpenCode)
+
+- Ajuste direto em `feat/pontos-de-retorno`: o estado atual do `journey.db` aparece como primeira linha dos Pontos de retorno — **Jogo salvo** na biblioteca e **Jogando agora** na Jornada aberta — com etiqueta **Atual**.
+- A linha é somente leitura, não conta nos limites 20/5 e não mostra mensagens. Na biblioteca, **Continuar** abre a Jornada pelo fluxo normal, sem chamar `/load`; dentro da Jornada não há ação de carregar.
+- Decisão do responsável: omitir a contagem de mensagens e não alterar o backend.
+- Validação: `npm run typecheck`, 34 testes direcionados e a suíte frontend completa (342 testes) passaram; `git diff --check` limpo.
+- Entrega: commit `23ae0d2`, branch publicada e PR #51 aberto com base em `feat/biblioteca-jornadas`: https://github.com/midrasil/henduran/pull/51.
+
+## 2026-11-27 — `ocultar-pontos-ausentes` (OpenCode)
+
+- Ajuste direto em `feat/pontos-de-retorno`: lista vazia ou indisponível fica oculta; um ponto que deixou de existir some após a ação; outras falhas exibem uma mensagem curta em português. Removido **Tentar de novo**.
+- Validação: `npm run typecheck` e os 18 testes de `JourneysScreen.test.tsx` passaram.
+
+## 2026-11-27 — `pontos-de-retorno` (OpenCode)
+
+- Rota: implementação local em `feat/pontos-de-retorno`, baseada em `feat/biblioteca-jornadas`.
+- Decisão: exceção aprovada ao ADR-041; carregar substitui o estado ativo e salva **Antes de carregar**, sujeito à retenção de cinco automáticos. O Mundo-base permanece na versão fixada.
+- Resultado: armazenamento SQLite, API, migração `0007` e componente `ReturnPoints` na biblioteca e na Jornada aberta.
+- Validação: 32 testes de backend, 28 de frontend e typecheck passaram. Suítes completas excederam o tempo disponível e a conferência no Tauri segue pendente.
+
+## 2026-11-27 — `acoes-no-rodape-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: ações no rodapé direito dos Pontos de retorno, com **Excluir Jornada** ao lado de **Continuar Jornada** ou **Restaurar…**.
+- Validação: typecheck e 13 testes de Jornadas passaram. Conferência visual no Tauri pendente.
+
+## 2026-11-27 — `navegacao-jornadas-sem-cabecalho` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: removido o cabeçalho visível de Jornadas; **Voltar ao menu** fica ao lado de **Nova Jornada**, também no estado vazio. O título acessível continua recebendo foco na entrada da tela.
+- Arquivos: `App.tsx`, `JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck e 13 testes de Jornadas passaram.
+
+## 2026-11-27 — `simplificar-busca-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: removidos o título com contador e os seletores de status da coluna esquerda. A busca e as etiquetas dos cartões permanecem.
+- Validação: typecheck e 12 testes de Jornadas passaram.
+
+## 2026-11-27 — `cartoes-compactos-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: cartões mais baixos com nome, retrato, etiquetas e salvamento; busca por Jornada, personagem ou Mundo, sem lugar.
+- Arquivos: `JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck e 12 testes da tela passaram. Conferência visual no Tauri pendente.
+
+## 2026-11-26 — `biblioteca-jornadas` (OpenCode)
+
+- Rota: revisão do protótipo → implementação no frontend → ajustes de contraste e layout → entrega da branch `feat/biblioteca-jornadas`, sem PR.
+- Resultado: biblioteca com busca, filtros, painel de detalhes e ações existentes. Pontos de retorno seguem pendentes; não foram substituídos por backups.
+- Arquivos principais: `app/src/screens/JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck, suíte completa com 333 testes antes dos ajustes finais e 11 testes de Jornadas após os ajustes. Conferência visual no Tauri pendente.
+
 ## 2026-11-26 — `instalador-esteira-claude` (OpenCode)
 
 - Rota: planejador → ajuste direto → entrega.

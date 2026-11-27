@@ -8,10 +8,14 @@ import {
   restoreBackup,
   type BackupInfo,
   type JourneyList,
+  type JourneySnapshot,
   type JourneySummary,
 } from "../api/journeys";
-import { describeError, formatBackupDate, formatSavedAt, STATUS_LABEL } from "../lib/format";
-import { Badge, Button, Dialog, ListCard, PixelIcon, RadioGroup, type BadgeTone } from "../ui";
+import { usePortraitUrl } from "../hooks/usePortraitUrl";
+import { describeError, formatBackupDate, formatSavedAgo, formatSavedAt, STATUS_LABEL, STATUS_NOTICE } from "../lib/format";
+import { Badge, Button, Dialog, PixelIcon, Portrait, RadioGroup, type BadgeTone } from "../ui";
+import "./JourneysScreen.css";
+import { ReturnPoints } from "./ReturnPoints";
 
 export interface JourneysScreenProps {
   info: BackendInfo;
@@ -20,6 +24,9 @@ export interface JourneysScreenProps {
   error: string | null;
   reload: () => Promise<JourneyList | null>;
   onOpen: (journey: JourneySummary) => void;
+  onNew: () => void;
+  onMenu: () => void;
+  onPointLoaded: (snapshot: JourneySnapshot) => void;
   opening: string | null;
   openError: string | null;
   /** Aviso vindo de outra tela (por exemplo, Jornada criada que não abriu). */
@@ -28,20 +35,33 @@ export interface JourneysScreenProps {
 
 const TONE: Record<string, BadgeTone> = { ok: "success", danificada: "danger", mais_nova: "warn", sem_mundo: "warn" };
 
+const label = (j: JourneySummary) => j.name ?? "Jornada sem nome";
+const normalize = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+const savedAt = (j: JourneySummary) => j.last_saved_at ?? j.created_at;
+const savedTime = (j: JourneySummary) => {
+  const time = Date.parse(savedAt(j) ?? "");
+  return Number.isNaN(time) ? -Infinity : time;
+};
+
+function JourneyPortrait({ info, journey }: { info: BackendInfo; journey: JourneySummary }) {
+  const src = usePortraitUrl(info, journey.portrait?.url_path ?? null);
+  return <Portrait name={journey.character_name ?? label(journey)} src={src} crop={journey.portrait?.crop ?? null} size="sm" />;
+}
+
 type RestoreState =
   | { journey: JourneySummary; kind: "loading" }
   | { journey: JourneySummary; kind: "ready"; backups: BackupInfo[]; chosen: string | null; sending: boolean; error: string | null }
   | { journey: JourneySummary; kind: "error"; error: string };
 
-/** Lista de Jornadas com Abrir, Excluir e (para as danificadas) Restaurar. */
-export function JourneysScreen({ info, list, loading, error, reload, onOpen, opening, openError, notice }: JourneysScreenProps) {
+export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, onMenu, onPointLoaded, opening, openError, notice }: JourneysScreenProps) {
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ journey: JourneySummary; sending: boolean; error: string | null } | null>(null);
   const [restoring, setRestoring] = useState<RestoreState | null>(null);
   const [announce, setAnnounce] = useState("");
+  const [pointBusy, setPointBusy] = useState(false);
   const keepRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-
-  const label = (j: JourneySummary) => j.name ?? "Jornada sem nome";
 
   const confirmDelete = async () => {
     if (!removing) return;
@@ -58,12 +78,14 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, ope
   };
 
   const startRestore = async (journey: JourneySummary) => {
-    setRestoring({ journey, kind: "loading" });
+    const pending: RestoreState = { journey, kind: "loading" };
+    setRestoring(pending);
     try {
       const { backups } = await listBackups(info, journey.id);
-      setRestoring({ journey, kind: "ready", backups, chosen: backups[0]?.name ?? null, sending: false, error: null });
+      setRestoring((current) => current === pending
+        ? { journey, kind: "ready", backups, chosen: backups[0]?.name ?? null, sending: false, error: null } : current);
     } catch (err) {
-      setRestoring({ journey, kind: "error", error: describeError(err) });
+      setRestoring((current) => current === pending ? { journey, kind: "error", error: describeError(err) } : current);
     }
   };
 
@@ -86,12 +108,23 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, ope
   };
 
   const journeys = list?.journeys ?? [];
+  const isEmpty = list !== null && !error && journeys.length === 0;
+  const latest = journeys.reduce<JourneySummary | null>((best, j) => !best || savedTime(j) > savedTime(best) ? j : best, null);
+  const search = normalize(query.trim());
+  const visible = journeys.filter((j) =>
+    [label(j), j.character_name, j.world_name].some((value) => normalize(value ?? "").includes(search)));
+  const selected = visible.find((j) => j.id === selectedId) ?? visible.find((j) => j.id === latest?.id) ?? visible[0];
+  const navigation = (
+    <div className="journeys__navigation">
+      <Button variant="primary" disabled={pointBusy} onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>
+      <Button disabled={pointBusy} onClick={onMenu}><PixelIcon name="back" /> Voltar ao menu</Button>
+    </div>
+  );
 
   return (
     <section className="journeys" aria-labelledby="journeys-title">
-      <h2 id="journeys-title" ref={titleRef} tabIndex={-1} className="screen-title">
-        Jornadas
-      </h2>
+      <h2 id="journeys-title" ref={titleRef} tabIndex={-1} className="visually-hidden">Jornadas</h2>
+      {!isEmpty ? navigation : null}
       {notice ? <p className="callout callout--warn">{notice}</p> : null}
       {openError ? (
         <p className="callout callout--danger" role="alert">
@@ -117,69 +150,88 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, ope
             </Button>
           </div>
         </div>
-      ) : list === null && loading ? (
-        <p className="hint">Carregando as Jornadas…</p>
+      ) : list === null ? (
+        <p className="hint" role="status">{loading ? "Carregando as Jornadas…" : "Preparando a biblioteca…"}</p>
       ) : journeys.length === 0 ? (
-        <div className="empty px-frame surface-parchment">
-          <p>Nenhuma Jornada salva. Crie uma pelo menu inicial, em Nova Jornada.</p>
+        <div className="journeys__empty px-frame surface-parchment">
+          <PixelIcon name="scroll" size={32} />
+          <h3>Nenhuma Jornada ainda</h3>
+          <p>Crie a sua primeira Jornada: um Mundo, um personagem e uma história com o Aduran.</p>
+          {navigation}
         </div>
       ) : (
-        <ul className="card-list">
-          {journeys.map((j) => {
-            const titleId = `journey-${j.id}`;
-            return (
-              <ListCard
-                key={j.id}
-                title={label(j)}
-                titleId={titleId}
-                selected={j.id === list?.last_journey_id}
-                tags={
-                  <>
-                    {j.id === list?.last_journey_id ? (
-                      <Badge tone="accent" icon={<PixelIcon name="star" />}>
-                        Última jogada
-                      </Badge>
-                    ) : null}
-                    <Badge tone={TONE[j.status] ?? "neutral"}>{STATUS_LABEL[j.status] ?? j.status}</Badge>
-                  </>
-                }
-                meta={`${j.character_name ?? "sem personagem"} · ${j.location ?? "local desconhecido"} · Mundo: ${
-                  j.world_name ?? "desconhecido"
-                }`}
-                actions={
-                  <>
-                    <Button
-                      variant="primary"
-                      aria-describedby={titleId}
-                      disabled={j.status !== "ok" || opening !== null}
-                      loading={opening === j.id}
-                      onClick={() => onOpen(j)}
-                    >
-                      Abrir
-                    </Button>
-                    {j.status === "danificada" ? (
-                      <Button aria-describedby={titleId} onClick={() => void startRestore(j)}>
-                        Restaurar
-                      </Button>
-                    ) : null}
-                    <Button
-                      variant="danger"
-                      aria-describedby={titleId}
-                      onClick={() => setRemoving({ journey: j, sending: false, error: null })}
-                    >
-                      Excluir
-                    </Button>
-                  </>
-                }
-              >
-                <p className="list-card__meta">
-                  Salvo em: {formatSavedAt(j.last_saved_at ?? j.created_at)} · Regras: {j.rules_version ?? "desconhecida"}
-                </p>
-                {j.status !== "ok" && j.error_message ? <p className="list-card__meta text-warn">{j.error_message}</p> : null}
-              </ListCard>
-            );
-          })}
-        </ul>
+        <div className="journeys__layout">
+          <aside className="journeys__library px-frame surface-dark" aria-label="Biblioteca de Jornadas">
+            <label className="field">
+              <span className="field__label">Buscar Jornadas</span>
+              <input className="field__control px-frame" type="search" placeholder="Jornada, personagem ou Mundo" disabled={pointBusy}
+                value={query} onChange={(event) => setQuery(event.target.value)} />
+            </label>
+            {visible.length ? (
+              <ul className="journeys__list" aria-label="Jornadas salvas">
+                {visible.map((j) => (
+                  <li key={j.id}>
+                    <button type="button" className="journeys__entry" disabled={pointBusy} aria-pressed={selected?.id === j.id}
+                      aria-labelledby={`journey-${j.id}`} aria-controls="journeys-detail" onClick={() => setSelectedId(j.id)}>
+                      <JourneyPortrait info={info} journey={j} />
+                      <span className="journeys__identity">
+                        <strong id={`journey-${j.id}`}>{label(j)}</strong>
+                        <span className="journeys__tags">
+                          {latest?.id === j.id ? <Badge tone="accent">Última</Badge> : null}
+                          <Badge tone={j.status !== "ok" ? TONE[j.status] ?? "neutral" : j.current_scene_title ? "success" : "neutral"}>
+                            {j.status !== "ok" ? STATUS_LABEL[j.status] ?? j.status : j.current_scene_title ? "Em Cena" : "Fora de Cena"}
+                          </Badge>
+                          <span title={formatSavedAt(savedAt(j))}>{formatSavedAgo(savedAt(j))}</span>
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="hint" role="status">Nenhuma Jornada encontrada para esta busca.</p>}
+          </aside>
+          <section id="journeys-detail" className="journeys__detail px-frame surface-parchment"
+            aria-label="Detalhe da Jornada">
+            {selected ? (
+              <>
+                <div className="journeys__detail-head">
+                  <JourneyPortrait key={selected.id} info={info} journey={selected} />
+                  <div className="journeys__identity">
+                    <h3>{label(selected)}</h3>
+                    <div className="journeys__tags">
+                      <Badge>{selected.character_name ?? "Sem personagem"}</Badge>
+                      <Badge>{selected.world_name ?? "Mundo desconhecido"}</Badge>
+                      <Badge tone={TONE[selected.status] ?? "neutral"}>{STATUS_LABEL[selected.status] ?? selected.status}</Badge>
+                      {latest?.id === selected.id ? <Badge tone="accent">Última jogada</Badge> : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="journeys__detail-body">
+                  {selected.status === "ok" ? (
+                    <ReturnPoints key={selected.id} info={info} journeyId={selected.id}
+                      current={{ location: selected.location, savedAt: savedAt(selected) }}
+                      disabled={opening !== null} onLoaded={onPointLoaded} onCurrent={() => onOpen(selected)} onBusy={setPointBusy} />
+                  ) : (
+                    <p className={`callout callout--${selected.status === "danificada" ? "danger" : "warn"}`} role="alert">
+                      {selected.error_message ?? STATUS_NOTICE[selected.status] ?? "Não foi possível abrir esta Jornada."}
+                      {selected.status === "mais_nova" && selected.error_message ? " Atualize o aplicativo para continuar." : null}
+                    </p>
+                  )}
+                </div>
+                <footer className="journeys__actions">
+                  {selected.status === "danificada" ? (
+                    <Button variant="primary" disabled={opening !== null} onClick={() => void startRestore(selected)}>Restaurar…</Button>
+                  ) : (
+                    <Button variant="primary" disabled={selected.status !== "ok" || opening !== null || pointBusy}
+                      loading={opening === selected.id} onClick={() => onOpen(selected)}>Continuar Jornada</Button>
+                  )}
+                  <Button variant="danger" disabled={opening !== null || pointBusy}
+                    onClick={() => setRemoving({ journey: selected, sending: false, error: null })}>Excluir Jornada</Button>
+                </footer>
+              </>
+            ) : <p className="journeys__detail-body">Escolha uma Jornada na lista para ver os detalhes.</p>}
+          </section>
+        </div>
       )}
 
       <Dialog

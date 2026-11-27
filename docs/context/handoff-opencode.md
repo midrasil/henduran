@@ -1,31 +1,16 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-26 após `instalador-esteira-claude`. Branch: `chore/instalador-esteira-claude`. [PR da entrega](https://github.com/midrasil/henduran/pulls?q=head%3Achore%2Finstalador-esteira-claude), contra `main`.
-- Elaborado por: opencode
+Atualizado em 2026-11-27. Branch de entrega: `feat/biblioteca-jornadas`. O PR #51 dos Pontos de retorno foi mergeado nesta branch; o PR #52 abre esta branch para `main` (https://github.com/midrasil/henduran/pull/52), aguardando revisão. Merge na `main` não autorizado.
 
 ## Estado
 
-- `AGENTS.md` explicita o handoff do OpenCode e orienta a escrita de PRs em português. O instalador `scripts/instalar-esteira-claude.ps1` aplica a mesma esteira no Claude Code; instruções em `scripts/README.md`. Instalação local concluída.
-- O PR [#49](https://github.com/midrasil/henduran/pull/49) já foi integrado à `main`.
-- Os indicadores visuais azuis de foco foram removidos temporariamente da interface.
-- O foco funcional e a navegação por teclado continuam implementados; apenas os contornos e destaques visuais foram desativados.
-- A remoção cobre o indicador global e os estilos específicos de botões, abas, campos, diálogos, rádio, modelos, Nova Jornada, Composer e editor de histórico.
-- Tokens de foco foram preservados para futura reimplementação configurável.
+- Pontos de retorno na biblioteca e no menu da Jornada. Limites: 20 manuais e 5 automáticos, contando **Antes de carregar**.
+- Save padrão listado como primeira linha: **Jogo salvo** na biblioteca e **Jogando agora** na Jornada aberta, com etiqueta **Atual**; somente leitura, sem contagem de mensagens e sem alteração no backend.
+- Exceção ao ADR-041 aprovada: carregar substitui o estado ativo e mantém a referência à versão fixa do Mundo-base. A imagem do retrato acompanha o SQLite restaurado.
+- Artefatos principais: `backend/henduran/services/return_points.py`, migração `journey/0007`, `app/src/screens/ReturnPoints.tsx` e `docs/ui-ux/15-jornadas.md`.
 
-## Validações
+## Validações e pendências
 
-- Instalador: `-WhatIf` não gravou; instalação nova, atualização com backup e preservação do texto externo ao bloco, e reexecução sem duplicação verificadas no PowerShell.
-- Validações do PR #49:
-- `cd app; npm run typecheck` passou.
-- `cd app; npm run test` passou: 37 arquivos, 330 testes.
-- `git diff --check` passou.
-
-## Pendências
-
-- Conferir visualmente no app Tauri se nenhum destaque azul aparece ao clicar e navegar com `Tab`/`Shift+Tab`.
-- Conferir acessibilidade, leitor de tela e DPI de 125% a 200%, considerando que o foco visual está temporariamente desativado.
-- Permanecem pendências do produto em `docs/backlog.md`, incluindo Estado da Cena, Diário, pontos de retorno e demais rodadas da tela Modelos.
-
-## Próximo passo recomendado
-
-⭐ Abrir uma nova sessão do Claude Code para conferir a esteira instalada. Na frente de UI, validar visualmente o foco no app real.
+- Typecheck, 34 testes direcionados e a suíte frontend completa (342 testes) passaram; `git diff --check` limpo. Os 32 testes de backend (Pontos de retorno, criação e migrações) seguem passando; a suíte backend completa ainda não terminou por tempo.
+- Ajustes posteriores: sem mensagens técnicas nem botão de retry; o save padrão permanece visível mesmo com lista vazia ou falha na consulta.
+- ⭐ Próximo passo: acompanhar o PR #52 e, após decisão, validar salvar, carregar e desfazer no Tauri para Windows, conforme `docs/backlog.md`.

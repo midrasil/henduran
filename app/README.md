@@ -8,7 +8,7 @@ Interface do Henduran: shell **Tauri 2** (Rust) com **React + TypeScript** (Vite
 ### Telas de jogo
 
 - **Menu inicial:** "Continuar Jornada" abre a última Jornada jogada (`last_journey_id`; sem ela, a salva mais recentemente) e fica desativado se ela não estiver utilizável; o cartão mostra nome, personagem, local, "Salvo em", período e o aviso quando a Jornada está danificada, é de versão mais nova ou perdeu o Mundo. "Sair" chama o comando `exit_app` do shell (só no Tauri; no navegador o botão não aparece).
-- **Jornadas:** lista com Abrir, Excluir (diálogo; apaga a Jornada do disco e, se nenhuma outra o usa, o Mundo dela) e, para as danificadas, Restaurar a partir de um backup.
+- **Jornadas:** biblioteca com busca e painel de detalhes para continuar, gerenciar os Pontos de retorno, excluir (o Mundo continua salvo) ou restaurar uma Jornada danificada a partir de um backup. O save padrão da Jornada aparece na lista como **Jogo salvo**. Na Jornada aberta, o menu de opções permite criar e sobrescrever pontos manuais.
 - **Nova Jornada:** gera o Mundo por semente (sorteada no cliente ou digitada), permite editar tudo (nome, era, tom, calendário com meses e dias da semana, religiões e lugares, dentro dos limites de `GET /worlds/schema`) e escolher o lugar inicial; o Protagonista tem identidade, Ambição, Desejo, Convicções com Pilar, Atributos, perfil e valores de Perícias e as trilhas de Vida e Vontade, com validação ao vivo no servidor (`/worlds/validate`, `/characters/validate`), erros por campo e "Distribuir ao acaso" a partir do catálogo. Nenhuma regra é duplicada na interface: tudo vem de `GET /rules/creation`.
 - **Jornada aberta:** "Menu" fecha a Jornada no serviço e volta ao menu. O Narrador ainda não recebe o contexto da Jornada.
 

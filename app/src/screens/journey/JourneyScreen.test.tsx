@@ -279,3 +279,24 @@ describe("Retrato", () => {
     await waitFor(() => expect(api.calls.some((c) => c.method === "GET" && c.path === "/journeys/current/portrait")).toBe(true));
   });
 });
+
+describe("Pontos de retorno na Jornada aberta", () => {
+  it("mostra o save padrão como linha atual, sem ações de ponto", async () => {
+    const game = stubGame({ journeys: [summary()], returnPoints: [] });
+    const snapshot = snapshotOf(summary());
+    game.api.state.open = snapshot;
+    const user = userEvent.setup();
+    render(
+      <JourneyScreen info={INFO} snapshot={snapshot} rules={RULES} engine={READY}
+        onOpenModels={vi.fn()} onBackToMenu={vi.fn()} copyText={vi.fn(async () => undefined)}
+        onPointLoaded={vi.fn()} />,
+    );
+    await user.click(await screen.findByRole("button", { name: "Opções" }));
+    await user.click(screen.getByRole("menuitem", { name: "Pontos de retorno" }));
+    const dialog = await screen.findByRole("dialog", { name: "Pontos de retorno" });
+    expect(within(dialog).getByText("Jogando agora")).toBeInTheDocument();
+    expect(within(dialog).getByText("Atual")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Carregar Jogando agora/ })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Excluir/ })).not.toBeInTheDocument();
+  });
+});

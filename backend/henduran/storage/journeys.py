@@ -150,6 +150,12 @@ def _read_open_scene_title(conn: sqlite3.Connection) -> str | None:
     return None if row is None else scene_title(dict(row))
 
 
+def _has_embedded_portrait(conn: sqlite3.Connection) -> bool:
+    return "portrait_snapshot" in _columns(conn, "character") and conn.execute(
+        "SELECT 1 FROM character WHERE id = 1 AND portrait_snapshot IS NOT NULL"
+    ).fetchone() is not None
+
+
 def _read_portrait_row(conn: sqlite3.Connection) -> tuple[str, str] | None:
     """``(arquivo, enquadramento JSON)`` do retrato gravado na ficha, ou ``None``."""
     if not {"portrait_file", "portrait_crop"} <= _columns(conn, "character"):
@@ -361,6 +367,7 @@ class JourneyStore:
         world_version: int = 1,
         *,
         initialize: Callable[[Transaction, str], None] | None = None,
+        after_initialize: Callable[[Database, str], None] | None = None,
     ) -> str:
         """Cria a Jornada vinculada a ``(world_id, world_version)``. Devolve o id.
 
@@ -387,6 +394,8 @@ class JourneyStore:
                 )
                 if initialize is not None:
                     initialize(tx, journey_id)
+            if after_initialize is not None:
+                after_initialize(db, journey_id)
         except BaseException:
             if db is not None:
                 db.close()
@@ -481,18 +490,38 @@ class JourneyStore:
             try:
                 summary.current_scene_title = _read_open_scene_title(conn)
                 portrait = _read_portrait_row(conn)
+                embedded = _has_embedded_portrait(conn)
             finally:
                 conn.close()
         except (sqlite3.Error, ValueError, TypeError) as exc:
             log.warning("cena ou retrato da jornada %s ilegível: %s", jid, exc)
             return
-        if portrait is None or not (self.paths.journey_assets_dir(jid) / portrait[0]).is_file():
+        if portrait is None or (not embedded and not (self.paths.journey_assets_dir(jid) / portrait[0]).is_file()):
             return
         try:
             crop = json.loads(portrait[1])
         except ValueError:
             return
         summary.portrait = {"crop": crop, "url_path": journey_portrait_url_path(jid)}
+
+    def portrait_bytes(self, journey_id: str) -> tuple[bytes, str]:
+        """Retrato embutido por um Ponto de retorno ou arquivo corrente."""
+        jid = checked_id(journey_id)
+        path = self.paths.journey_db_file(jid)
+        if path.is_file():
+            try:
+                conn = connect_readonly(path)
+                try:
+                    if _has_embedded_portrait(conn):
+                        row = conn.execute("SELECT portrait_file, portrait_snapshot FROM character WHERE id = 1").fetchone()
+                        if row and row[0] in character_store.PORTRAIT_FILES and row[1] is not None:
+                            return row[1], character_store.PORTRAIT_FILES[row[0]]
+                finally:
+                    conn.close()
+            except sqlite3.Error:
+                pass  # a leitura tradicional traduz banco ilegível em retrato ausente
+        picture, media = self.portrait_file(jid)
+        return picture.read_bytes(), media
 
     def portrait_file(self, journey_id: str) -> tuple[Path, str]:
         """Caminho e ``Content-Type`` do retrato de uma Jornada **sem abri-la** (somente leitura).

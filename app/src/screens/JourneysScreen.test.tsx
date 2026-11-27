@@ -40,35 +40,132 @@ async function openList(options: FakeGameOptions) {
   return { user, ...game };
 }
 
-const card = (name: string) => screen.getByText(name).closest("li")!;
+const card = (name: string) => screen.getByRole("button", { name });
+const detail = () => within(screen.getByRole("region", { name: "Detalhe da Jornada" }));
 
 describe("Tela Jornadas", () => {
-  it("lista as Jornadas com personagem, local, mundo, salvamento, regras e estado", async () => {
-    await openList({ journeys: [summary(), SECOND], lastJourneyId: summary().id });
+  it("exibe os dados do cartão e marca como Última a Jornada salva mais recentemente", async () => {
+    await openList({ journeys: [summary({ last_saved_at: "2026-11-24T10:00:00Z" }), SECOND], lastJourneyId: SECOND.id });
     await screen.findByText("Crônicas do Vale");
     const first = card("O Selo de Elmora");
-    expect(within(first).getByText("Última jogada")).toBeInTheDocument();
-    expect(within(first).getByText("Pronta")).toBeInTheDocument();
-    expect(within(first).getByText(/Ilsa Corvalho · .* · Mundo: /)).toBeInTheDocument();
-    expect(within(first).getByText(/Salvo em: .* · Regras: fatia-1/)).toBeInTheDocument();
+    expect(within(first).getByText("Última")).toBeInTheDocument();
+    expect(within(first).getByText("Fora de Cena")).toBeInTheDocument();
+    expect(first).not.toHaveTextContent("Ilsa Corvalho");
+    expect(first).not.toHaveTextContent(/Mundo:/);
+    expect(within(first).getByText(/^Salvo/)).toBeInTheDocument();
   });
 
   it("estado vazio", async () => {
-    await openList({});
-    expect(await screen.findByText(/Nenhuma Jornada salva/)).toBeInTheDocument();
+    const { user } = await openList({});
+    const empty = await screen.findByRole("heading", { name: "Nenhuma Jornada ainda" });
+    const create = screen.getByRole("button", { name: "Nova Jornada" });
+    expect(empty.parentElement).toContainElement(create);
+    await user.click(create);
+    expect(await screen.findByRole("heading", { name: "Nova Jornada" })).toBeInTheDocument();
   });
 
   it("Abrir leva à Jornada", async () => {
     const { user } = await openList({ journeys: [summary(), SECOND] });
     await screen.findByText("Crônicas do Vale");
-    await user.click(within(card("Crônicas do Vale")).getByRole("button", { name: "Abrir" }));
+    await user.click(card("Crônicas do Vale"));
+    expect(card("Crônicas do Vale")).toHaveAttribute("aria-pressed", "true");
+    await user.click(detail().getByRole("button", { name: "Continuar Jornada" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
   });
 
-  it("Excluir pede confirmação, apaga com confirm=true e avisa que o Mundo foi junto", async () => {
+  it("busca pelo nome sem acentos e volta a mostrar todas as Jornadas ao limpar", async () => {
+    const { user } = await openList({ journeys: [summary({ current_scene_title: "A chegada" }), SECOND] });
+    const search = await screen.findByRole("searchbox", { name: "Buscar Jornadas" });
+    await user.type(search, "inexistente");
+    expect(screen.getByText("Nenhuma Jornada encontrada para esta busca.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeInTheDocument();
+    await user.clear(search);
+    await user.type(search, "cronicas");
+    expect(card("Crônicas do Vale")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "O Selo de Elmora" })).not.toBeInTheDocument();
+    await user.clear(search);
+    expect(within(card("O Selo de Elmora")).getByText("Em Cena")).toBeInTheDocument();
+    expect(card("Crônicas do Vale")).toBeInTheDocument();
+  });
+
+  it("busca por personagem e Mundo, mas não pelo lugar", async () => {
+    const journey = summary({ character_name: "Lúcia", world_name: "Brumária", location: "Porto Cinzento" });
+    const { user } = await openList({ journeys: [journey, SECOND] });
+    const search = await screen.findByRole("searchbox", { name: "Buscar Jornadas" });
+    for (const term of ["lucia", "brumaria"]) {
+      await user.clear(search);
+      await user.type(search, term);
+      expect(card("O Selo de Elmora")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Crônicas do Vale" })).not.toBeInTheDocument();
+    }
+    await user.clear(search);
+    await user.type(search, "porto cinzento");
+    expect(screen.getByText("Nenhuma Jornada encontrada para esta busca.")).toBeInTheDocument();
+  });
+
+  it.each([undefined, 404])("mostra o save padrão quando não há pontos (%s)", async (returnPointsStatus) => {
+    const { api } = await openList({ journeys: [SECOND], ...(returnPointsStatus ? { returnPointsStatus } : {}) });
+    await waitFor(() => expect(api.calls.some((call) => call.path.endsWith("/return-points"))).toBe(true));
+    expect(await detail().findByRole("button", { name: "Continuar Jogo salvo" })).toBeEnabled();
+    expect(detail().getByRole("heading", { name: "Pontos de retorno" })).toBeInTheDocument();
+    expect(detail().getByText("Jogo salvo")).toBeInTheDocument();
+    expect(detail().getByText("Atual")).toBeInTheDocument();
+    expect(detail().queryByRole("button", { name: "Tentar de novo" })).not.toBeInTheDocument();
+    expect(detail().queryByText("Not Found")).not.toBeInTheDocument();
+  });
+
+  it("continua pelo save padrão sem carregar um ponto", async () => {
+    const { user, api } = await openList({ journeys: [SECOND] });
+    await user.click(await detail().findByRole("button", { name: "Continuar Jogo salvo" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
+    expect(api.calls).toContainEqual({ method: "POST", path: `/journeys/${SECOND.id}/open`, body: undefined });
+    expect(api.calls.some((call) => call.path.includes("/load"))).toBe(false);
+  });
+
+
+  it.each([404, 500])("trata falha ao carregar um ponto (%s) sem exibir detalhes técnicos", async (loadReturnPointStatus) => {
+    const { user } = await openList({ journeys: [SECOND], loadReturnPointStatus, returnPoints: [{
+      id: "inicio", name: "Início da Cena", kind: "automatic", location: "Porto", message_count: 1,
+      created_at: "2026-11-28T13:00:00Z",
+    }] });
+    await user.click(await detail().findByRole("button", { name: "Carregar Início da Cena" }));
+    await user.click(detail().getByRole("button", { name: "Carregar ponto" }));
+    if (loadReturnPointStatus === 404) {
+      await waitFor(() => expect(detail().queryByRole("button", { name: "Carregar Início da Cena" })).not.toBeInTheDocument());
+      expect(detail().getByRole("heading", { name: "Pontos de retorno" })).toBeInTheDocument();
+      expect(detail().getByText("Jogo salvo")).toBeInTheDocument();
+    } else {
+      expect(await detail().findByRole("alert")).toHaveTextContent("Não foi possível carregar este ponto.");
+    }
+    expect(detail().queryByText("Not Found")).not.toBeInTheDocument();
+  });
+
+  it("carrega um ponto automático após confirmar e abre a Jornada", async () => {
+    const { user, api } = await openList({ journeys: [SECOND], returnPoints: [{
+      id: "inicio", name: "Início da Cena", kind: "automatic", location: "Porto", message_count: 1,
+      created_at: "2026-11-28T13:00:00Z",
+    }] });
+    await user.click(await detail().findByRole("button", { name: "Carregar Início da Cena" }));
+    expect(detail().queryByRole("button", { name: /Renomear/ })).not.toBeInTheDocument();
+    expect(detail().getByText(/Antes de carregar/)).toBeInTheDocument();
+    expect(api.calls.some((call) => call.path.includes("/load"))).toBe(false);
+    await user.click(detail().getByRole("button", { name: "Carregar ponto" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
+    expect(api.calls).toContainEqual({ method: "POST", path: `/journeys/${SECOND.id}/return-points/inicio/load?confirm=true`, body: undefined });
+  });
+
+  it.each(["mais_nova", "sem_mundo"] as const)("impede continuar quando a situação é %s", async (status) => {
+    await openList({ journeys: [summary({ status })] });
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
+    expect(detail().getByRole("alert")).toBeInTheDocument();
+    expect(detail().getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
+    expect(detail().queryByRole("button", { name: /Restaurar/ })).not.toBeInTheDocument();
+  });
+
+  it("Excluir pede confirmação, apaga com confirm=true e preserva o Mundo", async () => {
     const { user, api } = await openList({ journeys: [summary(), SECOND], lastJourneyId: summary().id });
-    await screen.findByText("O Selo de Elmora");
-    await user.click(within(card("O Selo de Elmora")).getByRole("button", { name: "Excluir" }));
+    await user.click(await screen.findByRole("button", { name: "O Selo de Elmora" }));
+    await user.click(detail().getByRole("button", { name: "Excluir Jornada" }));
     const dialog = screen.getByRole("dialog", { name: "Excluir “O Selo de Elmora”?" });
     expect(dialog).toHaveAccessibleDescription(/apaga a Jornada do disco/);
     expect(within(dialog).getByRole("button", { name: "Cancelar" })).toHaveFocus();
@@ -83,11 +180,11 @@ describe("Tela Jornadas", () => {
 
   it("Cancelar a exclusão não apaga nada", async () => {
     const { user, api } = await openList({ journeys: [summary()] });
-    await screen.findByText("O Selo de Elmora");
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
+    await user.click(screen.getByRole("button", { name: "Excluir Jornada" }));
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancelar" }));
     expect(api.calls.some((c) => c.method === "DELETE")).toBe(false);
-    expect(screen.getByText("O Selo de Elmora")).toBeInTheDocument();
+    expect(card("O Selo de Elmora")).toBeInTheDocument();
   });
 
   it("Restaurar uma Jornada danificada: escolhe o backup e confirma", async () => {
@@ -99,11 +196,11 @@ describe("Tela Jornadas", () => {
         { name: "journey-v1-20261120-080000.db", schema_version: 1, created: "20261120-080000", size_bytes: 20480 },
       ],
     });
-    await screen.findByText("O Selo de Elmora");
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
     const item = card("O Selo de Elmora");
     expect(within(item).getByText("Danificada")).toBeInTheDocument();
-    expect(within(item).getByRole("button", { name: "Abrir" })).toBeDisabled();
-    await user.click(within(item).getByRole("button", { name: "Restaurar" }));
+    expect(detail().queryByRole("button", { name: "Continuar Jornada" })).not.toBeInTheDocument();
+    await user.click(detail().getByRole("button", { name: "Restaurar…" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Restaurar “O Selo de Elmora”" });
     const newest = await within(dialog).findByRole("radio", { name: "22/11/2026 às 10:15:00" });
@@ -117,19 +214,22 @@ describe("Tela Jornadas", () => {
       body: { backup: "journey-v1-20261120-080000.db" },
     });
     expect(screen.getAllByText(/Jornada restaurada a partir de journey-v1-20261120-080000.db/).length).toBeGreaterThan(0);
-    await waitFor(() => expect(within(card("O Selo de Elmora")).getByText("Pronta")).toBeInTheDocument());
+    await waitFor(() => expect(detail().getByText("Pronta")).toBeInTheDocument());
   });
 
   it("Restaurar sem backups explica que não há o que restaurar", async () => {
     const { user } = await openList({ journeys: [summary({ status: "danificada" })], backups: [] });
-    await screen.findByText("O Selo de Elmora");
-    await user.click(screen.getByRole("button", { name: "Restaurar" }));
+    await user.click(await screen.findByRole("button", { name: "Restaurar…" }));
     expect(await screen.findByText("Não há backups desta Jornada.")).toBeInTheDocument();
   });
 
-  it("Menu volta ao menu inicial", async () => {
-    const { user } = await openList({});
-    await user.click(screen.getByRole("button", { name: "Menu" }));
+  it.each([{ journeys: [] }, { journeys: [SECOND] }])("Voltar ao menu abre o menu inicial", async ({ journeys }) => {
+    const { user } = await openList({ journeys });
+    if (journeys.length) await screen.findByRole("button", { name: "Crônicas do Vale" });
+    else await screen.findByRole("heading", { name: "Nenhuma Jornada ainda" });
+    const back = screen.getByRole("button", { name: "Voltar ao menu" });
+    expect(back.previousElementSibling).toBe(screen.getByRole("button", { name: "Nova Jornada" }));
+    await user.click(back);
     expect(await screen.findByRole("heading", { level: 1, name: "Henduran" })).toHaveFocus();
   });
 });

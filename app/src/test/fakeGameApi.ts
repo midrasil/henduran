@@ -177,6 +177,9 @@ export function savedWorld(patch: Partial<SavedWorld> = {}, content: WorldConten
 }
 
 export interface FakeGameOptions extends FakeScreenOptions {
+  returnPoints?: import("../api/journeys").ReturnPoint[];
+  returnPointsStatus?: number;
+  loadReturnPointStatus?: number;
   /** Mundos salvos (`GET /worlds` e `GET /worlds/{id}`). */
   savedWorlds?: { world: SavedWorld; content: WorldContent }[];
   /** Erro de `GET /worlds`. */
@@ -356,6 +359,18 @@ export function createFakeGameApi(options: FakeGameOptions = {}) {
       const closed = state.open?.journey.id ?? null;
       state.open = null;
       return jsonResponse({ closed });
+    }
+    const pointRoute = /^\/journeys\/([^/]+)\/return-points(?:\/([^/]+)\/load)?$/.exec(path);
+    if (pointRoute) {
+      record();
+      if (options.returnPointsStatus) return jsonResponse({ detail: "Not Found" }, options.returnPointsStatus);
+      const journey = state.journeys.find((j) => j.id === decodeURIComponent(pointRoute[1]!));
+      if (method === "GET") return jsonResponse({ points: options.returnPoints ?? [] });
+      if (method === "POST" && journey && pointRoute[2] && parsed.searchParams.get("confirm") === "true") {
+        if (options.loadReturnPointStatus) return jsonResponse({ detail: "Not Found" }, options.loadReturnPointStatus);
+        state.open = snapshotOf(journey);
+        return jsonResponse(state.open);
+      }
     }
     const m = /^\/journeys\/([^/]+)(\/open|\/backups|\/restore|\/portrait)?$/.exec(path);
     if (m) {

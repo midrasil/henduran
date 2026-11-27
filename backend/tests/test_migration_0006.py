@@ -72,8 +72,10 @@ def test_0006_preserva_todos_os_dados(before_0006):
     restore()
     with journeys.open_journey(summary.id) as journey:
         db = journey.db
-        assert db.query_one("SELECT MAX(version) FROM schema_migrations")[0] == 6
-        assert dump(db) == old
+        assert db.query_one("SELECT 1 FROM schema_migrations WHERE version = 6")[0] == 1
+        migrated = dump(db)
+        assert migrated["character"][0].pop("portrait_snapshot") is None
+        assert migrated == old
         assert db.query_all("PRAGMA foreign_key_check") == []
         assert db.query_one("SELECT name FROM sqlite_master WHERE name LIKE 'm0006_%' OR name = 'character_new'") is None
         sheet = journey.character_sheet()

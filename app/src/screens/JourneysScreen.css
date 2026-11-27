@@ -1,0 +1,195 @@
+.journeys {
+  flex: 1;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.journeys__navigation,
+.journeys__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.journeys__empty .journeys__navigation {
+  justify-content: center;
+}
+
+.journeys__detail h3,
+.journeys__detail h4,
+.journeys__empty h3,
+.journeys__empty p {
+  margin: 0;
+}
+
+.journeys__layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.journeys__library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  min-height: 0;
+  min-width: 0;
+  background-color: var(--color-surface);
+}
+
+.journeys__library > :not(.journeys__list) {
+  flex: none;
+}
+
+.journeys__library .field__control {
+  /* O flex-basis do TextField é para campos lado a lado, não para esta coluna. */
+  flex: none;
+  width: 100%;
+}
+
+.journeys__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.journeys__list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.journeys__entry {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: left;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: var(--border-frame) solid var(--color-secondary-hover);
+  padding: 4px var(--space-1);
+  cursor: pointer;
+}
+
+.journeys__entry .portrait {
+  width: 44px;
+  height: 44px;
+}
+
+.journeys__entry:hover {
+  border-color: var(--color-frame);
+}
+
+.journeys__entry[aria-pressed="true"] {
+  background: var(--color-primary-active);
+  border-color: var(--color-accent);
+}
+
+.journeys__identity {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.journeys__entry .journeys__identity {
+  font-size: var(--font-size-sm);
+}
+
+.journeys__entry strong {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+}
+
+.journeys__detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background-color: var(--color-parchment);
+  color: var(--color-text-on-parchment);
+}
+
+.journeys__actions,
+.journeys__detail-head,
+.journeys__detail-body {
+  padding: var(--space-2);
+}
+
+.journeys__actions {
+  flex: none;
+  background: var(--color-parchment-deep);
+  border-top: var(--border-thin) solid var(--color-parchment-edge);
+}
+
+.journeys__detail-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: var(--border-thin) solid var(--color-parchment-edge);
+}
+
+.journeys__detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.journeys__detail-body > p {
+  margin: var(--space-1) 0 0;
+}
+
+.journeys__empty {
+  flex: 1;
+  background-color: var(--color-parchment);
+  min-height: 18rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  padding: var(--space-3);
+}
+
+.journeys .journeys__empty,
+.journeys .journeys__empty h3,
+.journeys .journeys__empty p {
+  color: var(--color-text-on-parchment);
+}
+
+.journeys__empty p {
+  max-width: 46ch;
+}
+
+@media (max-width: 760px), (max-height: 540px) {
+  .journeys__layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .journeys__list {
+    max-height: 45vh;
+  }
+
+  .journeys__detail-body {
+    overflow: visible;
+  }
+}

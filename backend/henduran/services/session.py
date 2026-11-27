@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from typing import Any
 
 from henduran.services.narration import chat_view, journey_view
@@ -25,7 +26,7 @@ class JourneySession:
 
     def __init__(self, journeys: JourneyStore) -> None:
         self.journeys = journeys
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._current: OpenJourney | None = None
 
     @property
@@ -87,6 +88,29 @@ class JourneySession:
                 **chat_view(journey),
                 **journey_view(journey),
             }
+
+    def with_journey(self, journey_id: str, work: Callable[[OpenJourney], Any], *, keep_open: bool = False) -> Any:
+        """Executa com o bloqueio de arquivo e sem disputar o ciclo de vida da sessão."""
+        jid = checked_id(journey_id)
+        with self._lock:
+            current = self._current
+            if current is not None and current.id == jid:
+                return work(current)
+            if current is not None and keep_open:
+                raise StorageError("jornada_ja_aberta", "Feche a Jornada atual antes de carregar outra.")
+            journey = self.journeys.open_journey(jid)
+            try:
+                result = work(journey)
+                if keep_open:
+                    self._current = journey
+                    try:
+                        self.journeys.set_last_played(jid)
+                    except Exception:
+                        log.exception("não foi possível gravar a última Jornada jogada")
+                return result
+            finally:
+                if self._current is not journey:
+                    journey.close()
 
 
 __all__ = ["JourneySession"]
