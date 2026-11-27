@@ -1,0 +1,37 @@
+.return-points__list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+  padding: 0;
+}
+
+.return-points__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: var(--border-thin) solid var(--frame-inner);
+  overflow-wrap: anywhere;
+}
+
+.return-points__row--current {
+  border-color: var(--color-accent);
+}
+
+.return-points__row p {
+  margin: 4px 0 0;
+}
+
+.return-points__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-1);
+}
+
+.return-points .field__control {
+  flex: none;
+  max-width: 100%;
+}

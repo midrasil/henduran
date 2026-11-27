@@ -68,6 +68,7 @@ from henduran.narrative.scene import ProposalRejected
 from henduran.rules.creation import creation_catalog, preview_derived, validate_character
 from henduran.services import narration
 from henduran.services import portrait as portraits
+from henduran.services.return_points import ReturnPoints, auto_save
 from henduran.services.journey_creation import (
     JourneyCreationFailed,
     JourneyCreationInvalid,
@@ -137,6 +138,12 @@ ERROR_STATUS = {
 
 # Erros de Jornadas e Mundos (StorageError, JourneyDamaged, MigrationError).
 STORAGE_STATUS = {
+    "ponto_ausente": 404,
+    "ponto_nome_invalido": 422,
+    "ponto_limite": 409,
+    "ponto_automatico": 409,
+    "ponto_danificado": 409,
+    "ponto_mundo_divergente": 409,
     "id_invalido": 422,
     "nome_invalido": 422,
     "backup_invalido": 422,
@@ -890,7 +897,7 @@ def create_app(
         body = await read_json(request, EDIT_FIELDS)
         journey = current_journey()
         try:
-            summary = await asyncio.to_thread(edit_journey_summary, journey, body)
+            summary = await exclusive(journey.id, edit_journey_summary, journey, body)
         except JourneyEditInvalid as exc:
             raise invalid(exc.code, str(exc), exc.error_dicts()) from exc
         except (StorageError, DatabaseError) as exc:
@@ -900,6 +907,8 @@ def create_app(
     @app.post("/journeys/close", dependencies=auth)
     async def journeys_close() -> dict:
         _, sess = need_journeys()
+        if point_operations:
+            raise _http_error("ponto_em_andamento", "Aguarde a operação de Ponto de retorno.", 409)
         return {"closed": await asyncio.to_thread(sess.close)}
 
     @app.post("/journeys/{journey_id}/open", dependencies=auth)
@@ -965,6 +974,7 @@ def create_app(
     # ------------------------------------------------- Narrador e ciclo de Cena (ADR-076)
     # Geração em curso por Jornada: id da Jornada -> id da geração.
     narrating: dict[str, str] = {}
+    point_operations: set[str] = set()
     app.state.narrating = narrating
 
     def current_journey() -> OpenJourney:
@@ -985,6 +995,93 @@ def create_app(
         if narrating.get(journey_id) == generation_id:
             del narrating[journey_id]
         generations.pop(generation_id, None)
+
+    async def exclusive(jid: str, work: Callable, *args, point_operation: bool = False):
+        generation_id, _ = reserve(jid)
+        if point_operation:
+            point_operations.add(jid)
+        # Não solte a reserva enquanto a thread ainda puder publicar uma gravação.
+        pending = asyncio.create_task(asyncio.to_thread(work, *args))
+
+        def finished(task: asyncio.Task) -> None:
+            if point_operation:
+                point_operations.discard(jid)
+            release(jid, generation_id)
+            if not task.cancelled():
+                task.exception()
+
+        pending.add_done_callback(finished)
+        return await asyncio.shield(pending)
+
+    def public_point(point: dict) -> dict:
+        return {key: value for key, value in point.items() if key != "file"}
+
+    async def point_work(jid: str, action: Callable, *, keep_open: bool = False):
+        store, sess = need_journeys()
+        try:
+            points = ReturnPoints(store, jid)
+
+            def work():
+                value = sess.with_journey(points.id, lambda j: action(points, j), keep_open=keep_open)
+                return sess.snapshot() if keep_open else value
+
+            return await exclusive(points.id, work, point_operation=True)
+        except (StorageError, DatabaseError) as exc:
+            raise storage_error(exc) from exc
+        except OSError as exc:
+            raise _http_error("ponto_falhou", "Não foi possível acessar os pontos de retorno.", 500) from exc
+
+    @app.get("/journeys/{jid}/return-points", dependencies=auth)
+    async def return_points_list(jid: str) -> dict:
+        store, _ = need_journeys()
+        try:
+            items = await asyncio.to_thread(ReturnPoints(store, jid).list)
+            return {"points": [public_point(p) for p in items]}
+        except StorageError as exc:
+            raise storage_error(exc) from exc
+
+    @app.post("/journeys/{jid}/return-points", dependencies=auth)
+    async def return_points_save(jid: str, request: Request) -> dict:
+        body = await read_json(request, ("name",))
+        if current_journey().id != jid:
+            raise _http_error("jornada_nao_encontrada", "Esta Jornada não está aberta.", 404)
+        point = await point_work(jid, lambda points, j: points.save(j.db, body.get("name")))
+        return {"point": public_point(point)}
+
+    @app.patch("/journeys/{jid}/return-points/{pid}", dependencies=auth)
+    async def return_points_rename(jid: str, pid: str, request: Request) -> dict:
+        body = await read_json(request, ("name",))
+        point = await point_work(jid, lambda points, _: points.rename(pid, body.get("name")))
+        return {"point": public_point(point)}
+
+    @app.put("/journeys/{jid}/return-points/{pid}", dependencies=auth)
+    async def return_points_replace(jid: str, pid: str, confirm: bool = False) -> dict:
+        if not confirm:
+            raise _http_error("confirmacao_necessaria", "Confirme a sobrescrita do ponto.", 409)
+        if current_journey().id != jid:
+            raise _http_error("jornada_nao_encontrada", "Esta Jornada não está aberta.", 404)
+        point = await point_work(jid, lambda points, j: points.save(j.db, replace=pid))
+        return {"point": public_point(point)}
+
+    @app.delete("/journeys/{jid}/return-points/{pid}", dependencies=auth)
+    async def return_points_delete(jid: str, pid: str, confirm: bool = False) -> dict:
+        if not confirm:
+            raise _http_error("confirmacao_necessaria", "Confirme a exclusão do ponto.", 409)
+        await point_work(jid, lambda points, _: points.delete(pid))
+        return {"deleted": pid}
+
+    @app.post("/journeys/{jid}/return-points/{pid}/load", dependencies=auth)
+    async def return_points_load(jid: str, pid: str, confirm: bool = False) -> dict:
+        if not confirm:
+            raise _http_error("confirmacao_necessaria", "Confirme o carregamento do ponto.", 409)
+        return await point_work(jid, lambda points, j: points.load(j, pid), keep_open=True)
+
+    async def with_scene_start_point(source, journey: OpenJourney):
+        store, _ = need_journeys()
+        async for name, data in source:
+            if name == "done" and data.get("reason") == "completed" and data.get("scene"):
+                await asyncio.to_thread(auto_save, store, journey.id, journey.db, "Início da Cena")
+            yield name, data
 
     def narrative_stream(
         journey_id: str,
@@ -1074,7 +1171,8 @@ def create_app(
     async def journeys_opening() -> StreamingResponse:
         return await start_stream(
             narration.prepare_opening,
-            lambda journey, plan, cancel: narration.run_opening(provider, journey, plan, cancel, rng=rng),
+            lambda journey, plan, cancel: with_scene_start_point(
+                narration.run_opening(provider, journey, plan, cancel, rng=rng), journey),
         )
 
     @app.post("/journeys/current/messages", dependencies=auth)
@@ -1116,7 +1214,10 @@ def create_app(
         generation_id, _ = reserve(journey.id)
         try:
             plan = await asyncio.to_thread(narration.prepare_close, journey)
-            return await narration.run_close(provider, journey, plan)
+            result = await narration.run_close(provider, journey, plan)
+            store, _ = need_journeys()
+            await asyncio.to_thread(auto_save, store, journey.id, journey.db, "Fim da Cena")
+            return result
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
         except ProviderUnavailable as exc:
@@ -1135,7 +1236,7 @@ def create_app(
     async def journeys_proposal_accept() -> StreamingResponse:
         return await start_stream(
             narration.prepare_accept,
-            lambda journey, plan, cancel: narration.run_accept(provider, journey, plan, cancel),
+            lambda journey, plan, cancel: with_scene_start_point(narration.run_accept(provider, journey, plan, cancel), journey),
         )
 
     @app.post("/journeys/current/proposal/reroll", dependencies=auth)
@@ -1184,7 +1285,7 @@ def create_app(
         body = await read_json(request, ("title",))
         journey = current_journey()
         try:
-            return await asyncio.to_thread(narration.rename_scene, journey, number, body.get("title"))
+            return await exclusive(journey.id, narration.rename_scene, journey, number, body.get("title"))
         except StorageError as exc:
             if exc.code == "titulo_invalido":
                 raise invalid(exc.code, str(exc), [{"field": "title", "code": exc.code, "message": str(exc)}]) from exc
@@ -1237,7 +1338,7 @@ def create_app(
         data = await read_image(request)
         journey = current_journey()
         try:
-            result = await asyncio.to_thread(portraits.save_portrait, journey, assets_of(journey), data, crop)
+            result = await exclusive(journey.id, portraits.save_portrait, journey, assets_of(journey), data, crop)
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
         return {"portrait": result}
@@ -1260,7 +1361,7 @@ def create_app(
             raise crop_error(exc) from exc
         journey = current_journey()
         try:
-            return {"portrait": await asyncio.to_thread(portraits.update_crop, journey, crop)}
+            return {"portrait": await exclusive(journey.id, portraits.update_crop, journey, crop)}
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
 
@@ -1268,12 +1369,9 @@ def create_app(
     async def journeys_portrait_get() -> Response:
         journey = current_journey()
 
-        def work() -> tuple[bytes, str]:
-            path, media = portraits.portrait_path(journey, assets_of(journey))
-            return path.read_bytes(), media
-
+        store, _ = need_journeys()
         try:
-            data, media = await asyncio.to_thread(work)
+            data, media = await asyncio.to_thread(store.portrait_bytes, journey.id)
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
         except OSError as exc:
@@ -1284,7 +1382,7 @@ def create_app(
     async def journeys_portrait_delete() -> dict:
         journey = current_journey()
         try:
-            await asyncio.to_thread(portraits.delete_portrait, journey, assets_of(journey))
+            await exclusive(journey.id, portraits.delete_portrait, journey, assets_of(journey))
         except (StorageError, DatabaseError) as exc:
             raise storage_error(exc) from exc
         return {"portrait": None}
@@ -1295,12 +1393,8 @@ def create_app(
     async def journeys_portrait_by_id(journey_id: str) -> Response:
         store, _ = need_journeys()
 
-        def work() -> tuple[bytes, str]:
-            path, media = store.portrait_file(journey_id)
-            return path.read_bytes(), media
-
         try:
-            data, media = await asyncio.to_thread(work)
+            data, media = await asyncio.to_thread(store.portrait_bytes, journey_id)
         except StorageError as exc:
             raise storage_error(exc) from exc
         except OSError as exc:

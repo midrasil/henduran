@@ -17,6 +17,7 @@ export interface JourneyTopBarProps {
   onBackToMenu: () => void;
   /** Editar o nome e a descrição da Jornada. */
   onEditJourney?: () => void;
+  onReturnPoints?: (() => void) | undefined;
 }
 
 /** O modelo está pronto para o Narrador? O provedor falso está sempre pronto. */
@@ -29,7 +30,7 @@ export function modelReady(engine: EngineStatus | null): boolean {
  * desenho do menu), o nome da Jornada, o personagem e o Mundo, o período e a
  * data, o indicador do modelo e o menu ⚙.
  */
-export function JourneyTopBar({ journeyName, characterName, worldName, period, dateText, engine, onOpenModels, onOpenWorld, onBackToMenu, onEditJourney }: JourneyTopBarProps) {
+export function JourneyTopBar({ journeyName, characterName, worldName, period, dateText, engine, onOpenModels, onOpenWorld, onBackToMenu, onEditJourney, onReturnPoints }: JourneyTopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const cogRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -118,6 +119,9 @@ export function JourneyTopBar({ journeyName, characterName, worldName, period, d
         </button>
         {menuOpen ? (
           <div ref={menuRef} id="jornada-menu" className="cog-menu" role="menu" aria-label="Opções da Jornada" onKeyDown={onMenuKey}>
+            {onReturnPoints ? (
+              <button type="button" role="menuitem" onClick={() => pick(onReturnPoints)}>Pontos de retorno</button>
+            ) : null}
             {onEditJourney ? (
               <button type="button" role="menuitem" onClick={() => pick(onEditJourney)}>
                 Editar Jornada<span className="visually-hidden">: </span><small>Nome e descrição</small>

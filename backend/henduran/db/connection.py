@@ -446,6 +446,18 @@ class Database:
             finally:
                 target.close()
 
+    def restore_from(self, source: Path) -> None:
+        """Substitui apenas main, em uma transação de backup do SQLite (mantém o WAL e os anexos)."""
+        with self._lock:
+            self._check_open()
+            if self._depth:
+                raise DatabaseError("restauracao_em_transacao", "Há uma gravação em curso.")
+            conn = connect_readonly(source)
+            try:
+                conn.backup(self._writer)
+            finally:
+                conn.close()
+
     # ------------------------------------------------------------ fechamento
     @property
     def closed(self) -> bool:

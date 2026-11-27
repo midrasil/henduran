@@ -17,6 +17,10 @@ A nova ramificação começa com o **estado consistente do ponto restaurado** e 
 
 A simples consulta a um ponto salvo não precisa gerar uma ramificação; o comportamento aprovado se aplica à **continuação efetiva** de uma Jornada a partir de estado anterior.
 
+### Exceção aprovada para a primeira entrega dos Pontos de retorno
+
+O responsável aprovou substituir o estado ativo, após confirmação, sem gerar uma ramificação. Antes da troca, grava-se **Antes de carregar**, recuperável enquanto estiver entre os cinco pontos automáticos mais recentes. A rotação pode remover esse ponto; ele não equivale à preservação permanente de uma continuidade. A versão do Mundo-base é fixa durante a Jornada: a restauração alcança somente o estado interno da partida. A política de ramificações permanece para a entrega futura de continuidades.
+
 ## Consequências
 
 - Rastrear a origem de cada ramificação e a referência ao ponto salvo de onde ela surgiu.

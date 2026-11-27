@@ -461,6 +461,29 @@ export const deleteJourney = (info: BackendInfo, id: string) =>
 export const listBackups = (info: BackendInfo, id: string) =>
   request<{ backups: BackupInfo[] }>(info, `${journeyPath(id)}/backups`);
 
+export interface ReturnPoint {
+  id: string;
+  name: string;
+  kind: "manual" | "automatic";
+  location: string | null;
+  message_count: number;
+  created_at: string;
+}
+
+const pointsPath = (id: string, pid?: string) => `${journeyPath(id)}/return-points${pid ? `/${encodeURIComponent(pid)}` : ""}`;
+export const listReturnPoints = (info: BackendInfo, id: string) =>
+  request<{ points: ReturnPoint[] }>(info, pointsPath(id));
+export const saveReturnPoint = (info: BackendInfo, id: string, name?: string) =>
+  request<{ point: ReturnPoint }>(info, pointsPath(id), { method: "POST", body: { name } });
+export const renameReturnPoint = (info: BackendInfo, id: string, pid: string, name: string) =>
+  request<{ point: ReturnPoint }>(info, pointsPath(id, pid), { method: "PATCH", body: { name } });
+export const replaceReturnPoint = (info: BackendInfo, id: string, pid: string) =>
+  request<{ point: ReturnPoint }>(info, `${pointsPath(id, pid)}?confirm=true`, { method: "PUT" });
+export const deleteReturnPoint = (info: BackendInfo, id: string, pid: string) =>
+  request<{ deleted: string }>(info, `${pointsPath(id, pid)}?confirm=true`, { method: "DELETE" });
+export const loadReturnPoint = (info: BackendInfo, id: string, pid: string) =>
+  request<JourneySnapshot>(info, `${pointsPath(id, pid)}/load?confirm=true`, { method: "POST" });
+
 /**
  * Imagem de um retrato pela rota do serviço (`portrait.url_path`); exige o token, por
  * isso não vai direto num `<img src>`. `null` sem retrato (404).

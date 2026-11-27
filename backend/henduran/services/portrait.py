@@ -96,6 +96,7 @@ def save_portrait(journey: OpenJourney, assets_dir: Path, data: bytes, crop: dic
     try:
         with journey.db.transaction() as tx:
             character_store.set_portrait(tx, name, crop)
+            tx.execute("UPDATE character SET portrait_snapshot = NULL WHERE id = 1")
     except BaseException:
         if previous != name:
             target.unlink(missing_ok=True)
@@ -133,6 +134,7 @@ def delete_portrait(journey: OpenJourney, assets_dir: Path) -> None:
         return
     with journey.db.transaction() as tx:
         character_store.set_portrait(tx, None, None)
+        tx.execute("UPDATE character SET portrait_snapshot = NULL WHERE id = 1")
     _remove(assets_dir / current)
 
 
