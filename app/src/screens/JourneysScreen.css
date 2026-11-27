@@ -104,15 +104,20 @@
 .journeys__entry {
   width: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-1);
   text-align: left;
   font: inherit;
   color: var(--color-text);
   background: var(--color-bg);
   border: var(--border-frame) solid var(--color-secondary-hover);
-  padding: var(--space-1);
+  padding: 4px var(--space-1);
   cursor: pointer;
+}
+
+.journeys__entry .portrait {
+  width: 44px;
+  height: 44px;
 }
 
 .journeys__entry:hover {

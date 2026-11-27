@@ -184,8 +184,6 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                       <JourneyPortrait info={info} journey={j} />
                       <span className="journeys__identity">
                         <strong id={`journey-${j.id}`}>{label(j)}</strong>
-                        <span>{j.character_name ?? "Sem personagem"} · {j.location ?? "Lugar desconhecido"}</span>
-                        <span>Mundo: {j.world_name ?? "desconhecido"}</span>
                         <span className="journeys__tags">
                           {latest?.id === j.id ? <Badge tone="accent">Última</Badge> : null}
                           <Badge tone={j.status !== "ok" ? TONE[j.status] ?? "neutral" : category(j) === "scene" ? "success" : "neutral"}>

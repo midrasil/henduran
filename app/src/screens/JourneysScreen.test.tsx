@@ -50,8 +50,8 @@ describe("Tela Jornadas", () => {
     const first = card("O Selo de Elmora");
     expect(within(first).getByText("Última")).toBeInTheDocument();
     expect(within(first).getByText("Fora de Cena")).toBeInTheDocument();
-    expect(within(first).getByText(/Ilsa Corvalho · /)).toBeInTheDocument();
-    expect(within(first).getByText(/Mundo: /)).toBeInTheDocument();
+    expect(first).not.toHaveTextContent("Ilsa Corvalho");
+    expect(first).not.toHaveTextContent(/Mundo:/);
     expect(within(first).getByText(/^Salvo/)).toBeInTheDocument();
   });
 
