@@ -73,17 +73,19 @@ describe("Tela Jornadas", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
   });
 
-  it("combina busca sem acentos com filtros e mantém os controles quando não há resultados", async () => {
+  it("busca pelo nome sem acentos e volta a mostrar todas as Jornadas ao limpar", async () => {
     const { user } = await openList({ journeys: [summary({ current_scene_title: "A chegada" }), SECOND] });
     const search = await screen.findByRole("searchbox", { name: "Buscar Jornadas" });
-    await user.click(screen.getByRole("button", { name: "Em Cena 1" }));
-    expect(card("O Selo de Elmora")).toHaveAttribute("aria-pressed", "true");
-    await user.type(search, "cronicas");
-    expect(screen.getByText(/Nenhuma Jornada combina/)).toBeInTheDocument();
+    await user.type(search, "inexistente");
+    expect(screen.getByText("Nenhuma Jornada encontrada para esta busca.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nova Jornada" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Fora de Cena 1" }));
+    await user.clear(search);
+    await user.type(search, "cronicas");
     expect(card("Crônicas do Vale")).toHaveAttribute("aria-pressed", "true");
-    expect(search).toHaveValue("cronicas");
+    expect(screen.queryByRole("button", { name: "O Selo de Elmora" })).not.toBeInTheDocument();
+    await user.clear(search);
+    expect(within(card("O Selo de Elmora")).getByText("Em Cena")).toBeInTheDocument();
+    expect(card("Crônicas do Vale")).toBeInTheDocument();
   });
 
   it("busca por personagem e Mundo, mas não pelo lugar", async () => {
@@ -98,12 +100,12 @@ describe("Tela Jornadas", () => {
     }
     await user.clear(search);
     await user.type(search, "porto cinzento");
-    expect(screen.getByText(/Nenhuma Jornada combina/)).toBeInTheDocument();
+    expect(screen.getByText("Nenhuma Jornada encontrada para esta busca.")).toBeInTheDocument();
   });
 
   it.each(["mais_nova", "sem_mundo"] as const)("impede continuar quando a situação é %s", async (status) => {
-    const { user } = await openList({ journeys: [summary({ status })] });
-    await user.click(await screen.findByRole("button", { name: "Com problema 1" }));
+    await openList({ journeys: [summary({ status })] });
+    await screen.findByRole("button", { name: "O Selo de Elmora" });
     expect(detail().getByRole("alert")).toBeInTheDocument();
     expect(detail().getByRole("button", { name: "Continuar Jornada" })).toBeDisabled();
     expect(detail().queryByRole("button", { name: /Restaurar/ })).not.toBeInTheDocument();

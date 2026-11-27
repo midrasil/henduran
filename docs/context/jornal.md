@@ -1,6 +1,12 @@
 # Jornal da esteira
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
+## 2026-11-27 — `simplificar-busca-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: removidos o título com contador e os seletores de status da coluna esquerda. A busca e as etiquetas dos cartões permanecem.
+- Validação: typecheck e 12 testes de Jornadas passaram.
+
 ## 2026-11-27 — `cartoes-compactos-jornadas` (OpenCode)
 
 - Rota: ajuste direto na branch `feat/biblioteca-jornadas`.

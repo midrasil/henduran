@@ -30,12 +30,9 @@ export interface JourneysScreenProps {
 }
 
 const TONE: Record<string, BadgeTone> = { ok: "success", danificada: "danger", mais_nova: "warn", sem_mundo: "warn" };
-const FILTERS = [["all", "Todas"], ["scene", "Em Cena"], ["outside", "Fora de Cena"], ["problem", "Com problema"]] as const;
-type Filter = (typeof FILTERS)[number][0];
 
 const label = (j: JourneySummary) => j.name ?? "Jornada sem nome";
 const normalize = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-const category = (j: JourneySummary) => j.status !== "ok" ? "problem" : j.current_scene_title ? "scene" : "outside";
 const savedAt = (j: JourneySummary) => j.last_saved_at ?? j.created_at;
 const savedTime = (j: JourneySummary) => {
   const time = Date.parse(savedAt(j) ?? "");
@@ -54,7 +51,6 @@ type RestoreState =
 
 export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, opening, openError, notice }: JourneysScreenProps) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ journey: JourneySummary; sending: boolean; error: string | null } | null>(null);
   const [restoring, setRestoring] = useState<RestoreState | null>(null);
@@ -109,10 +105,8 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
   const journeys = list?.journeys ?? [];
   const isEmpty = list !== null && !error && journeys.length === 0;
   const latest = journeys.reduce<JourneySummary | null>((best, j) => !best || savedTime(j) > savedTime(best) ? j : best, null);
-  const counts = { all: journeys.length, scene: 0, outside: 0, problem: 0 };
-  for (const journey of journeys) counts[category(journey)]++;
   const search = normalize(query.trim());
-  const visible = journeys.filter((j) => (filter === "all" || category(j) === filter) &&
+  const visible = journeys.filter((j) =>
     [label(j), j.character_name, j.world_name].some((value) => normalize(value ?? "").includes(search)));
   const selected = visible.find((j) => j.id === selectedId) ?? visible.find((j) => j.id === latest?.id) ?? visible[0];
   const newJourney = <Button variant="primary" onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>;
@@ -163,18 +157,11 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
       ) : (
         <div className="journeys__layout">
           <aside className="journeys__library px-frame surface-dark" aria-label="Biblioteca de Jornadas">
-            <h3 className="journeys__library-title">Jornadas <Badge>{journeys.length}</Badge></h3>
             <label className="field">
               <span className="field__label">Buscar Jornadas</span>
               <input className="field__control px-frame" type="search" placeholder="Jornada, personagem ou Mundo"
                 value={query} onChange={(event) => setQuery(event.target.value)} />
             </label>
-            <div className="journeys__filters" role="group" aria-label="Filtrar Jornadas">
-              {FILTERS.map(([key, text]) => (
-                <button key={key} type="button" className="journeys__filter"
-                  aria-pressed={filter === key} onClick={() => setFilter(key)}>{text} <strong>{counts[key]}</strong></button>
-              ))}
-            </div>
             {visible.length ? (
               <ul className="journeys__list" aria-label="Jornadas salvas">
                 {visible.map((j) => (
@@ -186,8 +173,8 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                         <strong id={`journey-${j.id}`}>{label(j)}</strong>
                         <span className="journeys__tags">
                           {latest?.id === j.id ? <Badge tone="accent">Última</Badge> : null}
-                          <Badge tone={j.status !== "ok" ? TONE[j.status] ?? "neutral" : category(j) === "scene" ? "success" : "neutral"}>
-                            {j.status !== "ok" ? STATUS_LABEL[j.status] ?? j.status : category(j) === "scene" ? "Em Cena" : "Fora de Cena"}
+                          <Badge tone={j.status !== "ok" ? TONE[j.status] ?? "neutral" : j.current_scene_title ? "success" : "neutral"}>
+                            {j.status !== "ok" ? STATUS_LABEL[j.status] ?? j.status : j.current_scene_title ? "Em Cena" : "Fora de Cena"}
                           </Badge>
                           <span title={formatSavedAt(savedAt(j))}>{formatSavedAgo(savedAt(j))}</span>
                         </span>
@@ -196,7 +183,7 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                   </li>
                 ))}
               </ul>
-            ) : <p className="hint" role="status">Nenhuma Jornada combina com a busca ou o filtro.</p>}
+            ) : <p className="hint" role="status">Nenhuma Jornada encontrada para esta busca.</p>}
           </aside>
           <section id="journeys-detail" className="journeys__detail px-frame surface-parchment"
             aria-label="Detalhe da Jornada">
