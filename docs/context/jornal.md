@@ -2,6 +2,25 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-27 — `save-padrão-como-ponto` (OpenCode)
+
+- Ajuste direto em `feat/pontos-de-retorno`: o estado atual do `journey.db` aparece como primeira linha dos Pontos de retorno — **Jogo salvo** na biblioteca e **Jogando agora** na Jornada aberta — com etiqueta **Atual**.
+- A linha é somente leitura, não conta nos limites 20/5 e não mostra mensagens. Na biblioteca, **Continuar** abre a Jornada pelo fluxo normal, sem chamar `/load`; dentro da Jornada não há ação de carregar.
+- Decisão do responsável: omitir a contagem de mensagens e não alterar o backend.
+- Validação: `npm run typecheck`, 34 testes direcionados e a suíte frontend completa (342 testes) passaram; `git diff --check` limpo.
+
+## 2026-11-27 — `ocultar-pontos-ausentes` (OpenCode)
+
+- Ajuste direto em `feat/pontos-de-retorno`: lista vazia ou indisponível fica oculta; um ponto que deixou de existir some após a ação; outras falhas exibem uma mensagem curta em português. Removido **Tentar de novo**.
+- Validação: `npm run typecheck` e os 18 testes de `JourneysScreen.test.tsx` passaram.
+
+## 2026-11-27 — `pontos-de-retorno` (OpenCode)
+
+- Rota: implementação local em `feat/pontos-de-retorno`, baseada em `feat/biblioteca-jornadas`.
+- Decisão: exceção aprovada ao ADR-041; carregar substitui o estado ativo e salva **Antes de carregar**, sujeito à retenção de cinco automáticos. O Mundo-base permanece na versão fixada.
+- Resultado: armazenamento SQLite, API, migração `0007` e componente `ReturnPoints` na biblioteca e na Jornada aberta.
+- Validação: 32 testes de backend, 28 de frontend e typecheck passaram. Suítes completas excederam o tempo disponível e a conferência no Tauri segue pendente.
+
 ## 2026-11-27 — `acoes-no-rodape-jornadas` (OpenCode)
 
 - Rota: ajuste direto na branch `feat/biblioteca-jornadas`.

@@ -1,6 +1,6 @@
 # Modelo de dados de jogo
 
-**Estado:** reflete o código em `backend/henduran/db/migrations/` (Jornada até a `0006`, Mundo até a `0002`, app na `0001`). Decisões de base: ADR-050, ADR-074, ADR-075, ADR-076 e ADR-077.
+**Estado:** reflete o código em `backend/henduran/db/migrations/` (Jornada até a `0007`, Mundo até a `0002`, app na `0001`). Decisões de base: ADR-050, ADR-074, ADR-075, ADR-076 e ADR-077.
 
 ## Onde os dados moram
 
@@ -53,4 +53,4 @@ Conteúdo, **esquema v1**: `schema`, `name`, `era`, `tone`, `calendar` (nome, an
 
 ## O que ainda não existe
 
-Fatos registrados (além do resumo de cada Cena), memória (FTS5 e vetores), salvamentos e autosaves, ramificações, registro de rolagens, usos por Dia do Mundo, troca e histórico de objetivos (os arcos já guardam a Ambição de cada Cena), passagem do tempo (a data e o período não mudam), inventário e dinheiro, anexos além do retrato e cache do catálogo de Jornadas. Os backups da Jornada (pré-migração) copiam só o `journey.db`: o retrato em `assets\` não entra neles. Cada um entra com a sua migração e, quando for o caso, com o seu ADR.
+Fatos registrados (além do resumo de cada Cena), memória (FTS5 e vetores), ramificações, registro de rolagens, usos por Dia do Mundo, troca e histórico de objetivos (os arcos já guardam a Ambição de cada Cena), passagem do tempo (a data e o período não mudam), inventário e dinheiro, anexos além do retrato e cache do catálogo de Jornadas. Os backups de pré-migração copiam só o `journey.db`, sem copiar `assets\`. Já os Pontos de retorno mantêm cópias em catálogo separado e incorporam a imagem do retrato em `character.portrait_snapshot` (migração `0007`), para que o banco e o retrato voltem juntos.

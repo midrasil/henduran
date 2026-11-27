@@ -41,6 +41,7 @@ from henduran.narrative.calendar import draw_date
 from henduran.narrative.periods import draw_day_period
 from henduran.rules import fatia1 as R
 from henduran.rules.creation import Character, FieldError, check_optional_text, check_text, validate_character
+from henduran.services.return_points import auto_save
 from henduran.storage import character as character_store
 from henduran.storage.errors import StorageError
 from henduran.storage.journeys import JourneyStore, JourneySummary
@@ -266,7 +267,10 @@ def create_journey_with_character(
                 ),
             )
 
-        journey_id = journeys.create_journey(plan.name, target_world, plan.world_version, initialize=initialize)
+        journey_id = journeys.create_journey(
+            plan.name, target_world, plan.world_version, initialize=initialize,
+            after_initialize=lambda db, jid: auto_save(journeys, jid, db, "Início da Jornada"),
+        )
 
         step = "conferir"
         summary = journeys.get_summary(journey_id)

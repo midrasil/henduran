@@ -103,6 +103,57 @@ describe("Tela Jornadas", () => {
     expect(screen.getByText("Nenhuma Jornada encontrada para esta busca.")).toBeInTheDocument();
   });
 
+  it.each([undefined, 404])("mostra o save padrão quando não há pontos (%s)", async (returnPointsStatus) => {
+    const { api } = await openList({ journeys: [SECOND], ...(returnPointsStatus ? { returnPointsStatus } : {}) });
+    await waitFor(() => expect(api.calls.some((call) => call.path.endsWith("/return-points"))).toBe(true));
+    expect(await detail().findByRole("button", { name: "Continuar Jogo salvo" })).toBeEnabled();
+    expect(detail().getByRole("heading", { name: "Pontos de retorno" })).toBeInTheDocument();
+    expect(detail().getByText("Jogo salvo")).toBeInTheDocument();
+    expect(detail().getByText("Atual")).toBeInTheDocument();
+    expect(detail().queryByRole("button", { name: "Tentar de novo" })).not.toBeInTheDocument();
+    expect(detail().queryByText("Not Found")).not.toBeInTheDocument();
+  });
+
+  it("continua pelo save padrão sem carregar um ponto", async () => {
+    const { user, api } = await openList({ journeys: [SECOND] });
+    await user.click(await detail().findByRole("button", { name: "Continuar Jogo salvo" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
+    expect(api.calls).toContainEqual({ method: "POST", path: `/journeys/${SECOND.id}/open`, body: undefined });
+    expect(api.calls.some((call) => call.path.includes("/load"))).toBe(false);
+  });
+
+
+  it.each([404, 500])("trata falha ao carregar um ponto (%s) sem exibir detalhes técnicos", async (loadReturnPointStatus) => {
+    const { user } = await openList({ journeys: [SECOND], loadReturnPointStatus, returnPoints: [{
+      id: "inicio", name: "Início da Cena", kind: "automatic", location: "Porto", message_count: 1,
+      created_at: "2026-11-28T13:00:00Z",
+    }] });
+    await user.click(await detail().findByRole("button", { name: "Carregar Início da Cena" }));
+    await user.click(detail().getByRole("button", { name: "Carregar ponto" }));
+    if (loadReturnPointStatus === 404) {
+      await waitFor(() => expect(detail().queryByRole("button", { name: "Carregar Início da Cena" })).not.toBeInTheDocument());
+      expect(detail().getByRole("heading", { name: "Pontos de retorno" })).toBeInTheDocument();
+      expect(detail().getByText("Jogo salvo")).toBeInTheDocument();
+    } else {
+      expect(await detail().findByRole("alert")).toHaveTextContent("Não foi possível carregar este ponto.");
+    }
+    expect(detail().queryByText("Not Found")).not.toBeInTheDocument();
+  });
+
+  it("carrega um ponto automático após confirmar e abre a Jornada", async () => {
+    const { user, api } = await openList({ journeys: [SECOND], returnPoints: [{
+      id: "inicio", name: "Início da Cena", kind: "automatic", location: "Porto", message_count: 1,
+      created_at: "2026-11-28T13:00:00Z",
+    }] });
+    await user.click(await detail().findByRole("button", { name: "Carregar Início da Cena" }));
+    expect(detail().queryByRole("button", { name: /Renomear/ })).not.toBeInTheDocument();
+    expect(detail().getByText(/Antes de carregar/)).toBeInTheDocument();
+    expect(api.calls.some((call) => call.path.includes("/load"))).toBe(false);
+    await user.click(detail().getByRole("button", { name: "Carregar ponto" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Crônicas do Vale" })).toBeInTheDocument();
+    expect(api.calls).toContainEqual({ method: "POST", path: `/journeys/${SECOND.id}/return-points/inicio/load?confirm=true`, body: undefined });
+  });
+
   it.each(["mais_nova", "sem_mundo"] as const)("impede continuar quando a situação é %s", async (status) => {
     await openList({ journeys: [summary({ status })] });
     await screen.findByRole("button", { name: "O Selo de Elmora" });

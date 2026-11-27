@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { ReturnPoints } from "../ReturnPoints";
 
 import type { BackendInfo } from "../../api/backend";
 import { ENGINE_ERROR_CODES } from "../../api/chatStream";
@@ -39,6 +40,7 @@ export interface JourneyScreenProps {
   portraitRetry?: PortraitRetry | null;
   /** Nome ou descrição editados (Editar Jornada); quem chama atualiza o seu resumo. */
   onJourneyChanged?: (journey: OpenJourneySummary) => void;
+  onPointLoaded?: (snapshot: JourneySnapshot) => void;
 }
 
 export interface PortraitRetry {
@@ -51,7 +53,7 @@ export interface PortraitRetry {
 type Center = "cena" | "aduran" | "log";
 type View = "loading" | "pending" | "cena" | "aduran" | "log" | "readonly";
 type Side = "arcos" | "chat" | "ficha";
-type Modal = "world" | "sheet" | "portrait" | "close" | "menu" | "edit" | null;
+type Modal = "world" | "sheet" | "portrait" | "close" | "menu" | "edit" | "points" | null;
 
 const SIDE_PREFIX = "jornada-col";
 const SIDES: { id: Side; label: string }[] = [
@@ -134,7 +136,7 @@ function HeadTool({
  * dos Arcos, centro (página da Cena ou margem do Aduran e do Log) e Ficha.
  * Abrir, encerrar e gravar são do serviço; a tela só pede e mostra.
  */
-export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, onOpenModels, onBackToMenu, copyText = defaultCopy, portraitRetry = null, onJourneyChanged }: JourneyScreenProps) {
+export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, onOpenModels, onBackToMenu, copyText = defaultCopy, portraitRetry = null, onJourneyChanged, onPointLoaded }: JourneyScreenProps) {
   const session = useJourneySession(info, snapshot, { onEngineProblem: () => onEngineProblem?.() });
   const { history, live, arcs } = session;
   const character = snapshot.character;
@@ -149,6 +151,7 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
   const [side, setSide] = useState<Side>("chat");
   const [arcsCollapsed, setArcsCollapsed] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
+  const [pointBusy, setPointBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<"cena" | "aduran", string>>({ cena: "", aduran: "" });
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
@@ -716,6 +719,7 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
         onOpenWorld={() => setModal("world")}
         onBackToMenu={() => setModal("menu")}
         onEditJourney={() => setModal("edit")}
+        onReturnPoints={onPointLoaded ? () => setModal("points") : undefined}
       />
       {retry ? (
         <div className="callout callout--warn jscreen__notice" role="alert">
@@ -799,6 +803,12 @@ export function JourneyScreen({ info, snapshot, rules, engine, onEngineProblem, 
         ) : null}
       </Dialog>
 
+      <Dialog open={modal === "points"} title="Pontos de retorno" size="wide" dismissible={!pointBusy}
+        onClose={() => setModal(null)} actions={<Button disabled={pointBusy} onClick={() => setModal(null)}>Fechar</Button>}>
+        {modal === "points" && onPointLoaded ? <ReturnPoints info={info} journeyId={snapshot.journey.id} playing
+          current={{ location: currentPlaceName, savedAt: snapshot.journey.last_saved_at ?? snapshot.journey.created_at }}
+          disabled={session.streaming || session.busy !== null} onLoaded={onPointLoaded} onBusy={setPointBusy} /> : null}
+      </Dialog>
       <Dialog
         open={modal === "menu"}
         onClose={() => setModal(null)}

@@ -8,12 +8,14 @@ import {
   restoreBackup,
   type BackupInfo,
   type JourneyList,
+  type JourneySnapshot,
   type JourneySummary,
 } from "../api/journeys";
 import { usePortraitUrl } from "../hooks/usePortraitUrl";
 import { describeError, formatBackupDate, formatSavedAgo, formatSavedAt, STATUS_LABEL, STATUS_NOTICE } from "../lib/format";
 import { Badge, Button, Dialog, PixelIcon, Portrait, RadioGroup, type BadgeTone } from "../ui";
 import "./JourneysScreen.css";
+import { ReturnPoints } from "./ReturnPoints";
 
 export interface JourneysScreenProps {
   info: BackendInfo;
@@ -24,6 +26,7 @@ export interface JourneysScreenProps {
   onOpen: (journey: JourneySummary) => void;
   onNew: () => void;
   onMenu: () => void;
+  onPointLoaded: (snapshot: JourneySnapshot) => void;
   opening: string | null;
   openError: string | null;
   /** Aviso vindo de outra tela (por exemplo, Jornada criada que não abriu). */
@@ -50,12 +53,13 @@ type RestoreState =
   | { journey: JourneySummary; kind: "ready"; backups: BackupInfo[]; chosen: string | null; sending: boolean; error: string | null }
   | { journey: JourneySummary; kind: "error"; error: string };
 
-export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, onMenu, opening, openError, notice }: JourneysScreenProps) {
+export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, onMenu, onPointLoaded, opening, openError, notice }: JourneysScreenProps) {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ journey: JourneySummary; sending: boolean; error: string | null } | null>(null);
   const [restoring, setRestoring] = useState<RestoreState | null>(null);
   const [announce, setAnnounce] = useState("");
+  const [pointBusy, setPointBusy] = useState(false);
   const keepRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -112,8 +116,8 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
   const selected = visible.find((j) => j.id === selectedId) ?? visible.find((j) => j.id === latest?.id) ?? visible[0];
   const navigation = (
     <div className="journeys__navigation">
-      <Button variant="primary" onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>
-      <Button onClick={onMenu}><PixelIcon name="back" /> Voltar ao menu</Button>
+      <Button variant="primary" disabled={pointBusy} onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>
+      <Button disabled={pointBusy} onClick={onMenu}><PixelIcon name="back" /> Voltar ao menu</Button>
     </div>
   );
 
@@ -160,14 +164,14 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
           <aside className="journeys__library px-frame surface-dark" aria-label="Biblioteca de Jornadas">
             <label className="field">
               <span className="field__label">Buscar Jornadas</span>
-              <input className="field__control px-frame" type="search" placeholder="Jornada, personagem ou Mundo"
+              <input className="field__control px-frame" type="search" placeholder="Jornada, personagem ou Mundo" disabled={pointBusy}
                 value={query} onChange={(event) => setQuery(event.target.value)} />
             </label>
             {visible.length ? (
               <ul className="journeys__list" aria-label="Jornadas salvas">
                 {visible.map((j) => (
                   <li key={j.id}>
-                    <button type="button" className="journeys__entry" aria-pressed={selected?.id === j.id}
+                    <button type="button" className="journeys__entry" disabled={pointBusy} aria-pressed={selected?.id === j.id}
                       aria-labelledby={`journey-${j.id}`} aria-controls="journeys-detail" onClick={() => setSelectedId(j.id)}>
                       <JourneyPortrait info={info} journey={j} />
                       <span className="journeys__identity">
@@ -204,7 +208,9 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                 </div>
                 <div className="journeys__detail-body">
                   {selected.status === "ok" ? (
-                    <><h4>Pontos de retorno</h4><p>Os pontos de retorno ainda não estão disponíveis.</p></>
+                    <ReturnPoints key={selected.id} info={info} journeyId={selected.id}
+                      current={{ location: selected.location, savedAt: savedAt(selected) }}
+                      disabled={opening !== null} onLoaded={onPointLoaded} onCurrent={() => onOpen(selected)} onBusy={setPointBusy} />
                   ) : (
                     <p className={`callout callout--${selected.status === "danificada" ? "danger" : "warn"}`} role="alert">
                       {selected.error_message ?? STATUS_NOTICE[selected.status] ?? "Não foi possível abrir esta Jornada."}
@@ -216,10 +222,10 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                   {selected.status === "danificada" ? (
                     <Button variant="primary" disabled={opening !== null} onClick={() => void startRestore(selected)}>Restaurar…</Button>
                   ) : (
-                    <Button variant="primary" disabled={selected.status !== "ok" || opening !== null}
+                    <Button variant="primary" disabled={selected.status !== "ok" || opening !== null || pointBusy}
                       loading={opening === selected.id} onClick={() => onOpen(selected)}>Continuar Jornada</Button>
                   )}
-                  <Button variant="danger" disabled={opening !== null}
+                  <Button variant="danger" disabled={opening !== null || pointBusy}
                     onClick={() => setRemoving({ journey: selected, sending: false, error: null })}>Excluir Jornada</Button>
                 </footer>
               </>
