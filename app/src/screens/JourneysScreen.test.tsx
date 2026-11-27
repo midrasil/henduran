@@ -86,6 +86,21 @@ describe("Tela Jornadas", () => {
     expect(search).toHaveValue("cronicas");
   });
 
+  it("busca por personagem e Mundo, mas não pelo lugar", async () => {
+    const journey = summary({ character_name: "Lúcia", world_name: "Brumária", location: "Porto Cinzento" });
+    const { user } = await openList({ journeys: [journey, SECOND] });
+    const search = await screen.findByRole("searchbox", { name: "Buscar Jornadas" });
+    for (const term of ["lucia", "brumaria"]) {
+      await user.clear(search);
+      await user.type(search, term);
+      expect(card("O Selo de Elmora")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Crônicas do Vale" })).not.toBeInTheDocument();
+    }
+    await user.clear(search);
+    await user.type(search, "porto cinzento");
+    expect(screen.getByText(/Nenhuma Jornada combina/)).toBeInTheDocument();
+  });
+
   it.each(["mais_nova", "sem_mundo"] as const)("impede continuar quando a situação é %s", async (status) => {
     const { user } = await openList({ journeys: [summary({ status })] });
     await user.click(await screen.findByRole("button", { name: "Com problema 1" }));

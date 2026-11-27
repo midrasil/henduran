@@ -113,7 +113,7 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
   for (const journey of journeys) counts[category(journey)]++;
   const search = normalize(query.trim());
   const visible = journeys.filter((j) => (filter === "all" || category(j) === filter) &&
-    [label(j), j.character_name, j.world_name, j.location].some((value) => normalize(value ?? "").includes(search)));
+    [label(j), j.character_name, j.world_name].some((value) => normalize(value ?? "").includes(search)));
   const selected = visible.find((j) => j.id === selectedId) ?? visible.find((j) => j.id === latest?.id) ?? visible[0];
   const newJourney = <Button variant="primary" onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>;
 
@@ -166,7 +166,7 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
             <h3 className="journeys__library-title">Jornadas <Badge>{journeys.length}</Badge></h3>
             <label className="field">
               <span className="field__label">Buscar Jornadas</span>
-              <input className="field__control px-frame" type="search" placeholder="Nome, personagem, Mundo ou lugar"
+              <input className="field__control px-frame" type="search" placeholder="Jornada, personagem ou Mundo"
                 value={query} onChange={(event) => setQuery(event.target.value)} />
             </label>
             <div className="journeys__filters" role="group" aria-label="Filtrar Jornadas">

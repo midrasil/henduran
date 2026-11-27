@@ -1,6 +1,12 @@
 # Jornal da esteira
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
+## 2026-11-27 — `cartoes-compactos-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: cartões mais baixos com nome, retrato, etiquetas e salvamento; busca por Jornada, personagem ou Mundo, sem lugar.
+- Arquivos: `JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck e 12 testes da tela passaram. Conferência visual no Tauri pendente.
 
 ## 2026-11-26 — `biblioteca-jornadas` (OpenCode)
 
