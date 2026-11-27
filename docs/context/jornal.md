@@ -1,6 +1,13 @@
 # Jornal da esteira
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
+
+## 2026-11-27 — `acoes-no-rodape-jornadas` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: ações no rodapé direito dos Pontos de retorno, com **Excluir Jornada** ao lado de **Continuar Jornada** ou **Restaurar…**.
+- Validação: typecheck e 13 testes de Jornadas passaram. Conferência visual no Tauri pendente.
+
 ## 2026-11-27 — `navegacao-jornadas-sem-cabecalho` (OpenCode)
 
 - Rota: ajuste direto na branch `feat/biblioteca-jornadas`.

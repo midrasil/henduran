@@ -190,16 +190,6 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
             aria-label="Detalhe da Jornada">
             {selected ? (
               <>
-                <div className="journeys__actions">
-                  {selected.status === "danificada" ? (
-                    <Button variant="primary" disabled={opening !== null} onClick={() => void startRestore(selected)}>Restaurar…</Button>
-                  ) : (
-                    <Button variant="primary" disabled={selected.status !== "ok" || opening !== null}
-                      loading={opening === selected.id} onClick={() => onOpen(selected)}>Continuar Jornada</Button>
-                  )}
-                  <Button variant="danger" size="sm" disabled={opening !== null}
-                    onClick={() => setRemoving({ journey: selected, sending: false, error: null })}>Excluir</Button>
-                </div>
                 <div className="journeys__detail-head">
                   <JourneyPortrait key={selected.id} info={info} journey={selected} />
                   <div className="journeys__identity">
@@ -222,6 +212,16 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
                     </p>
                   )}
                 </div>
+                <footer className="journeys__actions">
+                  {selected.status === "danificada" ? (
+                    <Button variant="primary" disabled={opening !== null} onClick={() => void startRestore(selected)}>Restaurar…</Button>
+                  ) : (
+                    <Button variant="primary" disabled={selected.status !== "ok" || opening !== null}
+                      loading={opening === selected.id} onClick={() => onOpen(selected)}>Continuar Jornada</Button>
+                  )}
+                  <Button variant="danger" disabled={opening !== null}
+                    onClick={() => setRemoving({ journey: selected, sending: false, error: null })}>Excluir Jornada</Button>
+                </footer>
               </>
             ) : <p className="journeys__detail-body">Escolha uma Jornada na lista para ver os detalhes.</p>}
           </section>

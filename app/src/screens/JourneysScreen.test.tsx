@@ -114,7 +114,7 @@ describe("Tela Jornadas", () => {
   it("Excluir pede confirmação, apaga com confirm=true e preserva o Mundo", async () => {
     const { user, api } = await openList({ journeys: [summary(), SECOND], lastJourneyId: summary().id });
     await user.click(await screen.findByRole("button", { name: "O Selo de Elmora" }));
-    await user.click(detail().getByRole("button", { name: "Excluir" }));
+    await user.click(detail().getByRole("button", { name: "Excluir Jornada" }));
     const dialog = screen.getByRole("dialog", { name: "Excluir “O Selo de Elmora”?" });
     expect(dialog).toHaveAccessibleDescription(/apaga a Jornada do disco/);
     expect(within(dialog).getByRole("button", { name: "Cancelar" })).toHaveFocus();
@@ -130,7 +130,7 @@ describe("Tela Jornadas", () => {
   it("Cancelar a exclusão não apaga nada", async () => {
     const { user, api } = await openList({ journeys: [summary()] });
     await screen.findByRole("button", { name: "O Selo de Elmora" });
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Excluir Jornada" }));
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancelar" }));
     expect(api.calls.some((c) => c.method === "DELETE")).toBe(false);
     expect(card("O Selo de Elmora")).toBeInTheDocument();

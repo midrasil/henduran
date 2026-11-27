@@ -10,13 +10,9 @@
 .journeys__actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--space-1);
-}
-
-.journeys__navigation {
-  justify-content: flex-end;
 }
 
 .journeys__empty .journeys__navigation {
@@ -139,7 +135,7 @@
 .journeys__actions {
   flex: none;
   background: var(--color-parchment-deep);
-  border-bottom: var(--border-thin) solid var(--color-parchment-edge);
+  border-top: var(--border-thin) solid var(--color-parchment-edge);
 }
 
 .journeys__detail-head {

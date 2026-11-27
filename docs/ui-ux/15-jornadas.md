@@ -10,7 +10,7 @@ Listar as Jornadas salvas, continuar de onde parou, restaurar uma danificada, ex
 
 - **Ações da tela**: **Nova Jornada** e, à direita, **Voltar ao menu**, sem cabeçalho visível. Na biblioteca vazia, ambos ficam no convite central.
 - **Lista (esquerda)**: campo de busca por nome da Jornada, personagem ou Mundo, sem exigir acentos, seguido dos cartões compactos. Cada cartão mostra nome, retrato, etiquetas (**Última**, **Em Cena**, **Fora de Cena** ou situação de problema) e "salvo há…". Com a busca vazia, aparecem todas as Jornadas.
-- **Detalhe (direita)**: **só a lista de Pontos de retorno da Jornada escolhida, sem resumo**. Topo com **Continuar Jornada**, **Excluir** e uma identificação curta (retrato, nome, personagem, Mundo, situação).
+- **Detalhe (direita)**: identificação curta no topo (retrato, nome, personagem, Mundo, situação) e **lista de Pontos de retorno da Jornada escolhida, sem resumo**. No rodapé, **Continuar Jornada** (ou **Restaurar…** para Jornadas danificadas) e **Excluir Jornada**, lado a lado e alinhados à direita.
 - **Lista vazia**: o aviso "Nenhuma Jornada ainda", com o botão Nova Jornada, **ocupa todo o espaço útil**.
 
 | Situação | Detalhe |
