@@ -172,9 +172,13 @@ describe("Tela Jornadas", () => {
     expect(await screen.findByText("Não há backups desta Jornada.")).toBeInTheDocument();
   });
 
-  it("Menu volta ao menu inicial", async () => {
-    const { user } = await openList({});
-    await user.click(screen.getByRole("button", { name: "Menu" }));
+  it.each([{ journeys: [] }, { journeys: [SECOND] }])("Voltar ao menu abre o menu inicial", async ({ journeys }) => {
+    const { user } = await openList({ journeys });
+    if (journeys.length) await screen.findByRole("button", { name: "Crônicas do Vale" });
+    else await screen.findByRole("heading", { name: "Nenhuma Jornada ainda" });
+    const back = screen.getByRole("button", { name: "Voltar ao menu" });
+    expect(back.previousElementSibling).toBe(screen.getByRole("button", { name: "Nova Jornada" }));
+    await user.click(back);
     expect(await screen.findByRole("heading", { level: 1, name: "Henduran" })).toHaveFocus();
   });
 });

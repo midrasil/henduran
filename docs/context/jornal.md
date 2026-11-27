@@ -1,6 +1,13 @@
 # Jornal da esteira
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
+## 2026-11-27 — `navegacao-jornadas-sem-cabecalho` (OpenCode)
+
+- Rota: ajuste direto na branch `feat/biblioteca-jornadas`.
+- Resultado: removido o cabeçalho visível de Jornadas; **Voltar ao menu** fica ao lado de **Nova Jornada**, também no estado vazio. O título acessível continua recebendo foco na entrada da tela.
+- Arquivos: `App.tsx`, `JourneysScreen.tsx`, `JourneysScreen.css`, `JourneysScreen.test.tsx` e `docs/ui-ux/15-jornadas.md`.
+- Validação: typecheck e 13 testes de Jornadas passaram.
+
 ## 2026-11-27 — `simplificar-busca-jornadas` (OpenCode)
 
 - Rota: ajuste direto na branch `feat/biblioteca-jornadas`.

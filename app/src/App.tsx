@@ -161,7 +161,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
 
   return (
     <div className={`app app--${screen}`}>
-      {screen !== "menu" && screen !== "jornada" ? (
+      {screen !== "menu" && screen !== "jornada" && screen !== "jornadas" ? (
         <header className="app-bar">
           <p className="app-bar__brand">
             <PixelIcon name="star" size={24} className="app-bar__mark" />
@@ -177,7 +177,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               <Button onClick={() => dispatch({ type: "go", screen: "jornada" })}>
                 <PixelIcon name="back" /> Voltar à Jornada
               </Button>
-            ) : screen === "jornadas" || screen === "mundos" || screen === "modelos" ? (
+            ) : screen === "mundos" || screen === "modelos" ? (
               <Button onClick={() => dispatch({ type: "go", screen: "menu" })}>
                 <PixelIcon name="back" /> Menu
               </Button>
@@ -219,6 +219,7 @@ export function App({ backendOptions, enginePollMs, copyText, copyMessage }: App
               reload={reloadJourneys}
               onOpen={(j) => void open(j, "jornadas")}
               onNew={() => dispatch({ type: "go", screen: "nova-jornada" })}
+              onMenu={() => dispatch({ type: "go", screen: "menu" })}
               opening={opening}
               openError={openError}
               notice={nav.notice}

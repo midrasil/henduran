@@ -6,7 +6,7 @@
   gap: var(--space-2);
 }
 
-.journeys__header,
+.journeys__navigation,
 .journeys__actions {
   display: flex;
   align-items: center;
@@ -15,7 +15,14 @@
   gap: var(--space-1);
 }
 
-.journeys__header p,
+.journeys__navigation {
+  justify-content: flex-end;
+}
+
+.journeys__empty .journeys__navigation {
+  justify-content: center;
+}
+
 .journeys__detail h3,
 .journeys__detail h4,
 .journeys__empty h3,

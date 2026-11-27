@@ -23,6 +23,7 @@ export interface JourneysScreenProps {
   reload: () => Promise<JourneyList | null>;
   onOpen: (journey: JourneySummary) => void;
   onNew: () => void;
+  onMenu: () => void;
   opening: string | null;
   openError: string | null;
   /** Aviso vindo de outra tela (por exemplo, Jornada criada que não abriu). */
@@ -49,7 +50,7 @@ type RestoreState =
   | { journey: JourneySummary; kind: "ready"; backups: BackupInfo[]; chosen: string | null; sending: boolean; error: string | null }
   | { journey: JourneySummary; kind: "error"; error: string };
 
-export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, opening, openError, notice }: JourneysScreenProps) {
+export function JourneysScreen({ info, list, loading, error, reload, onOpen, onNew, onMenu, opening, openError, notice }: JourneysScreenProps) {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ journey: JourneySummary; sending: boolean; error: string | null } | null>(null);
@@ -109,17 +110,17 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
   const visible = journeys.filter((j) =>
     [label(j), j.character_name, j.world_name].some((value) => normalize(value ?? "").includes(search)));
   const selected = visible.find((j) => j.id === selectedId) ?? visible.find((j) => j.id === latest?.id) ?? visible[0];
-  const newJourney = <Button variant="primary" onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>;
+  const navigation = (
+    <div className="journeys__navigation">
+      <Button variant="primary" onClick={onNew}><PixelIcon name="plus" /> Nova Jornada</Button>
+      <Button onClick={onMenu}><PixelIcon name="back" /> Voltar ao menu</Button>
+    </div>
+  );
 
   return (
     <section className="journeys" aria-labelledby="journeys-title">
-      <header className="journeys__header">
-        <div>
-          <h2 id="journeys-title" ref={titleRef} tabIndex={-1} className="screen-title">Jornadas</h2>
-          <p className="hint">Escolha uma Jornada para continuar sua história.</p>
-        </div>
-        {!isEmpty ? newJourney : null}
-      </header>
+      <h2 id="journeys-title" ref={titleRef} tabIndex={-1} className="visually-hidden">Jornadas</h2>
+      {!isEmpty ? navigation : null}
       {notice ? <p className="callout callout--warn">{notice}</p> : null}
       {openError ? (
         <p className="callout callout--danger" role="alert">
@@ -152,7 +153,7 @@ export function JourneysScreen({ info, list, loading, error, reload, onOpen, onN
           <PixelIcon name="scroll" size={32} />
           <h3>Nenhuma Jornada ainda</h3>
           <p>Crie a sua primeira Jornada: um Mundo, um personagem e uma história com o Aduran.</p>
-          {newJourney}
+          {navigation}
         </div>
       ) : (
         <div className="journeys__layout">
