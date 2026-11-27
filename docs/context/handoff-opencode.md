@@ -1,6 +1,6 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-27. Branch: `feat/pontos-de-retorno`, baseada em `feat/biblioteca-jornadas`. Implementação local, aguardando entrega em PR encadeado.
+Atualizado em 2026-11-27. Branch: `feat/pontos-de-retorno`, baseada em `feat/biblioteca-jornadas`. PR #51 aberto (https://github.com/midrasil/henduran/pull/51), aguardando revisão; merge não autorizado.
 
 ## Estado
 

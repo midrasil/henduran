@@ -8,6 +8,7 @@ Registro cronológico, cumulativo e conciso da execução do projeto. Este arqui
 - A linha é somente leitura, não conta nos limites 20/5 e não mostra mensagens. Na biblioteca, **Continuar** abre a Jornada pelo fluxo normal, sem chamar `/load`; dentro da Jornada não há ação de carregar.
 - Decisão do responsável: omitir a contagem de mensagens e não alterar o backend.
 - Validação: `npm run typecheck`, 34 testes direcionados e a suíte frontend completa (342 testes) passaram; `git diff --check` limpo.
+- Entrega: commit `23ae0d2`, branch publicada e PR #51 aberto com base em `feat/biblioteca-jornadas`: https://github.com/midrasil/henduran/pull/51.
 
 ## 2026-11-27 — `ocultar-pontos-ausentes` (OpenCode)
 
