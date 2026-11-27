@@ -1,6 +1,6 @@
 # Handoff do opencode — estado atual dos ajustes e tarefas menores
 
-Atualizado em 2026-11-27. Branch: `feat/pontos-de-retorno`, baseada em `feat/biblioteca-jornadas`. PR #51 aberto (https://github.com/midrasil/henduran/pull/51), aguardando revisão; merge não autorizado.
+Atualizado em 2026-11-27. Branch de entrega: `feat/biblioteca-jornadas`. O PR #51 dos Pontos de retorno foi mergeado nesta branch; o PR #52 abre esta branch para `main` (https://github.com/midrasil/henduran/pull/52), aguardando revisão. Merge na `main` não autorizado.
 
 ## Estado
 
@@ -13,4 +13,4 @@ Atualizado em 2026-11-27. Branch: `feat/pontos-de-retorno`, baseada em `feat/bib
 
 - Typecheck, 34 testes direcionados e a suíte frontend completa (342 testes) passaram; `git diff --check` limpo. Os 32 testes de backend (Pontos de retorno, criação e migrações) seguem passando; a suíte backend completa ainda não terminou por tempo.
 - Ajustes posteriores: sem mensagens técnicas nem botão de retry; o save padrão permanece visível mesmo com lista vazia ou falha na consulta.
-- ⭐ Próximo passo: validar salvar, carregar e desfazer no Tauri para Windows, conforme `docs/backlog.md`.
+- ⭐ Próximo passo: acompanhar o PR #52 e, após decisão, validar salvar, carregar e desfazer no Tauri para Windows, conforme `docs/backlog.md`.

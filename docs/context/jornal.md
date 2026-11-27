@@ -2,6 +2,12 @@
 
 Registro cronológico, cumulativo e conciso da execução do projeto. Este arquivo documenta o que aconteceu; `docs/backlog.md` continua sendo a lista autoritativa e ordenada de pendências.
 
+## 2026-11-27 — `pr-biblioteca-para-main` (OpenCode)
+
+- PR #52 aberto de `feat/biblioteca-jornadas` para `main`: https://github.com/midrasil/henduran/pull/52. Inclui o redesenho da biblioteca e os Pontos de retorno.
+- O PR #51 foi mergeado em `feat/biblioteca-jornadas` (`fe0c795`); merge na `main` segue sem autorização.
+- Validação usada no texto do PR: typecheck, 34 testes direcionados, suíte frontend completa (342 testes), 32 testes de backend e `git diff --check` limpo.
+
 ## 2026-11-27 — `save-padrão-como-ponto` (OpenCode)
 
 - Ajuste direto em `feat/pontos-de-retorno`: o estado atual do `journey.db` aparece como primeira linha dos Pontos de retorno — **Jogo salvo** na biblioteca e **Jogando agora** na Jornada aberta — com etiqueta **Atual**.
